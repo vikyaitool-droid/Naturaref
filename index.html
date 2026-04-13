@@ -1550,7 +1550,7 @@ body.dark .tab-index{background:#1a1612}
 
 /* ══ RESPONSIVE ══ */
 @media(max-width:900px){
-  .sb{transform:translateX(-100%)}.sb.open{transform:translateX(0)}
+  .sb{transform:translateX(-100%);bottom:calc(var(--botnav-h) + var(--safe))}.sb.open{transform:translateX(0)}
   .topbar{left:0}
   .main{margin-left:0}
   .mob-sb-btn{display:flex}
@@ -2073,6 +2073,10 @@ body.dark .tab-index{background:#1a1612}
 .nr-uid-display{font-size:9px;font-family:'Courier New',monospace;background:#2c2018;color:#f0e0cc;padding:3px 8px;border-radius:5px;display:inline-block;word-break:break-all;cursor:pointer;margin-top:6px;}
 .nr-card-foot{padding:8px 28px 16px;text-align:center;font-size:10px;color:#c0a888;}
 .nr-err{color:#b94040;font-size:11.5px;margin-top:8px;text-align:center;min-height:16px;}
+
+/* ══ PROFILE MODAL ══════════════════════════════════════════════════ */
+@keyframes nr-sheet-up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+#nr-profile-overlay.open{display:flex!important}
 
 /* ══ PIN LOCK SCREEN ═══════════════════════════════════════════════ */
 .nr-pin-avatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#3a5c3d,#6b8f6e);color:#fff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;letter-spacing:.03em;}
@@ -2617,7 +2621,10 @@ function nrSaveSession(user) {
       docId:    user.docId,
       username: user.username,
       name:     user.name,
-      email:    user.email || '',
+      email:    user.email    || '',
+      qual:     user.qual     || 'BNYS',
+      city:     user.city     || '',
+      photoB64: user.photoB64 || null,
       savedAt:  Date.now()
     }));
   } catch(e) { console.warn('[NR] Session save failed:', e); }
@@ -2933,17 +2940,200 @@ function nrUnlock() {
     var md = document.getElementById('nr-greet-motd');
     if (md) md.textContent = motto;
 
-    /* ── Sidebar footer — show doctor name + initials ── */
-    var sbAv = document.getElementById('sb-foot-avatar');
-    if (sbAv) { sbAv.textContent = initials; }
-    var sbNm = document.getElementById('sb-foot-name');
-    if (sbNm) sbNm.textContent = drName;
-    var sbRl = document.getElementById('sb-foot-role');
-    if (sbRl) sbRl.textContent = qual + ' · NaturaRef';
+    /* ── Sidebar footer & all avatars (incl. photo) ── */
+    _nrRefreshAllAvatars();
   })();
 }
 
 function nrLogoTap() {}  // no-op
+
+// ══════════════════════════════════════════════════════════════════
+// PROFILE EDIT MODAL
+// ══════════════════════════════════════════════════════════════════
+var _nrPendingPhotoB64 = null; // base64 of newly selected photo
+
+function nrOpenProfile() {
+  var user = _nrAuthUser;
+  if (!user) return;
+  // Populate fields
+  var el = function(id){ return document.getElementById(id); };
+  if (el('nr-prof-name'))     el('nr-prof-name').value     = user.name     || '';
+  if (el('nr-prof-qual'))     el('nr-prof-qual').value     = user.qual     || 'BNYS';
+  if (el('nr-prof-city'))     el('nr-prof-city').value     = user.city     || '';
+  if (el('nr-prof-email'))    el('nr-prof-email').value    = user.email    || '';
+  if (el('nr-prof-username')) el('nr-prof-username').value = user.username || '';
+  if (el('nr-prof-err'))      el('nr-prof-err').textContent = '';
+  _nrPendingPhotoB64 = null;
+
+  // Show current photo or initials in the big circle
+  _nrUpdateProfileCircle(user.photoB64 || null, user.name || 'Doctor');
+
+  // Show PIN row only in standalone PWA
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  var pinRow = el('nr-prof-pin-row');
+  if (pinRow) pinRow.style.display = isStandalone ? 'flex' : 'none';
+
+  // Open overlay
+  var ov = el('nr-profile-overlay');
+  if (ov) { ov.style.display = 'flex'; setTimeout(function(){ ov.classList.add('open'); }, 10); }
+  // Close sidebar
+  var sb = document.getElementById('sb');
+  if (sb) sb.classList.remove('open');
+}
+
+function nrCloseProfile() {
+  var ov = document.getElementById('nr-profile-overlay');
+  if (!ov) return;
+  ov.classList.remove('open');
+  setTimeout(function(){ ov.style.display = 'none'; }, 300);
+}
+
+function _nrUpdateProfileCircle(photoB64, name) {
+  var circle = document.getElementById('nr-prof-photo-circle');
+  if (!circle) return;
+  if (photoB64) {
+    circle.innerHTML = '<img src="'+photoB64+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+  } else {
+    var parts = (name || 'Doctor').trim().split(/\s+/);
+    var initials = parts.map(function(p){ return p[0]||''; }).join('').toUpperCase().slice(0,2) || '🌿';
+    circle.innerHTML = initials;
+    circle.style.fontSize = '28px';
+  }
+}
+
+function nrProfilePhotoSelected(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      // Compress to 220×220 max
+      var MAX = 220;
+      var w = img.width, h = img.height;
+      var scale = Math.min(MAX/w, MAX/h, 1);
+      var nw = Math.round(w * scale), nh = Math.round(h * scale);
+      var canvas = document.getElementById('nr-prof-canvas');
+      canvas.width = nw; canvas.height = nh;
+      var ctx = canvas.getContext('2d');
+      // Draw circular crop
+      ctx.clearRect(0, 0, nw, nh);
+      ctx.drawImage(img, 0, 0, nw, nh);
+      var b64 = canvas.toDataURL('image/jpeg', 0.78);
+      _nrPendingPhotoB64 = b64;
+      // Preview in circle
+      var circle = document.getElementById('nr-prof-photo-circle');
+      if (circle) circle.innerHTML = '<img src="'+b64+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+      // Show size hint
+      var err = document.getElementById('nr-prof-err');
+      var kb = Math.round(b64.length * 0.75 / 1024);
+      if (err) { err.style.color = '#3a5c3d'; err.textContent = 'Photo ready · ~'+kb+' KB'; }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  // Reset input so same file can be re-selected
+  input.value = '';
+}
+
+async function nrSaveProfile() {
+  var user = _nrAuthUser;
+  if (!user || !user.docId) return;
+  var el = function(id){ return document.getElementById(id); };
+  var name = (el('nr-prof-name').value || '').trim();
+  var qual = el('nr-prof-qual').value || 'BNYS';
+  var city = (el('nr-prof-city').value || '').trim();
+  var errEl = el('nr-prof-err');
+  if (!name) { errEl.style.color='#b94040'; errEl.textContent = 'Name cannot be empty.'; return; }
+
+  var saveBtn = document.querySelector('#nr-profile-sheet button:last-of-type');
+  if (saveBtn) { saveBtn.textContent = 'Saving…'; saveBtn.disabled = true; }
+  errEl.textContent = '';
+
+  try {
+    await _nrInitFirebase();
+    var update = { name: name, qual: qual, city: city };
+    if (_nrPendingPhotoB64) update.photoB64 = _nrPendingPhotoB64;
+
+    await _nrDb.collection('naturaref_users').doc(user.docId).update(update);
+
+    // Update in-memory user
+    _nrAuthUser.name = name;
+    _nrAuthUser.qual = qual;
+    _nrAuthUser.city = city;
+    if (_nrPendingPhotoB64) _nrAuthUser.photoB64 = _nrPendingPhotoB64;
+
+    // Update localStorage session
+    nrSaveSession(_nrAuthUser);
+
+    // Refresh all UI avatars
+    _nrRefreshAllAvatars();
+
+    errEl.style.color = '#3a5c3d';
+    errEl.textContent = '✅ Profile saved!';
+    setTimeout(nrCloseProfile, 1000);
+  } catch(e) {
+    errEl.style.color = '#b94040';
+    errEl.textContent = 'Save failed — ' + (e.message || 'try again.');
+  } finally {
+    if (saveBtn) { saveBtn.textContent = '💾  Save Profile'; saveBtn.disabled = false; }
+  }
+}
+
+function _nrRefreshAllAvatars() {
+  var user = _nrAuthUser;
+  if (!user) return;
+  var parts = (user.name || 'Doctor').trim().split(/\s+/);
+  var initials = parts.map(function(p){ return p[0]||''; }).join('').toUpperCase().slice(0,2) || '🌿';
+  var drName = 'Dr. ' + (parts[0] || user.name);
+  var qual = user.qual || 'BNYS';
+  var photo = user.photoB64 || null;
+
+  // Sidebar footer avatar
+  var sbAv = document.getElementById('sb-foot-avatar');
+  if (sbAv) {
+    if (photo) sbAv.innerHTML = '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+    else sbAv.textContent = initials;
+  }
+  var sbNm = document.getElementById('sb-foot-name');
+  if (sbNm) sbNm.textContent = drName;
+  var sbRl = document.getElementById('sb-foot-role');
+  if (sbRl) sbRl.textContent = qual + ' · NaturaRef';
+
+  // Greeting card avatar
+  var grAv = document.getElementById('nr-greet-avatar');
+  if (grAv) {
+    if (photo) { grAv.innerHTML = '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'; grAv.style.fontSize = 'unset'; }
+    else { grAv.textContent = initials; grAv.style.fontSize = '16px'; }
+  }
+  var grNm = document.getElementById('nr-greet-name');
+  if (grNm) grNm.innerHTML = drName.replace('Dr.', '<em>Dr.</em>');
+  var grQl = document.getElementById('nr-greet-qual');
+  if (grQl) grQl.textContent = qual;
+  var heroTxt = document.getElementById('hero-greet-text');
+  if (heroTxt) {
+    var hr = new Date().getHours();
+    var sal = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+    heroTxt.textContent = sal + ', ' + drName;
+  }
+
+  // PIN lock avatar
+  var lockAv = document.getElementById('nr-lock-avatar');
+  if (lockAv) {
+    if (photo) { lockAv.style.padding='0'; lockAv.innerHTML = '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'; }
+    else lockAv.textContent = initials;
+  }
+}
+
+function nrChangePIN() {
+  // Reset PIN setup so user goes through wizard again on next unlock
+  localStorage.removeItem(_NR_PIN_KEY);
+  localStorage.removeItem(_NR_BIO_KEY);
+  localStorage.removeItem(_NR_BIO_EN_KEY);
+  localStorage.removeItem(_NR_PIN_SETUP_DONE);
+  nrCloseProfile();
+  alert('PIN cleared. Next time you lock and reopen the app, you\'ll be prompted to set a new PIN.');
+}
 
 function nrSignOut() {
   nrClearSession();
@@ -3025,7 +3215,7 @@ async function nrLogin() {
       return;
     }
 
-    _nrAuthUser = { docId: doc.id, username: data.username, name: data.name || '', email: data.email || '', uid: doc.id };
+    _nrAuthUser = { docId: doc.id, username: data.username, name: data.name || '', email: data.email || '', qual: data.qual || 'BNYS', city: data.city || '', photoB64: data.photoB64 || null, uid: doc.id };
     var status = data.status || 'pending';
 
     if (status === 'active') {
@@ -3133,7 +3323,7 @@ async function nrCheckSessionStatus() {
     var data = doc.data();
     var status = data.status || 'pending';
     if (status === 'active') {
-      _nrAuthUser = { docId: doc.id, username: data.username, name: data.name, email: data.email || '', uid: doc.id };
+      _nrAuthUser = { docId: doc.id, username: data.username, name: data.name || '', email: data.email || '', qual: data.qual || 'BNYS', city: data.city || '', photoB64: data.photoB64 || null, uid: doc.id };
       nrSaveSession(_nrAuthUser);
       nrUnlock();
       setTimeout(function() { if (typeof nrFetchInbox === 'function') nrFetchInbox(doc.id); }, 700);
@@ -3173,8 +3363,11 @@ async function nrCheckSessionStatus() {
       _nrAuthUser = {
         docId:    sess.docId,
         username: sess.username || '',
-        name:     sess.name    || '',
-        email:    sess.email   || '',
+        name:     sess.name     || '',
+        email:    sess.email    || '',
+        qual:     sess.qual     || 'BNYS',
+        city:     sess.city     || '',
+        photoB64: sess.photoB64 || null,
         uid:      sess.docId
       };
       clearTimeout(_watchdog);
@@ -3205,7 +3398,7 @@ async function nrCheckSessionStatus() {
           var data = doc.data();
           if (data.status === 'active') {
             /* Refresh in-memory user with latest Firestore data */
-            _nrAuthUser = { docId: doc.id, username: data.username, name: data.name || '', email: data.email || '', uid: doc.id };
+            _nrAuthUser = { docId: doc.id, username: data.username, name: data.name || '', email: data.email || '', qual: data.qual || 'BNYS', city: data.city || '', photoB64: data.photoB64 || null, uid: doc.id };
             /* Fetch inbox after PIN unlock completes (already fetched if no PIN) */
             if (hasPIN && typeof nrFetchInbox === 'function') {
               // Inbox fetch happens in nrUnlock after PIN verified
@@ -3469,13 +3662,18 @@ async function nrCheckSessionStatus() {
 
   <!-- AI Doctor Avatar + Footer -->
   <div class="sb-foot-panel">
-    <div style="width:34px;height:34px;border-radius:17px;background:linear-gradient(135deg,#3a5c3d,#6b8f6e);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:.03em" id="sb-foot-avatar">🌿</div>
-    <div class="sb-foot-info">
+    <div id="sb-foot-avatar" onclick="nrOpenProfile()" title="Edit Profile"
+      style="width:34px;height:34px;border-radius:17px;background:linear-gradient(135deg,#3a5c3d,#6b8f6e);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:.03em;cursor:pointer;overflow:hidden;position:relative">🌿</div>
+    <div class="sb-foot-info" style="cursor:pointer" onclick="nrOpenProfile()">
       <div class="sb-foot-name" id="sb-foot-name" style="font-family:'DM Sans',sans-serif;font-size:12px">Doctor</div>
       <div class="sb-foot-sub" id="sb-foot-role" style="font-size:10px;color:#c4a882">BNYS · NaturaRef</div>
     </div>
+    <button onclick="nrOpenProfile()" title="Edit Profile"
+      style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#d4b896;font-size:14px;cursor:pointer;padding:5px 8px;transition:all .15s;flex-shrink:0"
+      onmouseover="this.style.background='rgba(107,143,110,.25)';this.style.color='#f0e0cc'"
+      onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='#d4b896'">✏️</button>
     <button onclick="nrTopbarSignOut()" title="Sign Out / Lock"
-      style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#d4b896;font-size:10px;font-weight:700;cursor:pointer;padding:5px 9px;white-space:nowrap;transition:all .15s;font-family:'DM Sans',sans-serif"
+      style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#d4b896;font-size:10px;font-weight:700;cursor:pointer;padding:5px 9px;white-space:nowrap;transition:all .15s;font-family:'DM Sans',sans-serif;flex-shrink:0"
       onmouseover="this.style.background='rgba(193,123,82,.25)';this.style.color='#f0e0cc'"
       onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='#d4b896'">
       Sign Out
@@ -3483,7 +3681,102 @@ async function nrCheckSessionStatus() {
   </div>
 </div>
 
-<div class="mob-srch-backdrop" id="mob-srch-backdrop" onclick="closeMobSearch()"></div>
+<!-- ═══════════════════════════════════════════════════════
+     PROFILE EDIT MODAL
+     ═══════════════════════════════════════════════════════ -->
+<div id="nr-profile-overlay" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(20,15,10,.82);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center">
+  <div id="nr-profile-sheet" style="background:linear-gradient(160deg,#f7f2ea,#ede4d3);border-radius:22px 22px 0 0;width:100%;max-width:520px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -12px 48px rgba(0,0,0,.35);animation:nr-sheet-up .3s cubic-bezier(.25,.46,.45,.94)">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#2c2018,#3a5c3d);padding:18px 20px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0">
+      <div style="flex:1">
+        <div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:#f0e0cc">Edit Profile</div>
+        <div style="font-size:10px;color:#c2d9c4;margin-top:2px;letter-spacing:.04em;text-transform:uppercase">Doctor · NaturaRef Portal</div>
+      </div>
+      <button onclick="nrCloseProfile()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#f0e0cc;font-size:18px;cursor:pointer;padding:4px 10px;line-height:1">✕</button>
+    </div>
+
+    <!-- Scrollable body -->
+    <div style="flex:1;overflow-y:auto;padding:20px">
+
+      <!-- Photo section -->
+      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:22px">
+        <div style="position:relative;display:inline-block">
+          <div id="nr-prof-photo-ring" style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#3a5c3d,#6b8f6e);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.2);cursor:pointer" onclick="document.getElementById('nr-prof-file').click()" id="nr-prof-photo-circle">🌿</div>
+          <button onclick="document.getElementById('nr-prof-file').click()" style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:13px;background:#c17b52;border:2px solid #f7f2ea;color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.2)">📷</button>
+        </div>
+        <input type="file" id="nr-prof-file" accept="image/*" style="display:none" onchange="nrProfilePhotoSelected(this)">
+        <div style="margin-top:8px;font-size:11px;color:#9a8070;text-align:center">Tap photo to change<br><span style="font-size:10px;color:#b8a090">Auto-compressed to ~200×200px</span></div>
+        <canvas id="nr-prof-canvas" style="display:none"></canvas>
+      </div>
+
+      <!-- Fields -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <div>
+          <label style="display:block;font-size:10px;font-weight:700;color:#5a4030;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Full Name</label>
+          <input id="nr-prof-name" type="text" placeholder="Dr. Your Full Name"
+            style="width:100%;padding:10px 12px;border:1.5px solid #e0d4c0;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:#2a2018;background:#fff;outline:none;box-sizing:border-box"
+            onfocus="this.style.borderColor='#6b8f6e'" onblur="this.style.borderColor='#e0d4c0'">
+        </div>
+
+        <div>
+          <label style="display:block;font-size:10px;font-weight:700;color:#5a4030;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Qualification</label>
+          <select id="nr-prof-qual"
+            style="width:100%;padding:10px 12px;border:1.5px solid #e0d4c0;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:#2a2018;background:#fff;outline:none;box-sizing:border-box"
+            onfocus="this.style.borderColor='#6b8f6e'" onblur="this.style.borderColor='#e0d4c0'">
+            <option value="BNYS">BNYS</option>
+            <option value="MD">MD (Naturopathy)</option>
+            <option value="BAMS">BAMS</option>
+            <option value="BHMS">BHMS</option>
+            <option value="BDS">BDS</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:10px;font-weight:700;color:#5a4030;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">City / Clinic</label>
+          <input id="nr-prof-city" type="text" placeholder="City, State"
+            style="width:100%;padding:10px 12px;border:1.5px solid #e0d4c0;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:#2a2018;background:#fff;outline:none;box-sizing:border-box"
+            onfocus="this.style.borderColor='#6b8f6e'" onblur="this.style.borderColor='#e0d4c0'">
+        </div>
+
+        <div>
+          <label style="display:block;font-size:10px;font-weight:700;color:#5a4030;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Email <span style="font-weight:400;color:#b8a090;text-transform:none">(read-only)</span></label>
+          <input id="nr-prof-email" type="email" disabled
+            style="width:100%;padding:10px 12px;border:1.5px solid #e8e0d4;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:#9a8070;background:#f5efe8;outline:none;box-sizing:border-box">
+        </div>
+
+        <div>
+          <label style="display:block;font-size:10px;font-weight:700;color:#5a4030;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Username <span style="font-weight:400;color:#b8a090;text-transform:none">(cannot be changed)</span></label>
+          <input id="nr-prof-username" type="text" disabled
+            style="width:100%;padding:10px 12px;border:1.5px solid #e8e0d4;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:#9a8070;background:#f5efe8;outline:none;box-sizing:border-box">
+        </div>
+
+        <!-- Change PIN (PWA only) -->
+        <div id="nr-prof-pin-row" style="display:none;background:#f0f7f0;border:1.5px solid #c2d9c4;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#2a4a2c">App PIN / Biometric</div>
+            <div style="font-size:10px;color:#6a8a6c;margin-top:2px">Change your unlock PIN or biometric</div>
+          </div>
+          <button onclick="nrChangePIN()" style="background:#3a5c3d;border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:700;padding:7px 12px;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif">Change PIN</button>
+        </div>
+
+      </div>
+
+      <!-- Status / error -->
+      <div id="nr-prof-err" style="margin-top:14px;text-align:center;font-size:12px;min-height:18px;color:#b94040"></div>
+
+      <!-- Save button -->
+      <button onclick="nrSaveProfile()"
+        style="margin-top:16px;width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,#3a5c3d,#6b8f6e);color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(58,92,61,.35)">
+        💾 &nbsp;Save Profile
+      </button>
+      <div style="height:24px"></div>
+    </div>
+
+  </div>
+</div>
 <div class="mob-srch-overlay" id="mob-srch-overlay">
   <div class="mob-srch-inner">
     <div class="mob-srch-row">
