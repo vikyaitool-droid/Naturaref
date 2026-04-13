@@ -2074,6 +2074,22 @@ body.dark .tab-index{background:#1a1612}
 .nr-card-foot{padding:8px 28px 16px;text-align:center;font-size:10px;color:#c0a888;}
 .nr-err{color:#b94040;font-size:11.5px;margin-top:8px;text-align:center;min-height:16px;}
 
+/* ══ PIN LOCK SCREEN ═══════════════════════════════════════════════ */
+.nr-pin-avatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#3a5c3d,#6b8f6e);color:#fff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;letter-spacing:.03em;}
+.nr-pin-dots{display:flex;gap:12px;justify-content:center;margin:18px 0 6px;}
+.nr-pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid #c0a888;background:transparent;transition:all .15s;}
+.nr-pin-dot.filled{background:#3a5c3d;border-color:#3a5c3d;}
+.nr-pin-dot.error{background:#b94040;border-color:#b94040;}
+.nr-pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0 12px;}
+.nr-pin-key{padding:14px 0;border:1.5px solid #ddd4c4;border-radius:12px;background:#fff;color:#2a2018;font-family:'DM Sans',sans-serif;font-size:20px;font-weight:600;cursor:pointer;transition:all .12s;text-align:center;-webkit-tap-highlight-color:transparent;user-select:none;}
+.nr-pin-key:active{background:#e8f0e8;border-color:#6b8f6e;transform:scale(.93);}
+.nr-pin-key.nr-key-del{font-size:17px;color:#7a6050;}
+.nr-pin-key.nr-key-bio{font-size:22px;background:transparent;border-color:#c2d9c4;}
+.nr-pin-sep{display:flex;align-items:center;gap:10px;margin:10px 0;color:#c0a888;font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
+.nr-pin-sep::before,.nr-pin-sep::after{content:'';flex:1;height:1px;background:#e0d4c0;}
+.nr-lock-name{font-family:'Lora',serif;font-size:15px;font-weight:700;color:#2a2018;text-align:center;margin-bottom:2px;}
+.nr-lock-qual{font-size:11px;color:#9a8070;text-align:center;margin-bottom:4px;}
+
 /* ══ NATURAREF INBOX ═══════════════════════════════════════════════ */
 /* ── Inbox topbar button ── */
 #nr-inbox-btn{
@@ -2409,6 +2425,69 @@ body.dark .tab-index{background:#1a1612}
         <button class="nr-btn-outline" onclick="nrSignOut()">Sign Out</button>
       </div>
 
+      <!-- PIN Lock (reopen) -->
+      <div class="nr-screen" id="nr-scr-pin-lock">
+        <div class="nr-pin-avatar" id="nr-lock-avatar">🌿</div>
+        <div class="nr-lock-name" id="nr-lock-name">Doctor</div>
+        <div class="nr-lock-qual" id="nr-lock-qual">BNYS</div>
+        <div class="nr-sub" style="margin-bottom:0;margin-top:4px">Enter PIN to unlock</div>
+        <div class="nr-pin-dots" id="nr-lock-dots">
+          <div class="nr-pin-dot" id="nr-ld-0"></div>
+          <div class="nr-pin-dot" id="nr-ld-1"></div>
+          <div class="nr-pin-dot" id="nr-ld-2"></div>
+          <div class="nr-pin-dot" id="nr-ld-3"></div>
+        </div>
+        <div class="nr-err" id="nr-pin-lock-err"></div>
+        <div class="nr-pin-pad" id="nr-lock-pad">
+          <button class="nr-pin-key" onclick="nrPinLockKey('1')">1</button>
+          <button class="nr-pin-key" onclick="nrPinLockKey('2')">2</button>
+          <button class="nr-pin-key" onclick="nrPinLockKey('3')">3</button>
+          <button class="nr-pin-key" onclick="nrPinLockKey('4')">4</button>
+          <button class="nr-pin-key" onclick="nrPinLockKey('5')">5</button>
+          <button class="nr-pin-key" onclick="nrPinLockKey('6')">6</button>
+          <button class="nr-pin-key" onclick="nrPinLockKey('7')">7</button>
+          <button class="nr-pin-key" onclick="nrPinLockKey('8')">8</button>
+          <button class="nr-pin-key" onclick="nrPinLockKey('9')">9</button>
+          <button class="nr-pin-key nr-key-bio" id="nr-bio-btn" onclick="nrBiometricUnlock()" style="display:none">🪪</button>
+          <button class="nr-pin-key" onclick="nrPinLockKey('0')">0</button>
+          <button class="nr-pin-key nr-key-del" onclick="nrPinLockDel()">⌫</button>
+        </div>
+        <button class="nr-btn-outline" onclick="nrSignOut()" style="font-size:11px;border-color:#f0ddd0;color:#c08060">Sign out completely</button>
+      </div>
+
+      <!-- PIN Setup (after first login or change) -->
+      <div class="nr-screen" id="nr-scr-pin-setup">
+        <div class="nr-icon">🔐</div>
+        <div class="nr-title" id="nr-setup-title">Set Your PIN</div>
+        <div class="nr-sub" id="nr-setup-sub">Choose a 4-digit PIN to quickly unlock the app when you reopen it. Recommended for installed PWA.</div>
+        <div class="nr-pin-dots" id="nr-setup-dots">
+          <div class="nr-pin-dot" id="nr-sd-0"></div>
+          <div class="nr-pin-dot" id="nr-sd-1"></div>
+          <div class="nr-pin-dot" id="nr-sd-2"></div>
+          <div class="nr-pin-dot" id="nr-sd-3"></div>
+        </div>
+        <div class="nr-err" id="nr-pin-setup-err"></div>
+        <div class="nr-pin-pad">
+          <button class="nr-pin-key" onclick="nrPinSetupKey('1')">1</button>
+          <button class="nr-pin-key" onclick="nrPinSetupKey('2')">2</button>
+          <button class="nr-pin-key" onclick="nrPinSetupKey('3')">3</button>
+          <button class="nr-pin-key" onclick="nrPinSetupKey('4')">4</button>
+          <button class="nr-pin-key" onclick="nrPinSetupKey('5')">5</button>
+          <button class="nr-pin-key" onclick="nrPinSetupKey('6')">6</button>
+          <button class="nr-pin-key" onclick="nrPinSetupKey('7')">7</button>
+          <button class="nr-pin-key" onclick="nrPinSetupKey('8')">8</button>
+          <button class="nr-pin-key" onclick="nrPinSetupKey('9')">9</button>
+          <div></div>
+          <button class="nr-pin-key" onclick="nrPinSetupKey('0')">0</button>
+          <button class="nr-pin-key nr-key-del" onclick="nrPinSetupDel()">⌫</button>
+        </div>
+        <div id="nr-bio-setup-area" style="display:none">
+          <div class="nr-pin-sep">also enable</div>
+          <button class="nr-btn-outline" id="nr-bio-setup-btn" onclick="nrRegisterBiometric()" style="font-size:12px">🪪 &nbsp;Enable Face ID / Fingerprint</button>
+        </div>
+        <button class="nr-btn-outline" onclick="nrSkipPinSetup()" style="font-size:11px;color:#9a8070;border-color:#e0d4c0;margin-top:4px">Skip — use PIN next time</button>
+      </div>
+
     </div>
     <div class="nr-card-foot">NaturaRef Clinical Portal · Dr. Vikranth BNYS</div>
   </div>
@@ -2521,19 +2600,251 @@ async function nrHashPassword(pwd) {
   return Array.from(new Uint8Array(hash)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
 }
 
-// ── Session management (sessionStorage) ──
+// ══════════════════════════════════════════════════════════════════
+// SESSION MANAGEMENT — uses localStorage so session survives PWA
+// restarts. A PIN / biometric lock guards re-access instead of
+// requiring full username+password login every time.
+// ══════════════════════════════════════════════════════════════════
+var _NR_SESSION_KEY  = 'nr_session_v2';   // localStorage key
+var _NR_PIN_KEY      = 'nr_pin_hash';     // SHA-256 of PIN
+var _NR_BIO_KEY      = 'nr_bio_cred_id'; // base64url WebAuthn cred ID
+var _NR_BIO_EN_KEY   = 'nr_bio_enabled';
+var _NR_PIN_SETUP_DONE = 'nr_pin_setup_done';
+
 function nrSaveSession(user) {
-  sessionStorage.setItem('nr_session', JSON.stringify({
-    docId: user.docId,
-    username: user.username,
-    name: user.name,
-    email: user.email || ''
-  }));
+  try {
+    localStorage.setItem(_NR_SESSION_KEY, JSON.stringify({
+      docId:    user.docId,
+      username: user.username,
+      name:     user.name,
+      email:    user.email || '',
+      savedAt:  Date.now()
+    }));
+  } catch(e) { console.warn('[NR] Session save failed:', e); }
 }
 function nrGetSession() {
-  try { return JSON.parse(sessionStorage.getItem('nr_session')); } catch(e) { return null; }
+  try { return JSON.parse(localStorage.getItem(_NR_SESSION_KEY)); } catch(e) { return null; }
 }
-function nrClearSession() { sessionStorage.removeItem('nr_session'); }
+function nrClearSession() {
+  try {
+    localStorage.removeItem(_NR_SESSION_KEY);
+    localStorage.removeItem(_NR_PIN_KEY);
+    localStorage.removeItem(_NR_BIO_KEY);
+    localStorage.removeItem(_NR_BIO_EN_KEY);
+    localStorage.removeItem(_NR_PIN_SETUP_DONE);
+  } catch(e) {}
+}
+
+// ── PIN helpers ──
+var _nrPinLockBuf   = '';  // digits entered on lock screen
+var _nrPinSetupBuf  = '';  // digits entered on setup screen
+var _nrPinSetupStep = 0;   // 0=enter new, 1=confirm
+var _nrPinFirst     = '';  // first entry during setup
+
+async function _nrHashPin(pin) { return nrHashPassword(pin); }
+
+function _nrUpdateDots(prefix, len, count, isError) {
+  for (var i = 0; i < len; i++) {
+    var d = document.getElementById(prefix + i);
+    if (!d) continue;
+    d.classList.toggle('filled', i < count);
+    d.classList.toggle('error', isError);
+  }
+}
+
+// ── PIN lock screen: key presses ──
+function nrPinLockKey(digit) {
+  if (_nrPinLockBuf.length >= 4) return;
+  _nrPinLockBuf += digit;
+  document.getElementById('nr-pin-lock-err').textContent = '';
+  _nrUpdateDots('nr-ld-', 4, _nrPinLockBuf.length, false);
+  if (_nrPinLockBuf.length === 4) setTimeout(_nrVerifyPin, 120);
+}
+function nrPinLockDel() {
+  _nrPinLockBuf = _nrPinLockBuf.slice(0, -1);
+  _nrUpdateDots('nr-ld-', 4, _nrPinLockBuf.length, false);
+}
+async function _nrVerifyPin() {
+  var stored = localStorage.getItem(_NR_PIN_KEY);
+  if (!stored) { _nrPinLockBuf = ''; _nrUpdateDots('nr-ld-', 4, 0, false); nrUnlock(); return; }
+  var h = await _nrHashPin(_nrPinLockBuf);
+  if (h === stored) {
+    _nrPinLockBuf = '';
+    _nrUpdateDots('nr-ld-', 4, 0, false);
+    nrUnlock();
+  } else {
+    _nrUpdateDots('nr-ld-', 4, 4, true);
+    document.getElementById('nr-pin-lock-err').textContent = 'Incorrect PIN. Try again.';
+    setTimeout(function() {
+      _nrPinLockBuf = '';
+      _nrUpdateDots('nr-ld-', 4, 0, false);
+    }, 700);
+  }
+}
+
+// ── PIN setup screen: key presses ──
+function nrPinSetupKey(digit) {
+  if (_nrPinSetupBuf.length >= 4) return;
+  _nrPinSetupBuf += digit;
+  document.getElementById('nr-pin-setup-err').textContent = '';
+  _nrUpdateDots('nr-sd-', 4, _nrPinSetupBuf.length, false);
+  if (_nrPinSetupBuf.length === 4) setTimeout(_nrHandleSetupFull, 150);
+}
+function nrPinSetupDel() {
+  _nrPinSetupBuf = _nrPinSetupBuf.slice(0, -1);
+  _nrUpdateDots('nr-sd-', 4, _nrPinSetupBuf.length, false);
+}
+async function _nrHandleSetupFull() {
+  if (_nrPinSetupStep === 0) {
+    // First entry → ask to confirm
+    _nrPinFirst = _nrPinSetupBuf;
+    _nrPinSetupBuf = '';
+    _nrPinSetupStep = 1;
+    _nrUpdateDots('nr-sd-', 4, 0, false);
+    document.getElementById('nr-setup-title').textContent = 'Confirm PIN';
+    document.getElementById('nr-setup-sub').textContent   = 'Enter the same 4-digit PIN again to confirm.';
+  } else {
+    // Second entry → verify match
+    if (_nrPinSetupBuf !== _nrPinFirst) {
+      _nrUpdateDots('nr-sd-', 4, 4, true);
+      document.getElementById('nr-pin-setup-err').textContent = 'PINs do not match. Start again.';
+      setTimeout(function() {
+        _nrPinSetupBuf = ''; _nrPinFirst = ''; _nrPinSetupStep = 0;
+        _nrUpdateDots('nr-sd-', 4, 0, false);
+        document.getElementById('nr-setup-title').textContent = 'Set Your PIN';
+        document.getElementById('nr-setup-sub').textContent   = 'Choose a 4-digit PIN to unlock next time.';
+      }, 900);
+      return;
+    }
+    var h = await _nrHashPin(_nrPinSetupBuf);
+    localStorage.setItem(_NR_PIN_KEY, h);
+    localStorage.setItem(_NR_PIN_SETUP_DONE, '1');
+    _nrPinSetupBuf = ''; _nrPinFirst = ''; _nrPinSetupStep = 0;
+
+    // Check if biometric is available and offer it
+    var bioAvail = await _nrCheckBiometric();
+    if (bioAvail) {
+      document.getElementById('nr-bio-setup-area').style.display = 'block';
+      var btn = document.getElementById('nr-bio-setup-btn');
+      btn.textContent = '🪪  Enable ' + _nrBioLabel() + ' unlock';
+      document.getElementById('nr-pin-setup-err').textContent = '';
+      document.getElementById('nr-setup-title').textContent = 'PIN Set ✓';
+      document.getElementById('nr-setup-sub').textContent   = 'You can also enable biometric unlock below.';
+    } else {
+      nrUnlock(); // done, go straight to app
+    }
+  }
+}
+function nrSkipPinSetup() {
+  localStorage.setItem(_NR_PIN_SETUP_DONE, '1');
+  nrUnlock();
+}
+
+// ── Biometric (WebAuthn) ──
+function _nrBioLabel() {
+  var ua = navigator.userAgent;
+  if (/iPhone|iPad/.test(ua)) return 'Face ID / Touch ID';
+  if (/Android/.test(ua)) return 'Fingerprint / Face';
+  return 'Biometric';
+}
+async function _nrCheckBiometric() {
+  try {
+    if (!window.PublicKeyCredential) return false;
+    return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  } catch(e) { return false; }
+}
+function _nrB64Encode(buf) {
+  return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+function _nrB64Decode(str) {
+  str = str.replace(/-/g,'+').replace(/_/g,'/');
+  while (str.length % 4) str += '=';
+  var bin = atob(str);
+  var buf = new Uint8Array(bin.length);
+  for (var i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
+  return buf.buffer;
+}
+
+async function nrRegisterBiometric() {
+  var btn = document.getElementById('nr-bio-setup-btn');
+  btn.textContent = 'Requesting…';
+  btn.disabled = true;
+  try {
+    var rpId = location.hostname || 'localhost';
+    var userId = new TextEncoder().encode((_nrAuthUser && _nrAuthUser.username) || 'nr_user');
+    var cred = await navigator.credentials.create({
+      publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        rp: { name: 'NaturaRef', id: rpId },
+        user: { id: userId, name: (_nrAuthUser && _nrAuthUser.username) || 'user', displayName: (_nrAuthUser && _nrAuthUser.name) || 'Doctor' },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
+        timeout: 60000
+      }
+    });
+    var credId = _nrB64Encode(cred.rawId);
+    localStorage.setItem(_NR_BIO_KEY, credId);
+    localStorage.setItem(_NR_BIO_EN_KEY, '1');
+    btn.textContent = '✅  ' + _nrBioLabel() + ' enabled!';
+    setTimeout(function() { nrUnlock(); }, 700);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '🪪  Enable ' + _nrBioLabel() + ' unlock';
+    document.getElementById('nr-pin-setup-err').textContent = 'Biometric not available or was cancelled.';
+  }
+}
+
+async function nrBiometricUnlock() {
+  var credIdStr = localStorage.getItem(_NR_BIO_KEY);
+  if (!credIdStr) return;
+  try {
+    var rpId = location.hostname || 'localhost';
+    await navigator.credentials.get({
+      publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        allowCredentials: [{ type: 'public-key', id: _nrB64Decode(credIdStr) }],
+        userVerification: 'required',
+        rpId: rpId,
+        timeout: 60000
+      }
+    });
+    nrUnlock();
+  } catch(e) {
+    if (e.name !== 'NotAllowedError') {
+      document.getElementById('nr-pin-lock-err').textContent = _nrBioLabel() + ' failed — use PIN.';
+    }
+  }
+}
+
+// ── Show PIN lock screen with user info prefilled ──
+function nrShowPinLock(sess) {
+  // Avatar initials
+  var name = (sess && sess.name) ? sess.name : 'Doctor';
+  var parts = name.trim().split(/\s+/);
+  var initials = parts.map(function(p){ return p[0]||''; }).join('').toUpperCase().slice(0,2) || '🌿';
+  var av = document.getElementById('nr-lock-avatar');
+  if (av) { av.textContent = initials; }
+  var nm = document.getElementById('nr-lock-name');
+  if (nm) nm.textContent = 'Dr. ' + (parts[0] || name);
+  var ql = document.getElementById('nr-lock-qual');
+  if (ql) ql.textContent = (sess && sess.qual) ? sess.qual : 'BNYS';
+
+  // Show biometric button if enabled
+  (async function() {
+    var bioEnabled = localStorage.getItem(_NR_BIO_EN_KEY) === '1';
+    var bioAvail   = bioEnabled && await _nrCheckBiometric();
+    var bioBtn = document.getElementById('nr-bio-btn');
+    if (bioBtn) {
+      bioBtn.style.display = bioAvail ? '' : 'none';
+      bioBtn.textContent   = /iPhone|iPad/.test(navigator.userAgent) ? '🫱' : '👆';
+      bioBtn.title = _nrBioLabel();
+    }
+    if (bioAvail) setTimeout(nrBiometricUnlock, 400); // auto-trigger biometric
+  })();
+
+  nrShow('nr-scr-pin-lock');
+}
 
 // ── UI helpers ──
 function nrShow(id) {
@@ -2543,6 +2854,26 @@ function nrShow(id) {
 }
 
 function nrUnlock() {
+  /* ── PIN setup: only in installed PWA, only once ── */
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                  || window.navigator.standalone === true;
+  var pinDone = localStorage.getItem(_NR_PIN_SETUP_DONE);
+  if (isStandalone && !pinDone) {
+    // First login in PWA — show PIN setup before entering app
+    _nrPinSetupBuf = ''; _nrPinFirst = ''; _nrPinSetupStep = 0;
+    var st = document.getElementById('nr-setup-title');
+    var ss = document.getElementById('nr-setup-sub');
+    if (st) st.textContent = 'Set Your PIN';
+    if (ss) ss.textContent = 'Choose a 4-digit PIN to quickly unlock next time.';
+    var ba = document.getElementById('nr-bio-setup-area');
+    if (ba) ba.style.display = 'none';
+    _nrUpdateDots('nr-sd-', 4, 0, false);
+    nrShow('nr-scr-pin-setup');
+    return;
+  }
+  /* Browser tab — mark setup done so it never prompts in browser */
+  if (!isStandalone && !pinDone) localStorage.setItem(_NR_PIN_SETUP_DONE, '1');
+
   var g = document.getElementById('nr-gate');
   g.classList.add('nr-hide');
   setTimeout(function() { g.classList.add('nr-gone'); }, 460);
@@ -2601,6 +2932,14 @@ function nrUnlock() {
 
     var md = document.getElementById('nr-greet-motd');
     if (md) md.textContent = motto;
+
+    /* ── Sidebar footer — show doctor name + initials ── */
+    var sbAv = document.getElementById('sb-foot-avatar');
+    if (sbAv) { sbAv.textContent = initials; }
+    var sbNm = document.getElementById('sb-foot-name');
+    if (sbNm) sbNm.textContent = drName;
+    var sbRl = document.getElementById('sb-foot-role');
+    if (sbRl) sbRl.textContent = qual + ' · NaturaRef';
   })();
 }
 
@@ -2612,10 +2951,37 @@ function nrSignOut() {
   location.reload();
 }
 
+// Lock the app (keeps session in localStorage, shows PIN on reopen)
+function nrLockApp() {
+  if (_nrBadgeInterval) { clearInterval(_nrBadgeInterval); _nrBadgeInterval = null; }
+  _nrAuthUser = null;
+  var g = document.getElementById('nr-gate');
+  if (g) { g.classList.remove('nr-gone', 'nr-hide'); }
+  var signoutBtn = document.getElementById('nr-signout-btn');
+  if (signoutBtn) signoutBtn.style.display = 'none';
+  var inxBtn = document.getElementById('nr-inbox-btn');
+  if (inxBtn) inxBtn.style.display = 'none';
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                  || window.navigator.standalone === true;
+  var sess = nrGetSession();
+  if (isStandalone && sess && localStorage.getItem(_NR_PIN_KEY)) {
+    nrShowPinLock(sess);
+  } else {
+    nrShow('nr-scr-login');
+  }
+}
+
 function nrTopbarSignOut() {
   if (_nrBadgeInterval) { clearInterval(_nrBadgeInterval); _nrBadgeInterval = null; }
-  if (!confirm('Sign out of NaturaRef?')) return;
-  nrSignOut();
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                  || window.navigator.standalone === true;
+  var hasPIN = isStandalone && !!localStorage.getItem(_NR_PIN_KEY);
+  if (hasPIN) {
+    var choice = confirm('Lock the app (reopen with PIN) ?\n\nOK = Lock  ·  Cancel = Sign Out completely');
+    if (choice) { nrLockApp(); } else { if (confirm('Sign out completely and clear all local data?')) nrSignOut(); }
+  } else {
+    if (confirm('Sign out of NaturaRef?')) nrSignOut();
+  }
 }
 
 function nrPreviewId(val) {
@@ -2785,24 +3151,24 @@ async function nrCheckSessionStatus() {
 
 // ── BOOT — check session ──
 (async function nrBoot() {
-  /* Hard watchdog: if anything stalls, force login screen after 1 s */
+  /* Hard watchdog: if anything stalls, force login screen after 2 s */
   var _watchdog = setTimeout(function() {
     var loading = document.getElementById('nr-scr-loading');
     if (loading && loading.classList.contains('nr-active')) {
       console.warn('[NaturaRef] Boot watchdog fired — forcing login screen');
-      nrClearSession();
       nrShow('nr-scr-login');
     }
-  }, 1000);
+  }, 2000);
 
   try {
     var sess = nrGetSession();
 
     if (sess && sess.docId) {
-      /* ── INSTANT UNLOCK from cached session ──────────────────────────
-         Trust sessionStorage immediately — user sees the app at once.
-         A background task then verifies with Firestore and signs out
-         only if the account has been deactivated or deleted.
+      /* ── SESSION EXISTS IN localStorage ─────────────────────────────
+         Don't unlock immediately — check if a PIN is configured.
+         If PIN exists → show PIN/biometric lock screen (fast, local).
+         If no PIN → unlock directly (session is trusted from localStorage).
+         Background Firestore verify runs in both cases.
          ──────────────────────────────────────────────────────────────── */
       _nrAuthUser = {
         docId:    sess.docId,
@@ -2812,10 +3178,23 @@ async function nrCheckSessionStatus() {
         uid:      sess.docId
       };
       clearTimeout(_watchdog);
-      nrUnlock();
-      setTimeout(function() {
-        if (typeof nrFetchInbox === 'function') nrFetchInbox(sess.docId);
-      }, 800);
+
+      /* PIN lock only applies when running as installed PWA (standalone).
+         In a regular browser tab — unlock directly, no PIN prompt. */
+      var isInstalledPWA = window.matchMedia('(display-mode: standalone)').matches
+                        || window.navigator.standalone === true;
+      var hasPIN = !!localStorage.getItem(_NR_PIN_KEY);
+
+      if (hasPIN && isInstalledPWA) {
+        /* Installed PWA reopen → show PIN / biometric lock */
+        nrShowPinLock(sess);
+      } else {
+        /* Browser tab, or no PIN set — unlock directly */
+        nrUnlock();
+        setTimeout(function() {
+          if (typeof nrFetchInbox === 'function') nrFetchInbox(sess.docId);
+        }, 800);
+      }
 
       /* Background verification — don't await, never blocks UI */
       (async function _bgVerify() {
@@ -2827,10 +3206,12 @@ async function nrCheckSessionStatus() {
           if (data.status === 'active') {
             /* Refresh in-memory user with latest Firestore data */
             _nrAuthUser = { docId: doc.id, username: data.username, name: data.name || '', email: data.email || '', uid: doc.id };
+            /* Fetch inbox after PIN unlock completes (already fetched if no PIN) */
+            if (hasPIN && typeof nrFetchInbox === 'function') {
+              // Inbox fetch happens in nrUnlock after PIN verified
+            }
           } else {
-            /* Account deactivated server-side — sign out without reload
-               (reload with stale sessionStorage causes an infinite loop
-               on GitHub Pages where sessionStorage survives page reloads) */
+            /* Account deactivated server-side — clear everything */
             nrClearSession();
             _nrAuthUser = null;
             var g = document.getElementById('nr-gate');
@@ -2838,7 +3219,7 @@ async function nrCheckSessionStatus() {
             nrShow('nr-scr-login');
           }
         } catch(e) {
-          /* Network/Firebase error — stay logged in, retry next load */
+          /* Network/Firebase error — stay in PIN lock, retry next load */
           console.warn('[NaturaRef] Background verify failed:', e.message);
         }
       })();
@@ -2846,7 +3227,7 @@ async function nrCheckSessionStatus() {
       return;
     }
 
-    /* No cached session — show login immediately */
+    /* No cached session — show login screen */
     clearTimeout(_watchdog);
     nrShow('nr-scr-login');
 
@@ -3088,27 +3469,17 @@ async function nrCheckSessionStatus() {
 
   <!-- AI Doctor Avatar + Footer -->
   <div class="sb-foot-panel">
-    <div class="sb-doctor-avatar">
-    <div style="width:32px;height:32px;border-radius:16px;background:linear-gradient(135deg,#c17b52,#8a4a28);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.2)">👨‍⚕️</div>
-  </div>
+    <div style="width:34px;height:34px;border-radius:17px;background:linear-gradient(135deg,#3a5c3d,#6b8f6e);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:.03em" id="sb-foot-avatar">🌿</div>
     <div class="sb-foot-info">
-      <div class="sb-foot-name" style="font-family:'Lora',serif">Natura<em style="color:#d4b896;font-style:italic">Ref</em></div>
-      <div class="sb-foot-sub">BNYS · Naturopathy</div>
+      <div class="sb-foot-name" id="sb-foot-name" style="font-family:'DM Sans',sans-serif;font-size:12px">Doctor</div>
+      <div class="sb-foot-sub" id="sb-foot-role" style="font-size:10px;color:#c4a882">BNYS · NaturaRef</div>
     </div>
-    <button class="sb-ai-trigger" onclick="toggleAI()" title="AI Assistant"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="22" height="22" fill="none">
-  <!-- Head -->
-  <circle cx="20" cy="11" r="7" fill="currentColor" opacity=".9"/>
-  <!-- White coat body -->
-  <path d="M8 40 Q8 26 20 24 Q32 26 32 40Z" fill="currentColor" opacity=".7"/>
-  <!-- Coat collar / lapels -->
-  <path d="M20 24 L15 32 L20 34 L25 32 Z" fill="currentColor" opacity=".5"/>
-  <!-- Stethoscope arc -->
-  <path d="M15 30 Q10 34 10 38 Q10 41 14 41 Q18 41 18 38" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" opacity=".9"/>
-  <!-- Stethoscope chest piece -->
-  <circle cx="18" cy="38" r="2.8" stroke="currentColor" stroke-width="1.8" fill="none" opacity=".9"/>
-  <!-- Pocket on coat -->
-  <rect x="22" y="30" width="6" height="5" rx="1.5" fill="currentColor" opacity=".3"/>
-</svg></button>
+    <button onclick="nrTopbarSignOut()" title="Sign Out / Lock"
+      style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#d4b896;font-size:10px;font-weight:700;cursor:pointer;padding:5px 9px;white-space:nowrap;transition:all .15s;font-family:'DM Sans',sans-serif"
+      onmouseover="this.style.background='rgba(193,123,82,.25)';this.style.color='#f0e0cc'"
+      onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='#d4b896'">
+      Sign Out
+    </button>
   </div>
 </div>
 
