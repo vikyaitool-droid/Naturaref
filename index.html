@@ -289,7 +289,7 @@ body.dark .sb-toggle::after{background:#fff;transform:translateX(14px)}
 }
 .tb-search-btn:active{box-shadow:inset 1px 1px 3px rgba(0,0,0,.08);transform:scale(.96)}
 #tb-sec{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#tb-sub{font-size:10px;color:var(--ink3)}
+#tb-sub{font-size:10px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .mob-sb-btn{width:40px;height:40px;border-radius:20px;background:var(--sand2);border:1.5px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .18s cubic-bezier(.34,1.56,.64,1);box-shadow:2px 2px 4px rgba(0,0,0,.06),-1px -1px 3px rgba(255,255,255,.8)}
 .mob-sb-btn:active{box-shadow:inset 1px 1px 3px rgba(0,0,0,.08);transform:scale(.96)}
 .mob-sb-btn svg{width:17px;height:17px;stroke:var(--sage-deep);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
@@ -322,6 +322,26 @@ body.dark .sb-toggle::after{background:#fff;transform:translateX(14px)}
 .back-btn{display:none;background:none;border:1.5px solid var(--border);border-radius:8px;color:var(--tx);font-size:11.5px;font-weight:600;cursor:pointer;padding:4px 10px;gap:4px;align-items:center;transition:all .12s;white-space:nowrap;flex-shrink:0}
 .back-btn:hover{background:var(--sand2);border-color:var(--sage)}
 .back-btn.visible{display:flex}
+/* Rich topbar icon — matches sec-hicon style */
+.tb-sec-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:background .2s,color .2s}
+/* On mobile: rich topbar content when in section or group — fixed height, no layout shift */
+@media(max-width:900px){
+  body.in-section #tb-sec,
+  body.in-group #tb-sec{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:inherit}
+  body.in-section #tb-sub,
+  body.in-group #tb-sub{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  /* Hide the duplicate sec-hdr inside section panes on mobile */
+  body.in-section .sec-view.active > .sec-hdr:first-child,
+  body.in-section .sec-view.active > .sec-hdr{display:none!important}
+  /* Hide duplicate gv-header in group-view on mobile */
+  body.in-group .gv-header{display:none!important}
+  /* Hide inbox / signout / search in non-home screens */
+  body.in-section #nr-inbox-btn,body.in-section #nr-signout-btn,body.in-section .mob-srch-btn,
+  body.in-group #nr-inbox-btn,body.in-group #nr-signout-btn,body.in-group .mob-srch-btn{display:none!important}
+  /* Hide back button — use native device back gesture/button */
+  body.in-section .back-btn,
+  body.in-group .back-btn{display:none!important}
+}
 .tb-ai-btn{
   width:38px;height:38px;border-radius:19px;
   background:linear-gradient(135deg,var(--sage) 0%,var(--sage-deep) 100%);
@@ -550,10 +570,250 @@ body.dark .sb-toggle::after{background:#fff;transform:translateX(14px)}
 @keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 .card-enter{animation:cardIn .35s ease both}
 /* ── Calculator info card grid ── */
-.calc-grid-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:4px 0 20px}
-.calc-info-card{background:var(--warm);border:1.5px solid var(--border);border-radius:14px;padding:13px 12px 11px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:5px}
-.calc-info-card:hover{border-color:#a5b4fc;box-shadow:var(--sh);transform:translateY(-2px)}
-.calc-info-card:active{transform:scale(.97)}
+/* ══════════════════════════════════════════════════
+   NaturaRef v13 · LUXURY CALCULATOR SYSTEM
+   ══════════════════════════════════════════════════ */
+
+/* ── Grid of calc cards ── */
+.calc-grid-wrap {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(148px,1fr));
+  gap:10px;
+  padding:6px 0 24px;
+}
+
+/* ── Calc card ── */
+.calc-info-card {
+  background:var(--warm);
+  border:1.5px solid var(--border);
+  border-radius:16px;
+  padding:14px 13px 12px;
+  cursor:pointer;
+  display:flex; flex-direction:column; gap:6px;
+  position:relative; overflow:hidden;
+  transition:border-color .2s ease, box-shadow .22s ease, transform .2s cubic-bezier(.34,1.56,.64,1);
+}
+.calc-info-card::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg, var(--sage), var(--terracotta));
+  opacity:0;
+  transition:opacity .2s ease;
+  border-radius:16px 16px 0 0;
+}
+.calc-info-card:hover {
+  border-color:var(--sage-lt);
+  box-shadow:0 6px 20px rgba(80,60,40,.12), 0 1px 4px rgba(80,60,40,.08);
+  transform:translateY(-3px);
+}
+.calc-info-card:hover::before { opacity:1; }
+.calc-info-card:active { transform:scale(.96) translateY(0); }
+
+/* ── Calc inputs & selects ── */
+.calc-input {
+  width:100%;
+  background:var(--warm);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:9px 12px;
+  font-family:'DM Sans', sans-serif;
+  font-size:14px; /* prevents iOS zoom */
+  color:var(--tx);
+  outline:none;
+  transition:border-color .18s ease, box-shadow .18s ease;
+  -webkit-appearance:none; appearance:none;
+  box-shadow:inset 0 1px 3px rgba(80,60,40,.05);
+}
+.calc-input:focus {
+  border-color:rgba(107,143,110,.55);
+  box-shadow:0 0 0 3px rgba(107,143,110,.1), inset 0 1px 2px rgba(80,60,40,.04);
+  background:var(--white);
+}
+select.calc-input {
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239a8070' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  padding-right:32px;
+}
+
+/* ── Field wrapper ── */
+.calc-field {
+  display:flex; flex-direction:column; gap:5px;
+  margin-bottom:10px;
+}
+.calc-field label, .calc-field > label {
+  font-size:10.5px; font-weight:700;
+  color:var(--ink3);
+  text-transform:uppercase; letter-spacing:.07em;
+  display:block;
+}
+
+/* ── Checkbox row ── */
+.calc-check-row {
+  display:flex; align-items:center; gap:9px;
+  padding:8px 11px;
+  background:var(--sand);
+  border:1.5px solid var(--border);
+  border-radius:9px;
+  cursor:pointer;
+  font-size:12.5px; color:var(--tx);
+  margin-bottom:7px;
+  transition:background .15s, border-color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.calc-check-row:hover { background:var(--sage-pale); border-color:var(--sage-lt); }
+.calc-check-row input[type=checkbox] {
+  width:16px; height:16px;
+  accent-color:var(--sage-deep);
+  flex-shrink:0;
+}
+
+/* ── Calculate button ── */
+.calc-go-btn {
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  width:100%; margin-top:14px;
+  padding:12px 20px;
+  background:linear-gradient(135deg, var(--sage) 0%, var(--sage-deep) 100%);
+  color:#fff; border:none;
+  border-radius:12px;
+  font-family:'DM Sans', sans-serif;
+  font-size:13.5px; font-weight:700;
+  letter-spacing:.02em;
+  cursor:pointer;
+  box-shadow:0 2px 10px rgba(42,90,50,.28);
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.calc-go-btn:hover {
+  transform:translateY(-2px);
+  box-shadow:0 5px 18px rgba(42,90,50,.38);
+}
+.calc-go-btn:active { transform:scale(.96); }
+
+/* ── Result panel ── */
+.calc-result {
+  margin-top:14px;
+  padding:16px 14px;
+  background:var(--sage-pale);
+  border:1.5px solid var(--sage-lt);
+  border-radius:14px;
+  font-size:13px; line-height:1.7; color:var(--tx);
+  animation:calcResultIn .3s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes calcResultIn {
+  from { opacity:0; transform:translateY(8px) scale(.98); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+
+/* ── Luxury calc detail wrapper (mobile full-screen) ── */
+.lux-calc-detail {
+  padding:14px 14px 24px;
+  animation:calcDetailIn .3s cubic-bezier(.32,.72,0,1) both;
+}
+@keyframes calcDetailIn {
+  from { opacity:0; transform:translateX(18px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+.lux-calc-topbar {
+  display:flex; align-items:center; gap:10px;
+  margin-bottom:18px;
+  padding-bottom:12px;
+  border-bottom:1px solid rgba(184,150,46,.15);
+}
+.lux-calc-back {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:7px 13px;
+  background:var(--warm);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  font-size:12px; font-weight:600; color:var(--mu);
+  cursor:pointer;
+  transition:all .15s ease;
+  white-space:nowrap;
+  font-family:'DM Sans',sans-serif;
+}
+.lux-calc-back:hover { background:var(--sand2); border-color:var(--clay); color:var(--tx); }
+.lux-calc-back:active { transform:scale(.96); }
+.lux-calc-title {
+  font-family:'Lora', serif;
+  font-size:15px; font-weight:700;
+  color:var(--tx); flex:1;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* ── Desktop split layout ── */
+.lux-calc-split {
+  display:grid; grid-template-columns:1fr 1fr;
+  background:var(--warm);
+  border:1.5px solid rgba(184,150,46,.18);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 4px 20px rgba(80,60,40,.08);
+  margin-top:12px;
+}
+.lux-calc-split-hdr {
+  grid-column:1/-1;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 18px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg, var(--sage-pale), var(--terra-pale));
+}
+.lux-calc-split-title {
+  font-family:'Lora',serif;
+  font-size:14px; font-weight:700; color:var(--tx);
+}
+.lux-calc-split-close {
+  width:28px; height:28px; border-radius:8px;
+  background:var(--sand2); border:1.5px solid var(--border);
+  font-size:16px; color:var(--mu); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .15s;
+}
+.lux-calc-split-close:hover { background:var(--border); color:var(--tx); }
+.lux-calc-pane {
+  padding:18px 16px;
+}
+.lux-calc-pane + .lux-calc-pane {
+  border-left:1px solid var(--border);
+  background:var(--sand);
+}
+.lux-calc-pane-label {
+  font-size:9.5px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.1em;
+  color:var(--lt); margin-bottom:12px;
+  display:flex; align-items:center; gap:6px;
+}
+.lux-calc-pane-label::after {
+  content:''; flex:1; height:1px;
+  background:var(--border);
+}
+.lux-calc-placeholder {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:10px; padding:32px 16px;
+  color:var(--mu); font-size:12px; font-style:italic; text-align:center;
+}
+.lux-calc-placeholder-icon {
+  font-size:32px; opacity:.35;
+}
+
+/* Dark mode */
+body.dark .calc-info-card { background:#221e18; border-color:#3a3028; }
+body.dark .calc-info-card:hover { border-color:var(--sage-lt); }
+body.dark .calc-input { background:#1a1612; border-color:#3a3028; color:var(--tx); }
+body.dark .calc-input:focus { background:#201c16; border-color:rgba(107,143,110,.45); }
+body.dark .calc-check-row { background:#1a1612; border-color:#3a3028; }
+body.dark .calc-result { background:#0d1a0d; border-color:#1a3a1a; }
+body.dark .lux-calc-split { background:#221e18; border-color:#3a3028; }
+body.dark .lux-calc-pane + .lux-calc-pane { background:#1a1612; border-color:#3a3028; }
+body.dark .lux-calc-split-hdr { background:linear-gradient(135deg,#0d1a0d,#1a0d0a); border-color:#3a3028; }
+body.dark .lux-calc-back { background:#221e18; border-color:#3a3028; }
+
+@media(max-width:600px) {
+  .calc-grid-wrap { grid-template-columns:repeat(2,1fr); gap:8px; }
+  .calc-input { font-size:16px; } /* prevent iOS zoom */
+  .lux-calc-split { grid-template-columns:1fr; }
+  .lux-calc-pane + .lux-calc-pane { border-left:none; border-top:1px solid var(--border); }
+}
 .cic-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .cic-icon{font-size:18px;flex-shrink:0}
 .cic-name{font-size:13px;font-weight:800;color:var(--ink);font-family:'DM Sans',sans-serif}
@@ -1235,8 +1495,7 @@ body.dark .sb-toggle::after{background:#fff;transform:translateX(14px)}
 #sv-calculators .stabs{display:none}
 #sv-calculators .ca{padding:0}
 #sv-calculators .sec-hdr{padding:8px 16px}
-.calc-input{width:100%;background:var(--sand);border:1.5px solid var(--border);border-radius:8px;padding:7px 11px;font-family:'DM Sans',inherit;font-size:13px;color:var(--tx);outline:none;transition:border-color .15s}
-.calc-input:focus{border-color:var(--sage)}
+/* calc-input defined in luxury calculator block above */
 
 /* ══ SHARE / API KEY MODAL ══ */
 .share-modal,.apikey-modal,#apikey-overlay{position:fixed;inset:0;z-index:10000;background:rgba(42,32,24,.5);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
@@ -2875,10 +3134,13 @@ async function nrCheckSessionStatus() {
     <div class="tb-brand-name">Natura<em>Ref</em></div>
     <div class="tb-brand-sub">BNYS Clinical Reference · v11</div>
   </div>
-  <!-- Section title block -->
-  <div class="tb-ttl" id="tb-ttl-block" style="display:none">
-    <div class="tb-sec" id="tb-sec">Complete Clinical Reference</div>
-    <div class="tb-sub" id="tb-sub">Dr. Vikranth · BNYS</div>
+  <!-- Section title block — styled like sec-hdr -->
+  <div class="tb-ttl" id="tb-ttl-block" style="display:none;flex:1;min-width:0;align-items:center;gap:9px">
+    <div id="tb-icon" class="tb-sec-icon">🫁</div>
+    <div style="min-width:0;flex:1">
+      <div class="tb-sec" id="tb-sec">Complete Clinical Reference</div>
+      <div class="tb-sub" id="tb-sub">Dr. Vikranth · BNYS</div>
+    </div>
   </div>
   <!-- Inbox Button (shown after unlock) -->
   <button id="nr-inbox-btn" onclick="nrOpenInbox()" title="Inbox">
@@ -4981,15 +5243,32 @@ window.addEventListener('popstate', function(e) {
   if (!state || state.page === 'home') {
     goHome(true);
   } else if (state.page === 'calc') {
-    calcBack();
+    // Safety fallback — open calculators section and reset calc UI
+    openSec('calculators', document.getElementById('sbh-calculators'), true);
+    var _cg0 = document.getElementById('calc-grid-el');
+    var _ca0 = document.getElementById('calc-area-el');
+    if (_ca0) { _ca0.innerHTML = ''; _ca0.style.display = 'none'; }
+    if (_cg0) _cg0.style.display = '';
+    document.querySelectorAll('.calc-info-card').forEach(function(el){ el.style.borderColor = ''; });
   } else if (state.page === 'tab') {
     // Card view → back to category grid — skipHistory=true to avoid double-push
     showTabIndex(state.secId, true);
   } else if (state.page === 'sec') {
-    // Restore section index grid — skipHistory=true
+    // Restore section — skipHistory=true
     var btn = document.getElementById('sbh-' + state.secId);
     openSec(state.secId, btn, true, state.groupKey);
-    showTabIndex(state.secId, true);
+    if (state.secId === 'calculators') {
+      // Calculators is single-tab with static HTML — reset inner calc UI, do NOT call showTabIndex (it wipes content)
+      var _cg = document.getElementById('calc-grid-el');
+      var _ca = document.getElementById('calc-area-el');
+      if (_ca) { _ca.innerHTML = ''; _ca.style.display = 'none'; }
+      if (_cg) _cg.style.display = '';
+      document.querySelectorAll('.calc-info-card').forEach(function(el){ el.style.borderColor = ''; });
+    } else {
+      // Multi-tab or other sections — show category index grid as normal
+      var _secDef = typeof SECS !== 'undefined' ? SECS.find(function(s){ return s.id === state.secId; }) : null;
+      if (!_secDef || _secDef.tabs.length > 1) showTabIndex(state.secId, true);
+    }
   } else if (state.page === 'group') {
     // Group view → skipHistory=true to avoid re-pushing
     openGroupView(state.groupKey, true);
@@ -5752,7 +6031,8 @@ function goHome(skipHistory) {
   var tbTtl = document.getElementById('tb-ttl-block');
   if (tbBrand) tbBrand.style.display = 'block';
   if (tbTtl) tbTtl.style.display = 'none';
-  curSec = 'home';
+  document.body.classList.remove('in-section');
+  document.body.classList.remove('in-group');
   closeSB();
   renderRecentlyViewed();
   if (!skipHistory) history.pushState({page:'home'}, '', '');
@@ -5803,13 +6083,22 @@ function openSec(secId, btn, skipHistory, groupKey) {
     }
   }
 
-  // Topbar title
+  // Topbar title — rich style (icon + colored title + full sub)
   const sec = SECS.find(s => s.id === secId);
   if (sec) {
     document.getElementById('tb-sec').textContent = sec.title;
-    document.getElementById('tb-sub').textContent = sec.sub;
+    document.getElementById('tb-sec').style.color = sec.color || '';
+    document.getElementById('tb-sub').textContent = sec.sub || '';
+    var tbIcon = document.getElementById('tb-icon');
+    if (tbIcon) {
+      tbIcon.innerHTML = resolveIcon(sec.icon) || '';
+      tbIcon.style.background = sec.bg || 'var(--sand2)';
+      tbIcon.style.color = sec.color || 'var(--ink)';
+    }
   }
   document.getElementById('back-btn').classList.add('visible');
+  document.body.classList.remove('in-group');
+  document.body.classList.add('in-section');
   curSec = secId;
 
   // Resolve groupKey for history
@@ -9053,45 +9342,580 @@ async function sendAI() {
 </div>
 <!-- ─── AI CLINICAL ASSISTANT ─── -->
 <!-- ══════════════════════════════════════════════════
-     LUXURY AI PANEL — CCR v11 Hero Edition
+     LUXURY AI PANEL — NaturaRef v13 · World-Class Edition
 ══════════════════════════════════════════════════ -->
 
+<style>
+/* ══════════════════════════════════════════════════════════════
+   NaturaRef v13 · WORLD-CLASS LUXURY AI PANEL
+   Bespoke wellness-clinical aesthetic · mobile & desktop
+   ══════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=DM+Mono:wght@300;400;500&display=swap');
+
+/* ─── Root token extensions ─── */
+:root {
+  --lux-gold:#b8962e;
+  --lux-gold-lt:#f5e9c0;
+  --lux-gold-glow:rgba(184,150,46,.18);
+  --lux-obsidian:#14110d;
+  --lux-panel-bg:rgba(247,242,234,.97);
+  --lux-glass:rgba(255,253,249,.72);
+  --lux-bdr:rgba(184,150,46,.22);
+  --lux-radius:20px;
+  --lux-chip-h:28px;
+  --lux-ekg-color:#3a5c3d;
+  --lux-critical:#c0392b;
+  --lux-caution:#b45309;
+  --lux-safe:#1a6b3c;
+  --lux-info:#1d4ed8;
+  --lux-shadow:0 20px 60px rgba(42,32,18,.18), 0 4px 16px rgba(42,32,18,.10);
+  --lux-transition:cubic-bezier(.32,.72,0,1);
+}
+
+/* ─── Panel shell ─── */
+.ai-panel {
+  position:fixed;
+  right:0; top:var(--topbar-h); bottom:0;
+  width:min(380px,100vw);
+  background:var(--lux-panel-bg);
+  backdrop-filter:blur(24px) saturate(1.4);
+  -webkit-backdrop-filter:blur(24px) saturate(1.4);
+  border-left:1px solid var(--lux-bdr);
+  z-index:80;
+  display:flex; flex-direction:column;
+  transform:translateX(calc(100% + 2px));
+  transition:transform .42s var(--lux-transition), box-shadow .42s ease;
+  box-shadow:none;
+  overflow:hidden;
+}
+.ai-panel.open {
+  transform:translateX(0);
+  box-shadow:var(--lux-shadow);
+}
+@media(max-width:900px){
+  .ai-panel { width:100%; top:0; border-left:none; border-top:1px solid var(--lux-bdr); }
+}
+
+/* ─── Header ─── */
+.lux-ai-hdr {
+  display:flex; align-items:center; gap:11px;
+  padding:14px 16px 12px;
+  background:linear-gradient(135deg, var(--sage-deep) 0%, #2a4a2d 60%, #1e3520 100%);
+  border-bottom:1px solid rgba(184,150,46,.3);
+  flex-shrink:0;
+  position:relative;
+  overflow:hidden;
+}
+.lux-ai-hdr::before {
+  content:'';
+  position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 160% 100% at 10% 50%, rgba(184,150,46,.08) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='28' fill='none' stroke='rgba(184,150,46,.04)' stroke-width='1'/%3E%3C/svg%3E") repeat;
+  pointer-events:none;
+}
+
+.lux-ai-avatar {
+  width:40px; height:40px;
+  border-radius:12px;
+  background:linear-gradient(135deg,rgba(184,150,46,.25),rgba(184,150,46,.08));
+  border:1px solid rgba(184,150,46,.35);
+  display:flex; align-items:center; justify-content:center;
+  font-size:19px; flex-shrink:0;
+  box-shadow:0 2px 10px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.1);
+  position:relative; z-index:1;
+}
+
+.lux-ai-identity { flex:1; min-width:0; position:relative; z-index:1; }
+
+.lux-ai-name {
+  font-family:'Playfair Display', 'Lora', serif;
+  font-size:13.5px; font-weight:700;
+  color:#f0e8d8;
+  letter-spacing:.01em;
+  line-height:1.3;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+.lux-ai-status {
+  display:flex; align-items:center; gap:5px;
+  margin-top:3px;
+}
+.lux-ai-status-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:#4ade80;
+  box-shadow:0 0 0 2px rgba(74,222,128,.25), 0 0 6px rgba(74,222,128,.5);
+  animation:lux-pulse-dot 2.4s ease-in-out infinite;
+  flex-shrink:0;
+}
+@keyframes lux-pulse-dot {
+  0%,100%{ box-shadow:0 0 0 2px rgba(74,222,128,.2), 0 0 5px rgba(74,222,128,.4); }
+  50%{ box-shadow:0 0 0 4px rgba(74,222,128,.12), 0 0 10px rgba(74,222,128,.6); }
+}
+.lux-ai-status-text {
+  font-family:'DM Mono', monospace;
+  font-size:9px; font-weight:400;
+  color:rgba(200,185,165,.75);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+.lux-ai-close {
+  width:30px; height:30px; border-radius:8px;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+  color:rgba(255,255,255,.65); font-size:14px; line-height:1;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:all .18s ease; flex-shrink:0;
+  position:relative; z-index:1;
+}
+.lux-ai-close:hover {
+  background:rgba(255,255,255,.16); color:#fff;
+  transform:scale(1.06);
+}
+.lux-ai-close:active { transform:scale(.94); }
+
+/* ─── EKG bar ─── */
+.lux-ekg-bar {
+  height:28px; flex-shrink:0;
+  background:linear-gradient(180deg, #1e3520 0%, rgba(30,53,32,.05) 100%);
+  overflow:hidden; position:relative;
+}
+.lux-ekg-bar svg {
+  width:100%; height:100%;
+  display:block;
+}
+.lux-ekg-path {
+  fill:none;
+  stroke:var(--lux-ekg-color);
+  stroke-width:1.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:.6;
+  stroke-dasharray:1200;
+  stroke-dashoffset:1200;
+  animation:lux-ekg-draw 2.2s ease forwards;
+}
+.ai-panel.open .lux-ekg-path {
+  animation:lux-ekg-draw 2.2s ease forwards, lux-ekg-loop 4s 2.2s linear infinite;
+}
+@keyframes lux-ekg-draw { to { stroke-dashoffset:0; } }
+@keyframes lux-ekg-loop {
+  0%   { stroke-dashoffset:0; opacity:.6; }
+  45%  { stroke-dashoffset:-600; opacity:.9; }
+  80%  { stroke-dashoffset:-1200; opacity:.4; }
+  100% { stroke-dashoffset:-1200; opacity:.2; }
+}
+
+/* ─── Triage chips bar ─── */
+.lux-triage-bar {
+  display:flex; gap:6px;
+  padding:9px 12px;
+  overflow-x:auto; flex-shrink:0;
+  background:linear-gradient(180deg, rgba(255,253,249,.95) 0%, rgba(242,235,224,.95) 100%);
+  border-bottom:1px solid rgba(184,150,46,.12);
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.lux-triage-bar::-webkit-scrollbar { display:none; }
+
+.lux-triage-chip {
+  display:inline-flex; align-items:center; gap:4px;
+  height:var(--lux-chip-h);
+  padding:0 10px;
+  border-radius:20px;
+  font-size:10.5px; font-weight:700;
+  white-space:nowrap; cursor:pointer;
+  border:1.5px solid;
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, filter .18s ease;
+  letter-spacing:.01em;
+  font-family:'DM Sans',sans-serif;
+  position:relative; overflow:hidden;
+}
+.lux-triage-chip::after {
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(255,255,255,.2) 0%, transparent 50%);
+  border-radius:inherit;
+  pointer-events:none;
+}
+.lux-triage-chip:hover {
+  transform:translateY(-2px) scale(1.03);
+  box-shadow:0 4px 14px rgba(0,0,0,.15);
+  filter:brightness(1.05);
+}
+.lux-triage-chip:active { transform:translateY(0) scale(.97); }
+
+.lux-triage-chip.critical {
+  background:linear-gradient(135deg,#fff5f5,#fee2e2);
+  border-color:rgba(192,57,43,.35);
+  color:var(--lux-critical);
+  box-shadow:0 1px 4px rgba(192,57,43,.12);
+}
+.lux-triage-chip.critical:hover { box-shadow:0 4px 14px rgba(192,57,43,.25); }
+.lux-triage-chip.caution {
+  background:linear-gradient(135deg,#fffbeb,#fef3c7);
+  border-color:rgba(180,83,9,.3);
+  color:var(--lux-caution);
+  box-shadow:0 1px 4px rgba(180,83,9,.1);
+}
+.lux-triage-chip.caution:hover { box-shadow:0 4px 14px rgba(180,83,9,.22); }
+.lux-triage-chip.safe {
+  background:linear-gradient(135deg,var(--sage-pale),#d1fae5);
+  border-color:rgba(26,107,60,.25);
+  color:var(--lux-safe);
+  box-shadow:0 1px 4px rgba(26,107,60,.1);
+}
+.lux-triage-chip.safe:hover { box-shadow:0 4px 14px rgba(26,107,60,.22); }
+
+/* ─── Category pill row (below chips) ─── */
+.lux-cat-row {
+  display:flex; align-items:center; gap:5px;
+  padding:7px 12px;
+  flex-shrink:0;
+  border-bottom:1px solid var(--border);
+  overflow-x:auto; scrollbar-width:none;
+}
+.lux-cat-row::-webkit-scrollbar { display:none; }
+.lux-cat-pill {
+  display:inline-flex; align-items:center; gap:3px;
+  height:22px; padding:0 9px;
+  border-radius:11px;
+  font-size:10px; font-weight:700;
+  white-space:nowrap; cursor:pointer;
+  letter-spacing:.02em;
+  background:var(--sand2); border:1px solid var(--border);
+  color:var(--ink3);
+  transition:all .15s ease;
+}
+.lux-cat-pill.active, .lux-cat-pill:hover {
+  background:var(--sage-deep); border-color:var(--sage-deep);
+  color:#fff; transform:none;
+}
+
+/* ─── Messages ─── */
+.ai-msgs {
+  flex:1;
+  overflow-y:auto;
+  padding:14px 13px;
+  display:flex; flex-direction:column; gap:10px;
+  background:var(--sand);
+  scroll-behavior:smooth;
+}
+.ai-msgs::-webkit-scrollbar { width:3px; }
+.ai-msgs::-webkit-scrollbar-thumb {
+  background:rgba(184,150,46,.25);
+  border-radius:2px;
+}
+.ai-msgs::-webkit-scrollbar-track { background:transparent; }
+
+/* ─── Message bubbles ─── */
+.ai-msg {
+  border-radius:14px;
+  padding:11px 14px;
+  font-size:12.5px;
+  line-height:1.7;
+  max-width:92%;
+  word-break:break-word;
+  position:relative;
+  animation:lux-msg-in .28s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes lux-msg-in {
+  from { opacity:0; transform:translateY(8px) scale(.97); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.ai-msg.user {
+  background:linear-gradient(135deg, var(--sage-deep) 0%, #2d5230 100%);
+  color:#f0f8f1;
+  align-self:flex-end;
+  border-bottom-right-radius:4px;
+  box-shadow:0 2px 10px rgba(42,90,50,.25);
+}
+.ai-msg.assistant {
+  background:var(--warm);
+  border:1px solid rgba(184,150,46,.2);
+  color:var(--tx);
+  align-self:flex-start;
+  border-bottom-left-radius:4px;
+  box-shadow:0 2px 8px rgba(80,60,40,.07);
+}
+.ai-msg.error {
+  background:#fff5f5;
+  border:1px solid rgba(192,57,43,.25);
+  color:var(--lux-critical);
+  align-self:flex-start;
+  border-bottom-left-radius:4px;
+}
+.ai-msg.thinking {
+  background:var(--warm);
+  border:1px solid var(--border);
+  color:var(--mu);
+  align-self:flex-start;
+  border-bottom-left-radius:4px;
+  padding:12px 16px;
+}
+
+/* ─── Severity badge inside messages ─── */
+.lux-severity {
+  display:inline-flex; align-items:center; gap:4px;
+  font-family:'DM Mono', monospace;
+  font-size:8.5px; font-weight:500;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding:2px 8px;
+  border-radius:4px;
+  margin-bottom:7px;
+}
+.lux-severity.info {
+  background:rgba(107,143,110,.12);
+  color:var(--sage-deep);
+  border:1px solid rgba(107,143,110,.2);
+}
+.lux-severity.critical { background:rgba(192,57,43,.08); color:var(--lux-critical); border:1px solid rgba(192,57,43,.2); }
+.lux-severity.caution  { background:rgba(180,83,9,.08);  color:var(--lux-caution);  border:1px solid rgba(180,83,9,.2);  }
+.lux-severity.safe     { background:rgba(26,107,60,.08); color:var(--lux-safe);     border:1px solid rgba(26,107,60,.2); }
+
+/* ─── Thinking dots ─── */
+.lux-thinking-dots {
+  display:inline-flex; align-items:center; gap:5px; padding:2px 0;
+}
+.lux-dot {
+  width:7px; height:7px; border-radius:50%;
+  background:var(--sage);
+  animation:lux-dot-bounce 1.3s ease-in-out infinite;
+}
+.lux-dot:nth-child(1){ animation-delay:0s; }
+.lux-dot:nth-child(2){ animation-delay:.15s; }
+.lux-dot:nth-child(3){ animation-delay:.3s; }
+@keyframes lux-dot-bounce {
+  0%,80%,100%{ transform:scale(.7) translateY(0); opacity:.4; }
+  40%{ transform:scale(1) translateY(-3px); opacity:1; }
+}
+
+/* ─── Input row ─── */
+.lux-ai-input-row {
+  display:flex; align-items:flex-end; gap:8px;
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(180deg, var(--sand2) 0%, var(--warm) 100%);
+  border-top:1px solid rgba(184,150,46,.15);
+  flex-shrink:0;
+  position:relative;
+}
+.lux-ai-input-row::before {
+  content:'';
+  position:absolute;
+  top:-1px; left:16px; right:16px; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(184,150,46,.3), transparent);
+}
+
+/* Textarea */
+#ai-input {
+  flex:1;
+  background:var(--warm);
+  border:1.5px solid rgba(184,150,46,.2);
+  border-radius:14px;
+  padding:10px 13px;
+  font-family:'DM Sans', sans-serif;
+  font-size:13px; color:var(--tx);
+  resize:none; outline:none;
+  overflow-y:hidden;
+  min-height:40px; max-height:120px;
+  line-height:1.5;
+  transition:border-color .2s ease, box-shadow .2s ease;
+  box-shadow:0 1px 4px rgba(80,60,40,.05), inset 0 1px 3px rgba(80,60,40,.04);
+  -webkit-appearance:none;
+}
+#ai-input:focus {
+  border-color:rgba(107,143,110,.55);
+  box-shadow:0 0 0 3px rgba(107,143,110,.1), 0 1px 4px rgba(80,60,40,.06);
+}
+#ai-input::placeholder { color:var(--lt); }
+
+/* Send button */
+#ai-send {
+  width:40px; height:40px;
+  border-radius:12px;
+  background:linear-gradient(135deg, var(--sage) 0%, var(--sage-deep) 100%);
+  border:none; color:#fff;
+  font-size:16px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+  box-shadow:0 2px 10px rgba(42,90,50,.3);
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease, opacity .15s;
+  line-height:1;
+}
+#ai-send:hover {
+  transform:scale(1.08) translateY(-1px);
+  box-shadow:0 4px 16px rgba(42,90,50,.4);
+}
+#ai-send:active { transform:scale(.93); }
+#ai-send:disabled {
+  opacity:.38; transform:none; cursor:default;
+  box-shadow:none;
+}
+
+/* ─── Char count / model hint ─── */
+.lux-input-meta {
+  position:absolute;
+  bottom:calc(4px + env(safe-area-inset-bottom,0px));
+  right:62px;
+  font-family:'DM Mono',monospace;
+  font-size:8.5px;
+  color:var(--lt);
+  letter-spacing:.04em;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .2s;
+}
+.lux-ai-input-row:focus-within .lux-input-meta { opacity:1; }
+
+/* ─── Card AI bottom sheet enhancements ─── */
+#card-ai-sheet {
+  background:var(--lux-panel-bg);
+  backdrop-filter:blur(20px) saturate(1.3);
+  -webkit-backdrop-filter:blur(20px) saturate(1.3);
+  border:1px solid var(--lux-bdr);
+}
+
+.cai-textarea:focus {
+  border-color:rgba(107,143,110,.5);
+  box-shadow:0 0 0 3px rgba(107,143,110,.1);
+}
+.cai-send {
+  box-shadow:0 2px 8px rgba(42,90,50,.28);
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease, opacity .15s;
+}
+.cai-send:hover:not(:disabled) {
+  transform:scale(1.1) translateY(-1px);
+  box-shadow:0 4px 14px rgba(42,90,50,.38);
+}
+.cai-send:active:not(:disabled) { transform:scale(.92); }
+
+/* ─── Chip row in card sheet ─── */
+.cai-chip {
+  transition:all .18s cubic-bezier(.34,1.56,.64,1);
+}
+.cai-chip:hover {
+  transform:translateY(-2px) scale(1.03);
+  box-shadow:0 3px 10px rgba(42,90,50,.15);
+}
+.cai-chip:active { transform:scale(.96); }
+
+/* ─── Mobile bottom-sheet drag handle ─── */
+#card-ai-sheet::before {
+  content:'';
+  display:block;
+  width:36px; height:4px;
+  border-radius:2px;
+  background:var(--clay);
+  margin:10px auto 4px;
+  opacity:.5;
+  flex-shrink:0;
+}
+
+/* ─── FAB button ─── */
+#ai-fab {
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease, opacity .3s ease !important;
+}
+#ai-fab:hover {
+  transform:scale(1.12) translateY(-2px) !important;
+}
+#ai-fab:active {
+  transform:scale(.94) !important;
+}
+#ai-fab.ai-open {
+  box-shadow:0 0 0 4px rgba(107,143,110,.25), 0 6px 20px rgba(42,90,50,.35) !important;
+}
+
+/* ─── Card AI button pulse on hover ─── */
+.card-ai-btn {
+  transition:opacity .2s ease, transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease !important;
+}
+.card-ai-btn:hover {
+  transform:scale(1.15) !important;
+  box-shadow:0 3px 10px rgba(42,90,50,.35) !important;
+}
+
+/* ─── Dark mode refinements ─── */
+body.dark .ai-panel {
+  background:rgba(26,22,18,.97);
+  border-color:rgba(184,150,46,.18);
+}
+body.dark .lux-triage-bar {
+  background:linear-gradient(180deg,rgba(34,30,24,.97),rgba(26,22,18,.97));
+  border-bottom-color:rgba(184,150,46,.1);
+}
+body.dark .lux-cat-pill {
+  background:#2a2418; border-color:#3a3028; color:var(--mu);
+}
+body.dark .lux-cat-pill.active, body.dark .lux-cat-pill:hover {
+  background:var(--sage-deep); border-color:var(--sage-deep); color:#fff;
+}
+body.dark #ai-input {
+  background:#1a1612; border-color:rgba(184,150,46,.15); color:var(--tx);
+}
+body.dark #ai-input:focus { border-color:rgba(107,143,110,.45); }
+body.dark .ai-msg.assistant { background:#1e1a14; border-color:rgba(184,150,46,.15); }
+body.dark .lux-ai-input-row { background:linear-gradient(180deg,#1e1a14,#1a1612); border-top-color:rgba(184,150,46,.12); }
+body.dark #card-ai-sheet { background:rgba(26,22,18,.97); border-color:rgba(184,150,46,.2); }
+
+/* ─── Smooth panel entry animation for messages ─── */
+.ai-msgs .ai-msg:last-child { animation:lux-msg-in .28s cubic-bezier(.34,1.56,.64,1) both; }
+
+/* ─── Topbar AI button ─── */
+.tb-ai-btn {
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease !important;
+}
+.tb-ai-btn:hover { transform:scale(1.1) !important; }
+.tb-ai-btn.ai-active {
+  background:linear-gradient(135deg,var(--sage),var(--sage-deep)) !important;
+  color:#fff !important;
+  box-shadow:0 0 0 3px rgba(107,143,110,.22), 0 2px 8px rgba(42,90,50,.25) !important;
+}
+
+@media(max-width:600px){
+  .lux-triage-chip { font-size:10px; padding:0 9px; height:26px; }
+  .ai-msg { font-size:12px; padding:10px 12px; }
+  #ai-input { font-size:16px; /* prevents zoom on iOS */ }
+  .lux-ai-name { font-size:12.5px; }
+}
+</style>
 
 <div class="ai-panel" id="ai-panel">
-  <!-- Header -->
+  <!-- ── Header ── -->
   <div class="lux-ai-hdr">
     <div class="lux-ai-avatar">🩺</div>
     <div class="lux-ai-identity">
       <div class="lux-ai-name">AI Clinical Decision Engine</div>
       <div class="lux-ai-status">
         <div class="lux-ai-status-dot" id="lux-status-dot"></div>
-        <div class="lux-ai-status-text" id="lux-status-text">READY · DR. VIKRANTH CCR v11</div>
+        <div class="lux-ai-status-text" id="lux-status-text">READY · DR. VIKRANTH · NATURAREF</div>
       </div>
     </div>
-    <button class="lux-ai-close" onclick="luxToggleAI()" title="Close">✕</button>
+    <button class="lux-ai-close" onclick="luxToggleAI()" title="Close" aria-label="Close AI panel">✕</button>
   </div>
 
-  <!-- EKG pulse bar -->
+  <!-- ── EKG pulse bar ── -->
   <div class="lux-ekg-bar">
     <svg viewBox="0 0 400 28" preserveAspectRatio="none">
       <path class="lux-ekg-path" d="M0,14 L60,14 L70,4 L80,24 L90,14 L110,14 L115,9 L120,19 L125,14 L180,14 L190,4 L200,24 L210,14 L230,14 L235,9 L240,19 L245,14 L310,14 L320,4 L330,24 L340,14 L360,14 L365,9 L370,19 L375,14 L400,14"/>
     </svg>
   </div>
 
-  <!-- Triage quick chips -->
-  <div class="lux-triage-bar">
-    <span class="lux-triage-chip critical" onclick="aiQuick('ACLS algorithm for ventricular fibrillation — step by step')">🚨 VF Protocol</span>
-    <span class="lux-triage-chip critical" onclick="aiQuick('Acute chest pain differential diagnosis with red flags and immediate management')">🫀 Chest Pain DDx</span>
-    <span class="lux-triage-chip critical" onclick="aiQuick('Sepsis early recognition criteria and management bundle')">⚠️ Sepsis Bundle</span>
-    <span class="lux-triage-chip caution" onclick="aiQuick('Interpret a low Hb with low MCV — causes, investigation approach and naturopathic management')">🔬 Low Hb + MCV</span>
-    <span class="lux-triage-chip caution" onclick="aiQuick('BNYS naturopathic protocol for hypertension — lifestyle, yoga, diet, herbs')">🌿 HTN Protocol</span>
-    <span class="lux-triage-chip safe" onclick="aiQuick('Safe herbs and naturopathic treatments during pregnancy — with safety grading')">🤰 Herbs in Pregnancy</span>
-    <span class="lux-triage-chip safe" onclick="aiQuick('Yoga contraindications and modifications for cardiac patients')">🧘 Yoga + Cardiac</span>
-    <span class="lux-triage-chip safe" onclick="aiQuick('Drug-herb interaction checker — explain common clinically significant interactions')">💊 Drug-Herb Check</span>
+  <!-- ── Triage quick chips ── -->
+  <div class="lux-triage-bar" role="toolbar" aria-label="Quick clinical prompts">
+    <span class="lux-triage-chip critical" onclick="aiQuick('ACLS algorithm for ventricular fibrillation — step by step')" title="VF Protocol">🚨 VF Protocol</span>
+    <span class="lux-triage-chip critical" onclick="aiQuick('Acute chest pain differential diagnosis with red flags and immediate management')" title="Chest Pain DDx">🫀 Chest Pain DDx</span>
+    <span class="lux-triage-chip critical" onclick="aiQuick('Sepsis early recognition criteria and management bundle')" title="Sepsis Bundle">⚠️ Sepsis Bundle</span>
+    <span class="lux-triage-chip caution" onclick="aiQuick('Interpret a low Hb with low MCV — causes, investigation approach and naturopathic management')" title="Low Hb + MCV">🔬 Low Hb + MCV</span>
+    <span class="lux-triage-chip caution" onclick="aiQuick('BNYS naturopathic protocol for hypertension — lifestyle, yoga, diet, herbs')" title="HTN Protocol">🌿 HTN Protocol</span>
+    <span class="lux-triage-chip safe" onclick="aiQuick('Safe herbs and naturopathic treatments during pregnancy — with safety grading')" title="Herbs in Pregnancy">🤰 Herbs in Pregnancy</span>
+    <span class="lux-triage-chip safe" onclick="aiQuick('Yoga contraindications and modifications for cardiac patients')" title="Yoga + Cardiac">🧘 Yoga + Cardiac</span>
+    <span class="lux-triage-chip safe" onclick="aiQuick('Drug-herb interaction checker — explain common clinically significant interactions')" title="Drug-Herb Check">💊 Drug-Herb Check</span>
   </div>
 
-  <!-- Messages -->
-  <div class="ai-msgs" id="ai-msgs">
+  <!-- ── Messages ── -->
+  <div class="ai-msgs" id="ai-msgs" role="log" aria-live="polite" aria-label="AI conversation">
     <div class="ai-msg assistant">
       <div class="lux-severity info">● AI CLINICAL ENGINE</div>
       Welcome, Doctor. I'm your clinical decision support assistant. I can help with differential diagnosis, evidence-based protocols, drug interactions, lab interpretation, and BNYS naturopathic guidelines.<br><br>Select a quick action above or type your clinical question below.
@@ -9101,16 +9925,58 @@ async function sendAI() {
   <!-- Hidden old elements to keep JS working -->
   <div class="ai-suggestions" id="ai-chips" style="display:none!important"></div>
 
-  <!-- Input -->
+  <!-- ── Input row ── -->
   <div class="lux-ai-input-row">
-    <textarea id="ai-input" placeholder="Type a clinical question… (Enter to send)" rows="1"
+    <textarea id="ai-input"
+      placeholder="Ask a clinical question…"
+      rows="1"
+      aria-label="Clinical question input"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAI()}"
-      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
-    <button id="ai-send" onclick="sendAI()">➤</button>
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+    <button id="ai-send" onclick="sendAI()" aria-label="Send question" title="Send (Enter)">
+      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="17" height="17" style="display:block">
+        <path d="M3 10L17 3L10 17L9 11L3 10Z" stroke="white" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,.15)"/>
+      </svg>
+    </button>
+    <span class="lux-input-meta" id="lux-input-meta">Enter ↵ to send</span>
   </div>
 </div>
 
 <script>
+// ── NaturaRef v13 · Luxury AI interaction enhancements ──
+
+// Animate EKG path on panel open
+(function(){
+  var panel = document.getElementById('ai-panel');
+  if (!panel) return;
+  var obs = new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      if (m.attributeName === 'class') {
+        var path = panel.querySelector('.lux-ekg-path');
+        if (!path) return;
+        if (panel.classList.contains('open')) {
+          // Reset & replay animation
+          path.style.animation = 'none';
+          path.offsetHeight; // force reflow
+          path.style.animation = '';
+        }
+      }
+    });
+  });
+  obs.observe(panel, { attributes: true });
+})();
+
+// Auto-resize textarea & update input meta
+(function(){
+  var inp = document.getElementById('ai-input');
+  var meta = document.getElementById('lux-input-meta');
+  if (!inp || !meta) return;
+  inp.addEventListener('input', function(){
+    var len = inp.value.length;
+    meta.textContent = len > 0 ? len + ' chars · Enter ↵' : 'Enter ↵ to send';
+  });
+})();
+
 // ── LUXURY AI TOGGLE ──
 function dismissAIFab() {
   var fab = document.getElementById('ai-fab');
@@ -9122,7 +9988,6 @@ function dismissAIFab() {
     fab.style.opacity = '0';
     fab.style.pointerEvents = 'none';
   }
-  // Show a small "restore" button in corner after 3 seconds
   setTimeout(function() {
     if (!fab) return;
     var restore = document.createElement('button');
@@ -9146,27 +10011,24 @@ function luxToggleAI() {
   var tbbtn = document.getElementById('tb-ai-btn');
   var isOpen = panel.classList.contains('open');
   if (isOpen) {
-    // Animate panel closing — slides back up toward fab
     panel.classList.remove('open');
     panel.classList.add('closing');
     if (fab)   fab.classList.remove('ai-open');
     if (tbbtn) tbbtn.classList.remove('ai-active');
-    setTimeout(function() { panel.classList.remove('closing'); }, 200);
+    setTimeout(function() { panel.classList.remove('closing'); }, 420);
   } else {
     panel.classList.add('open');
     if (fab)   fab.classList.add('ai-open');
     if (tbbtn) tbbtn.classList.add('ai-active');
-    setTimeout(function(){ var i=document.getElementById('ai-input'); if(i) i.focus(); }, 120);
+    setTimeout(function(){ var i=document.getElementById('ai-input'); if(i) i.focus(); }, 150);
   }
 }
 
 // Override the existing toggleAI so topbar button also works
 window.toggleAI = function() { luxToggleAI(); };
-
-// addAIMsg override removed — using original directly
-
-// sendAI wrapper removed — using original directly
 </script>
+
+
 
 <script>
 // ─── CALCULATOR JS ───
@@ -9303,14 +10165,13 @@ window.toggleAI = function() { luxToggleAI(); };
       if(area){ area.innerHTML=''; area.style.display='none'; }
       if(grid) grid.style.display='';
       document.querySelectorAll('.calc-info-card').forEach(el=>el.style.borderColor='');
-      history.pushState({page:'sec',secId:'calculators'},'','');
+      history.back(); // triggers popstate → {page:'sec',secId:'calculators'} → openSec + grid reset
     }
     function showCalc(id){
       const c=CALCS2[id];if(!c)return;
       var grid=document.getElementById('calc-grid-el');
       var area=document.getElementById('calc-area-el');
       var isMobile=window.innerWidth<=900;
-      // Mobile: hide grid, show full-screen
       if(isMobile && grid) grid.style.display='none';
       if(area) area.style.display='block';
       document.querySelectorAll('.calc-info-card').forEach(el=>el.style.borderColor='');
@@ -9319,14 +10180,13 @@ window.toggleAI = function() { luxToggleAI(); };
         if(f.type==='chk')return '<label class="calc-check-row"><input type="checkbox" id="'+f.id+'"><span>'+f.label+'</span></label>';
         if(f.type==='sel')return '<div class="calc-field"><label>'+f.label+'</label><select id="'+f.id+'" class="calc-input">'+f.opts.map(o=>'<option>'+o+'</option>').join('')+'</select></div>';
         if(f.type==='date')return '<div class="calc-field"><label>'+f.label+'</label><input type="date" id="'+f.id+'" class="calc-input"></div>';
-        return '<div class="calc-field"><label>'+f.label+'</label><input type="number" id="'+f.id+'" class="calc-input" placeholder="'+f.ph+'" oninput="runCalc2(\''+id+'\')"></div>';
+        return '<div class="calc-field"><label>'+f.label+'</label><input type="number" inputmode="decimal" id="'+f.id+'" class="calc-input" placeholder="'+f.ph+'" oninput="runCalc2(\''+id+'\')"></div>';
       }).join('');
+      const calcBtn=isChk?'<button class="calc-go-btn" onclick="runCalc2(\''+id+'\')">✦ Calculate</button>':'';
       if(isMobile){
-        // Mobile: single column, full screen with Back button
-        area.innerHTML='<div style="padding:14px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><button onclick="calcBack()" style="background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;color:var(--mu);font-weight:500">&larr; Back</button><div style="font-size:14px;font-weight:700;color:var(--tx)">'+c.label+'</div></div>'+fh+(isChk?'<button class="calc-go-btn" onclick="runCalc2(\''+id+'\')">Calculate &rarr;</button>':'')+'<div id="cr-'+id+'" class="calc-result" style="display:none"></div></div>';
+        area.innerHTML='<div class="lux-calc-detail"><div class="lux-calc-topbar"><button class="lux-calc-back" onclick="calcBack()">← Back</button><div class="lux-calc-title">'+c.label+'</div></div>'+fh+calcBtn+'<div id="cr-'+id+'" class="calc-result" style="display:none"></div></div>';
       } else {
-        // Desktop: split — left half inputs, right half results
-        area.innerHTML='<div style="background:var(--surf);border:1.5px solid var(--bdr);border-radius:12px;margin-top:10px;overflow:hidden"><div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--bdr);background:linear-gradient(90deg,#eef2ff,#f0fdf4)"><span style="font-size:13px;font-weight:700;color:#4f46e5">'+c.label+'</span><button onclick="calcBack()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--mu);padding:2px 8px;line-height:1">&times;</button></div><div style="display:grid;grid-template-columns:1fr 1fr"><div style="padding:16px 14px;border-right:1px solid var(--bdr)"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mu);margin-bottom:10px">Inputs</div>'+fh+(isChk?'<button class="calc-go-btn" onclick="runCalc2(\''+id+'\')">Calculate &rarr;</button>':'')+'</div><div style="padding:16px 14px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mu);margin-bottom:10px">Results</div><div id="cr-'+id+'" class="calc-result" style="display:none"></div><div id="cr-'+id+'-ph" style="color:var(--mu);font-size:12px;font-style:italic;margin-top:6px">Fill in values on the left to see results</div></div></div></div>';
+        area.innerHTML='<div class="lux-calc-split"><div class="lux-calc-split-hdr"><span class="lux-calc-split-title">'+c.label+'</span><button class="lux-calc-split-close" onclick="calcBack()">✕</button></div><div class="lux-calc-pane"><div class="lux-calc-pane-label">Inputs</div>'+fh+calcBtn+'</div><div class="lux-calc-pane"><div class="lux-calc-pane-label">Results</div><div id="cr-'+id+'" class="calc-result" style="display:none"></div><div id="cr-'+id+'-ph" class="lux-calc-placeholder"><div class="lux-calc-placeholder-icon">⚕️</div><span>Fill in values on the left<br>to see results</span></div></div></div>';
       }
       if(!isChk){c.fields.forEach(f=>{const el=document.getElementById(f.id);if(el&&f.type!=='num')el.onchange=()=>runCalc2(id);});}
       history.pushState({page:'calc',secId:'calculators'},'','');
@@ -9785,9 +10645,27 @@ function openGroupView(groupKey, skipHistory) {
 
   // Render header
   document.getElementById('gv-title').textContent = group.label;
+  // Rich topbar — show icon + group name + subtitle (same style as section)
+  var tbBrand2 = document.getElementById('tb-brand-home');
+  var tbTtl2 = document.getElementById('tb-ttl-block');
+  if (tbBrand2) tbBrand2.style.display = 'none';
+  if (tbTtl2) tbTtl2.style.display = 'flex';
+  var groupEmoji = group.label.match(/^(\S+)/)?.[1] || '🌿';
+  var groupName = group.label.replace(/^\S+\s*/, '');
+  document.getElementById('tb-sec').textContent = groupName;
+  document.getElementById('tb-sec').style.color = '';
+  document.getElementById('tb-sub').textContent = 'Select a section to explore';
+  var tbIcon2 = document.getElementById('tb-icon');
+  if (tbIcon2) {
+    tbIcon2.innerHTML = groupEmoji;
+    tbIcon2.style.background = 'var(--sand2)';
+    tbIcon2.style.color = 'var(--sage-deep)';
+  }
   document.getElementById('tb-sec').textContent = group.label.replace(/^[^ ]+ /, '');
   document.getElementById('tb-sub').textContent = 'Select a section to explore';
   document.getElementById('back-btn').classList.remove('visible');
+  document.body.classList.remove('in-section');
+  document.body.classList.add('in-group');
 
   // Render section cards
   var grid = document.getElementById('gv-grid');
