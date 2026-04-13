@@ -400,6 +400,75 @@ body.dark .sb-toggle::after{background:#fff;transform:translateX(14px)}
 .hero-wave{display:inline-block;animation:wave 2.5s ease-in-out infinite;transform-origin:70% 70%}
 @keyframes wave{0%,100%{transform:rotate(0deg)}20%{transform:rotate(-15deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-10deg)}80%{transform:rotate(5deg)}}
 
+/* ── GREETING CARD — Minimal Luxury Editorial ── */
+@keyframes greetIn{
+  from{opacity:0;transform:translateY(-10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.nr-greet-card{
+  background:var(--warm);
+  border:none;
+  border-radius:0;
+  padding:18px 0 16px;
+  margin-bottom:16px;
+  position:relative;
+  animation:greetIn .55s cubic-bezier(.22,1,.36,1) both;
+}
+/* Top gold rule */
+.nr-greet-card::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent 0%,#b8962e 20%,#d4af37 50%,#b8962e 80%,transparent 100%);
+}
+/* Bottom subtle rule */
+.nr-greet-card::after{
+  content:'';
+  position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent 0%,rgba(184,150,46,.3) 30%,rgba(184,150,46,.3) 70%,transparent 100%);
+}
+.nr-greet-avatar{ display:none; }
+.nr-greet-body{width:100%;}
+.nr-greet-line1{
+  font-size:9.5px;font-weight:700;
+  color:#a07828;
+  text-transform:uppercase;letter-spacing:.22em;
+  margin-bottom:6px;
+  display:flex;align-items:center;gap:8px;
+}
+.nr-greet-line1::after{
+  content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,rgba(184,150,46,.25),transparent);
+}
+.nr-greet-name{
+  font-family:'Lora',serif;
+  font-size:26px;font-weight:700;
+  color:var(--ink);line-height:1.05;
+  margin-bottom:7px;
+  letter-spacing:-.01em;
+}
+.nr-greet-name em{
+  color:#a07828;
+  font-style:italic;
+  font-weight:600;
+}
+.nr-greet-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:10px;font-weight:600;
+  color:var(--ink3);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  background:none;border:none;padding:0;
+}
+.nr-greet-badge span:first-child{ color:#a07828; font-size:11px; }
+.nr-greet-motd{
+  font-family:'Lora',serif;
+  font-size:12px;color:var(--ink3);
+  margin-top:8px;font-style:italic;line-height:1.55;
+  border-left:2px solid #d4af37;
+  padding-left:10px;
+  opacity:.75;
+}
+
 /* Large title */
 .home-hero-title{
   font-family:'Lora',serif;
@@ -474,7 +543,7 @@ body.dark .sb-toggle::after{background:#fff;transform:translateX(14px)}
 .home-cat-tile:hover::after{transform:translateX(100%)}
 .home-cat-tile:active{transform:scale(.97)}
 /* ══ DDx AI SEARCH ══ */
-.ddx-wrap{background:linear-gradient(135deg,var(--sage-pale),#e8f5f0);border:2px solid var(--sage-lt);border-radius:18px;padding:16px;margin-bottom:16px}
+.ddx-wrap{background:linear-gradient(135deg,var(--sage-pale),#e8f5f0);border:2px solid var(--sage-lt);border-radius:18px;padding:10px 14px 12px;margin-bottom:14px}
 /* ── Anatomy AI response box ── */
 .anat-ai-box{background:var(--sky-lt);border:1px solid #b0d4e8;border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink);line-height:1.7;margin-top:2px}
 /* ── Card entrance animation (applied via JS) ── */
@@ -491,9 +560,9 @@ body.dark .sb-toggle::after{background:#fff;transform:translateX(14px)}
 .cic-tag{font-size:9.5px;font-weight:700;border-radius:8px;padding:1px 7px;margin-left:auto;white-space:nowrap}
 .cic-desc{font-size:11.5px;color:var(--ink2);line-height:1.45}
 .cic-inputs{font-size:10.5px;color:var(--mu);margin-top:2px}
-.ddx-label{font-size:12px;font-weight:800;color:var(--sage-deep);text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px}
-.ddx-desc{font-size:11.5px;color:var(--ink3);margin-bottom:12px;font-weight:500}
-.ddx-input-row{display:flex;gap:8px;margin-bottom:10px}
+.ddx-label{font-size:12px;font-weight:800;color:var(--sage-deep);text-transform:uppercase;letter-spacing:.1em;margin-bottom:1px}
+.ddx-desc{font-size:11px;color:var(--ink3);margin-bottom:8px;font-weight:500}
+.ddx-input-row{display:flex;gap:8px;margin-bottom:8px}
 .ddx-input{flex:1;background:var(--white);border:1.5px solid var(--sage-lt);border-radius:12px;padding:11px 14px;font-size:14px;color:var(--ink);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
 .ddx-input:focus{border-color:var(--sage-deep);box-shadow:0 0 0 3px rgba(107,143,110,.15)}
 .ddx-key-btn{background:rgba(107,143,110,.15);color:var(--sage-deep);border:1.5px solid var(--sage-lt);border-radius:12px;width:44px;height:44px;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .15s}
@@ -1412,13 +1481,21 @@ body.dark .tab-index{background:#1a1612}
   }
   .home-cat-tile{ min-height:120px; border-radius:20px; }
 
+  /* ── Greeting card — desktop refinement ── */
+  .nr-greet-card{
+    padding:22px 0 20px;
+    margin-bottom:22px;
+  }
+  .nr-greet-name{ font-size:34px; }
+  .nr-greet-line1{ font-size:10px; letter-spacing:.26em; }
+
   /* ── DDx search — full width, prominent ── */
   .ddx-wrap{
     background:linear-gradient(135deg,var(--sage-pale) 0%,#e8f5f0 100%);
     border:2px solid var(--sage-lt);
     border-radius:20px;
-    padding:24px 28px;
-    margin-bottom:28px;
+    padding:14px 22px 16px;
+    margin-bottom:22px;
     box-shadow:0 4px 20px rgba(58,92,61,.08);
   }
   .ddx-label{ font-size:15px; font-weight:800; }
@@ -1696,30 +1773,6 @@ body.dark .tab-index{background:#1a1612}
 </style>
 </head>
 <body>
-
-<!-- ═══════════════ PHASE 1 · REMOTE CONFIG OVERLAYS ═══════════════ -->
-
-<!-- Announcement Banner -->
-<div id="nr-announcement" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99990;padding:10px 48px 10px 16px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;line-height:1.4;text-align:center;">
-  <span id="nr-announcement-text"></span>
-  <button onclick="this.parentElement.style.display='none'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;cursor:pointer;opacity:.7;line-height:1;">×</button>
-</div>
-
-<!-- Access Expired Overlay (Phase 2 RBAC) -->
-<div id="nr-access-expired-overlay" style="display:none;position:fixed;inset:0;z-index:999998;background:#fff8f0;align-items:center;justify-content:center;flex-direction:column;gap:12px;font-family:'DM Sans',sans-serif;">
-  <div style="font-size:48px;">🔒</div>
-  <div style="font-size:22px;font-weight:700;color:#7c2d12;">Access Expired</div>
-  <div style="font-size:15px;color:#9a4a2a;text-align:center;max-width:300px;line-height:1.6;padding:0 24px;">Your NaturaRef access has expired. Please contact Dr. Vikranth to renew.</div>
-  <div style="font-size:12px;color:#c8a8a0;margin-top:8px;">NaturaRef · Dr. Vikranth BNYS</div>
-</div>
-
-<!-- Maintenance Overlay -->
-<div id="nr-maintenance-overlay" style="display:none;position:fixed;inset:0;z-index:999999;background:#f8f4f0;align-items:center;justify-content:center;flex-direction:column;gap:16px;font-family:'DM Sans',sans-serif;">
-  <div style="font-size:48px;">🔧</div>
-  <div style="font-size:22px;font-weight:700;color:#2c4a2e;">Under Maintenance</div>
-  <div id="nr-maintenance-msg" style="font-size:15px;color:#5a6b5a;text-align:center;max-width:320px;line-height:1.6;padding:0 24px;"></div>
-  <div style="font-size:12px;color:#9aaa9a;margin-top:8px;">NaturaRef · Dr. Vikranth BNYS</div>
-</div>
 
 <!-- ═══════════════════════════════════════════════════════
      NATURAREF · PHASE 1A + 1B — AUTH GATE + SIGNUP
@@ -2243,12 +2296,58 @@ function nrUnlock() {
   _nrBadgeInterval = setInterval(function() {
     if (_nrAuthUser && typeof nrFetchInbox === 'function') nrFetchInbox(_nrAuthUser.docId);
   }, 60000);
+
+  /* ── Update greeting card & hero with logged-in doctor name ── */
+  (function() {
+    var mottos = [
+      '"Healing begins where medicine meets nature."',
+      '"Treat the whole person, not just the disease."',
+      '"Nature cures — the physician assists."',
+      '"Prevention is the highest form of medicine."',
+      '"Vis Medicatrix Naturae — the healing power of nature."',
+      '"First do no harm; then restore with nature."',
+      '"Every patient is a unique opportunity to heal."'
+    ];
+    var hr = new Date().getHours();
+    var salutation = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+    var motto = mottos[new Date().getDay() % mottos.length];
+
+    var fullName = (_nrAuthUser && _nrAuthUser.name) ? _nrAuthUser.name : 'Doctor';
+    var qual     = (_nrAuthUser && _nrAuthUser.qual)  ? _nrAuthUser.qual  : 'BNYS';
+
+    /* Display name: use "Dr. FirstName" if name has spaces, else full */
+    var parts = fullName.trim().split(/\s+/);
+    var displayFirst = parts[0] || fullName;
+    var drName = 'Dr. ' + displayFirst;
+
+    /* Initials for avatar circle */
+    var initials = parts.map(function(p){ return p[0]; }).join('').toUpperCase().slice(0,2) || '🌿';
+
+    /* Hero greeting line */
+    var heroTxt = document.getElementById('hero-greet-text');
+    if (heroTxt) heroTxt.textContent = salutation + ', ' + drName;
+
+    /* Greeting card */
+    var av = document.getElementById('nr-greet-avatar');
+    if (av) { av.textContent = initials; av.style.fontSize = '16px'; }
+
+    var sal = document.getElementById('nr-greet-salutation');
+    if (sal) sal.textContent = salutation;
+
+    var nm = document.getElementById('nr-greet-name');
+    if (nm) nm.innerHTML = drName.replace('Dr.', '<em>Dr.</em>');
+
+    var qEl = document.getElementById('nr-greet-qual');
+    if (qEl) qEl.textContent = qual;
+
+    var md = document.getElementById('nr-greet-motd');
+    if (md) md.textContent = motto;
+  })();
 }
 
 function nrLogoTap() {}  // no-op
 
 function nrSignOut() {
-  writeAudit('logout', {});
   nrClearSession();
   _nrAuthUser = null;
   location.reload();
@@ -2310,11 +2409,6 @@ async function nrLogin() {
         try { await _nrDb.collection('naturaref_users').doc(doc.id).update({ tempPasswordHash: firebase.firestore.FieldValue.delete() }); } catch(e) {}
       }
       nrSaveSession(_nrAuthUser);
-      window._nrUid = doc.id;
-      loadUserRole(data);
-      writeSessionToken();
-      writeAudit('login', { device: navigator.userAgent.slice(0,80) });
-      setTimeout(function(){ if (typeof trackEvent==='function') trackEvent('session_start',{}); }, 900);
       nrUnlock();
       setTimeout(function() { if (typeof nrFetchInbox === 'function') nrFetchInbox(doc.id); }, 700);
     } else if (status === 'pending') {
@@ -2416,10 +2510,6 @@ async function nrCheckSessionStatus() {
     if (status === 'active') {
       _nrAuthUser = { docId: doc.id, username: data.username, name: data.name, email: data.email || '', uid: doc.id };
       nrSaveSession(_nrAuthUser);
-      window._nrUid = doc.id;
-      loadUserRole(data);
-      writeAudit('login', { device: navigator.userAgent.slice(0,80) });
-      setTimeout(function(){ if (typeof trackEvent==='function') trackEvent('session_start',{}); }, 900);
       nrUnlock();
       setTimeout(function() { if (typeof nrFetchInbox === 'function') nrFetchInbox(doc.id); }, 700);
     } else if (status === 'pending') {
@@ -2462,7 +2552,6 @@ async function nrCheckSessionStatus() {
         email:    sess.email   || '',
         uid:      sess.docId
       };
-      window._nrUid = sess.docId;
       clearTimeout(_watchdog);
       nrUnlock();
       setTimeout(function() {
@@ -2479,10 +2568,6 @@ async function nrCheckSessionStatus() {
           if (data.status === 'active') {
             /* Refresh in-memory user with latest Firestore data */
             _nrAuthUser = { docId: doc.id, username: data.username, name: data.name || '', email: data.email || '', uid: doc.id };
-            window._nrUid = doc.id;
-            loadUserRole(data);
-            // Phase 1: start Remote Config listener once Firebase is confirmed ready
-            if (typeof fetchRemoteConfig === 'function') fetchRemoteConfig();
           } else {
             /* Account deactivated server-side — sign out without reload
                (reload with stale sessionStorage causes an infinite loop
@@ -2830,8 +2915,8 @@ async function nrCheckSessionStatus() {
       <div class="hero-blob hero-blob-2"></div>
       <div class="hero-blob hero-blob-3"></div>
       <div class="home-hero-inner">
-        <div class="hero-greeting">
-          <span class="hero-wave">👋</span> Good morning, Dr. Vikranth
+        <div class="hero-greeting" id="hero-greeting-line">
+          <span class="hero-wave">👋</span> <span id="hero-greet-text">Good morning, Doctor</span>
         </div>
         <h1 class="home-hero-title">Your Clinical<br><em>Reference</em></h1>
         <p class="home-hero-sub">Naturopathy &amp; Yoga — BNYS Clinical Portal</p>
@@ -2884,6 +2969,22 @@ async function nrCheckSessionStatus() {
         <div class="stat"><div class="stat-n" style="color:#064E3B">60+</div><div class="stat-l">BNYS protocols</div></div>
         <div class="stat"><div class="stat-n" style="color:#0e7490">44+</div><div class="stat-l">Imaging patterns</div></div>
         <div class="stat"><div class="stat-n" style="color:#7c3aed">12</div><div class="stat-l">AI tools</div></div>
+      </div>
+
+      <!-- ══ DOCTOR GREETING CARD ══ -->
+      <div class="nr-greet-card" id="nr-greet-card">
+        <div class="nr-greet-avatar" id="nr-greet-avatar">🌿</div>
+        <div class="nr-greet-body">
+          <div class="nr-greet-line1">
+            <span class="hero-wave" style="font-size:13px">👋</span>
+            <span id="nr-greet-salutation">Good morning</span>
+          </div>
+          <div class="nr-greet-name" id="nr-greet-name">Doctor</div>
+          <div class="nr-greet-badge" id="nr-greet-badge">
+            <span>🌿</span><span id="nr-greet-qual">BNYS</span> · NaturaRef Portal
+          </div>
+          <div class="nr-greet-motd" id="nr-greet-motd">"Healing begins where medicine meets nature."</div>
+        </div>
       </div>
 
       <!-- ══ SENIOR NATUROPATH AI SEARCH ══ -->
@@ -5710,8 +5811,6 @@ function openSec(secId, btn, skipHistory, groupKey) {
   }
   document.getElementById('back-btn').classList.add('visible');
   curSec = secId;
-  // Phase 3: track section open
-  if (typeof trackEvent === 'function') trackEvent('section_open', {secId: secId});
 
   // Resolve groupKey for history
   var gk = groupKey || currentGroup || (typeof getGroupForSec === 'function' ? getGroupForSec(secId) : null);
@@ -6669,13 +6768,10 @@ var _IS_LOCAL = (function() {
 })();
 
 var AI_PROVIDERS = {
-  cerebras:   { name:'Cerebras',          endpoint:'https://api.cerebras.ai/v1/chat/completions',                                            model:'llama3.1-8b',                           keyPrefix:'csk-',   storageKey:'cerebras_key',   dailyLimit:1000000 },
-  groq:       { name:'Groq',              endpoint:'https://api.groq.com/openai/v1/chat/completions',                                         model:'llama-3.3-70b-versatile',               keyPrefix:'gsk_',   storageKey:'groq_key',       dailyLimit:500000  },
-  sambanova:  { name:'SambaNova',         endpoint:'https://api.sambanova.ai/v1/chat/completions',                                            model:'Meta-Llama-3.3-70B-Instruct',           keyPrefix:'sn-',    storageKey:'sambanova_key',  dailyLimit:400000  },
-  deepseek:   { name:'DeepSeek',          endpoint:'https://api.deepseek.com/v1/chat/completions',                                            model:'deepseek-chat',                         keyPrefix:'sk-',    storageKey:'deepseek_key',   dailyLimit:500000  },
-  gemini:     { name:'Gemini',            endpoint:'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', model:'gemini-2.0-flash',                      keyPrefix:'AIza',   storageKey:'gemini_key',     dailyLimit:1000000 },
-  openrouter: { name:'OpenRouter',        endpoint:'https://openrouter.ai/api/v1/chat/completions',                                           model:'meta-llama/llama-3.1-8b-instruct:free', keyPrefix:'sk-or-', storageKey:'openrouter_key', dailyLimit:200000  },
-  pollinations:{ name:'Pollinations (Free)', endpoint:'https://text.pollinations.ai/',                                                        model:'openai',                                keyPrefix:'',       storageKey:'',               dailyLimit:999999  }
+  cerebras:   { name:'Cerebras',   endpoint:'https://api.cerebras.ai/v1/chat/completions',                                            model:'llama3.1-8b',                           keyPrefix:'csk-',   storageKey:'cerebras_key',   dailyLimit:1000000 },
+  groq:       { name:'Groq',       endpoint:'https://api.groq.com/openai/v1/chat/completions',                                         model:'llama-3.3-70b-versatile',               keyPrefix:'gsk_',   storageKey:'groq_key',       dailyLimit:500000  },
+  gemini:     { name:'Gemini',     endpoint:'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', model:'gemini-2.0-flash',                      keyPrefix:'AIza',   storageKey:'gemini_key',     dailyLimit:1000000 },
+  openrouter: { name:'OpenRouter', endpoint:'https://openrouter.ai/api/v1/chat/completions',                                           model:'meta-llama/llama-3.1-8b-instruct:free', keyPrefix:'sk-or-', storageKey:'openrouter_key', dailyLimit:200000  }
 };
 var AI_PROVIDERS_EXTRA = {
   puter: { name:'Puter (Free)', model:'gpt-4o-mini', keyPrefix:'', storageKey:'', dailyLimit:999999 }
@@ -6683,7 +6779,7 @@ var AI_PROVIDERS_EXTRA = {
 // Merge puter into AI_PROVIDERS
 AI_PROVIDERS.puter = AI_PROVIDERS_EXTRA.puter;
 
-var PROVIDER_ORDER = ['cerebras','groq','sambanova','deepseek','gemini','openrouter','pollinations','puter'];
+var PROVIDER_ORDER = ['cerebras','groq','gemini','openrouter','puter'];
 
 // Session provider: null = auto (fallback chain), else specific pid
 var _sessionProvider = localStorage.getItem('ccr_session_provider') || 'auto';
@@ -6704,7 +6800,7 @@ var GROQ_ENDPOINT = AI_PROVIDERS.groq.endpoint;
 function getApiUrl() { return AI_PROVIDERS.groq.endpoint; }
 
 // Key storage (localStorage only, no cookies)
-var _keyCaches = {cerebras:'',groq:'',sambanova:'',deepseek:'',gemini:'',openrouter:''};
+var _keyCaches = {cerebras:'',groq:'',gemini:'',openrouter:''};
 // Keys are loaded from Firestore by admin — memory-only, no localStorage
 function getProviderKey(pid) { return _keyCaches[pid] || ''; }
 function setProviderKey(pid,k) { _keyCaches[pid] = k || ''; }
@@ -6726,9 +6822,9 @@ function loadTokenUsage(){
     var raw=localStorage.getItem(TOKEN_USAGE_KEY);
     var data=raw?JSON.parse(raw):{};
     var today=getTodayStr();
-    if(data.date!==today) data={date:today,cerebras:0,groq:0,sambanova:0,deepseek:0,gemini:0,openrouter:0,pollinations:0,puter:0,calls:0,lastProvider:''};
+    if(data.date!==today) data={date:today,cerebras:0,groq:0,gemini:0,openrouter:0,puter:0,calls:0,lastProvider:''};
     return data;
-  }catch(e){return{date:getTodayStr(),cerebras:0,groq:0,sambanova:0,deepseek:0,gemini:0,openrouter:0,pollinations:0,puter:0,calls:0,lastProvider:''};}
+  }catch(e){return{date:getTodayStr(),cerebras:0,groq:0,gemini:0,openrouter:0,puter:0,calls:0,lastProvider:''};}
 }
 function saveTokenUsage(data){try{localStorage.setItem(TOKEN_USAGE_KEY,JSON.stringify(data));}catch(e){}}
 function recordTokens(pid,tokens){
@@ -6806,21 +6902,6 @@ function buildHeaders(){ return {'Content-Type':'application/json'}; }
 // ---- MULTI-PROVIDER callAI with fallback chain + token tracking ----
 async function _callProvider(pid, messages, maxTokens) {
   var p = AI_PROVIDERS[pid];
-
-  // ── Pollinations (keyless, different response format) ──
-  if (pid === 'pollinations') {
-    var res = await fetch('https://text.pollinations.ai/', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({model:'openai', messages:messages, max_tokens:maxTokens||1000, stream:false})
-    });
-    if (!res.ok) throw new Error('Pollinations error ' + res.status);
-    var text = await res.text();
-    if (!text) throw new Error('Pollinations returned empty response');
-    recordTokens('pollinations', Math.round(text.length/4));
-    return text;
-  }
-
   var key = pid === 'puter' ? 'free' : getProviderKey(pid);
   if (!key) throw new Error('NO_KEY');
 
@@ -6893,28 +6974,19 @@ async function _callProvider(pid, messages, maxTokens) {
 
 
 async function callAI(messages, maxTokens) {
-  // ── Phase 1: Kill switch + session call limit ──
-  if (window._aiKillSwitch) throw new Error('AI is currently disabled by the administrator.');
-  window._aiCallCount = (window._aiCallCount || 0) + 1;
-  if (window._aiCallCount > (window._maxAiCalls || 100)) throw new Error('Session AI limit reached. Please refresh the page to continue.');
-
   maxTokens = maxTokens || 4000;
   var lastErr;
   var providers = getActiveProviders();
   for (var i=0; i<providers.length; i++) {
     var pid = providers[i];
-    if (pid !== 'puter' && pid !== 'pollinations' && !getProviderKey(pid)) continue;  // skip if no key (puter and pollinations need no key)
+    if (pid !== 'puter' && !getProviderKey(pid)) continue;  // skip if no key (puter needs no key)
     // Retry up to 2 times on rate-limit/server errors
     for (var attempt=1; attempt<=2; attempt++) {
       try {
         var result = await _callProvider(pid, messages, maxTokens);
-        // Phase 3: track successful AI call
-        if (typeof trackEvent === 'function') trackEvent('ai_call', {tokens: Math.round((result||'').length/4)});
         return result;
       } catch(err) {
         lastErr = err;
-        // Phase 3: track AI failure
-        if (typeof trackEvent === 'function') trackEvent('ai_failure', {});
         var msg = err.message || '';
         var isRetryable = msg.indexOf('429')!==-1 || msg.indexOf('503')!==-1 || msg.indexOf('500')!==-1;
         if (isRetryable && attempt===1) {
@@ -6995,13 +7067,10 @@ async function fetchAdminApiKeys() {
     var doc = await _fbDb.collection('naturaref_settings').doc('ai_config').get();
     if (doc.exists) {
       var d = doc.data();
-      if (d.groq)        setProviderKey('groq',        d.groq);
-      if (d.gemini)      { setProviderKey('gemini',    d.gemini); _geminiKeyCache = d.gemini; }
-      if (d.cerebras)    setProviderKey('cerebras',    d.cerebras);
-      if (d.openrouter)  setProviderKey('openrouter',  d.openrouter);
-      if (d.sambanova)   setProviderKey('sambanova',   d.sambanova);
-      if (d.deepseek)    setProviderKey('deepseek',    d.deepseek);
-      // pollinations needs no key
+      if (d.groq)       setProviderKey('groq',       d.groq);
+      if (d.gemini)     { setProviderKey('gemini',   d.gemini); _geminiKeyCache = d.gemini; }
+      if (d.cerebras)   setProviderKey('cerebras',   d.cerebras);
+      if (d.openrouter) setProviderKey('openrouter', d.openrouter);
       _adminKeysFetched = true;
       if (typeof dtUpdateAIStatus === 'function') dtUpdateAIStatus();
       console.log('NaturaRef: admin API keys loaded ✓');
@@ -7010,295 +7079,6 @@ async function fetchAdminApiKeys() {
 }
 
 
-
-// ════════════════════════════════════════
-// PHASE 2 · ROLE-BASED ACCESS CONTROL
-// Fields read from naturaref_users/{uid}:
-//   role, allowed_sections, ai_access,
-//   can_export, access_expires
-// ════════════════════════════════════════
-window._userRole        = 'junior';
-window._allowedSections = null;   // null = all allowed
-window._aiAccess        = true;
-window._canExport       = false;
-
-function loadUserRole(userData) {
-  if (!userData) return;
-  window._userRole        = userData.role            || 'junior';
-  window._allowedSections = userData.allowed_sections || null;
-  window._aiAccess        = (userData.ai_access !== false);
-  window._canExport       = (userData.can_export === true);
-
-  // Check expiry
-  if (userData.access_expires) {
-    var expires = new Date(userData.access_expires);
-    if (!isNaN(expires) && expires < new Date()) {
-      var overlay = document.getElementById('nr-access-expired-overlay');
-      if (overlay) overlay.style.display = 'flex';
-      // Block further use
-      window._aiKillSwitch = true;
-      return;
-    }
-  }
-
-  applyRoleRestrictions();
-}
-
-function applyRoleRestrictions() {
-  // ── Hide restricted sections ──
-  if (Array.isArray(window._allowedSections) && window._allowedSections.length > 0) {
-    // Wait for sidebar to render then apply
-    setTimeout(function() {
-      var allBtns = document.querySelectorAll('[id^="sbh-"]');
-      allBtns.forEach(function(btn) {
-        var secId = btn.id.replace('sbh-', '');
-        if (window._allowedSections.indexOf(secId) === -1) {
-          btn.style.display = 'none';
-        }
-      });
-    }, 600);
-  }
-
-  // ── Hide AI feature buttons ──
-  if (!window._aiAccess) {
-    setTimeout(function() {
-      document.querySelectorAll('.ai-btn, [data-ai="true"]').forEach(function(el) {
-        el.style.display = 'none';
-      });
-    }, 600);
-  }
-
-  // ── Hide export/download buttons ──
-  if (!window._canExport) {
-    setTimeout(function() {
-      document.querySelectorAll('[data-export="true"], .export-btn').forEach(function(el) {
-        el.style.display = 'none';
-      });
-    }, 600);
-  }
-}
-
-// ════════════════════════════════════════
-// PHASE 4 · SESSION CONTROL + AUDIT
-// ════════════════════════════════════════
-
-// ── Audit write (fire-and-forget) ──
-function writeAudit(action, meta) {
-  try {
-    if (!_fbDb || !window._nrUid) return;
-    _fbDb.collection('naturaref_audit').add({
-      action: action,
-      uid:    window._nrUid,
-      by:     window._nrUid,
-      ts:     Date.now(),
-      meta:   meta || {}
-    });
-  } catch(e) { /* silent */ }
-}
-
-// ── Session token: write on login, validate every 5 min ──
-async function writeSessionToken() {
-  try {
-    if (!_fbDb || !window._nrUid) return;
-    var token = (typeof crypto !== 'undefined' && crypto.randomUUID)
-      ? crypto.randomUUID()
-      : Date.now().toString(36) + Math.random().toString(36).slice(2);
-    sessionStorage.setItem('nr_session_token', token);
-    await _fbDb.collection('naturaref_users').doc(window._nrUid).update({ session_token: token });
-  } catch(e) { console.warn('[SessionToken] write failed:', e.message); }
-}
-
-async function validateSession() {
-  try {
-    if (!_fbDb || !window._nrUid) return;
-    var local = sessionStorage.getItem('nr_session_token');
-    if (!local) return; // no token stored yet — skip (first boot path)
-    var doc = await _fbDb.collection('naturaref_users').doc(window._nrUid).get();
-    if (!doc.exists) return;
-    var remote = doc.data().session_token;
-    if (remote && remote !== local) {
-      // Admin invalidated this session
-      sessionStorage.clear();
-      writeAudit('session_invalidated', {});
-      // Show toast then redirect to login
-      var toast = document.createElement('div');
-      toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#b71c1c;color:#fff;padding:12px 22px;border-radius:10px;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,.3);white-space:nowrap';
-      toast.textContent = '⚠️ Session ended by administrator';
-      document.body.appendChild(toast);
-      setTimeout(function() {
-        toast.remove();
-        _nrAuthUser = null;
-        var g = document.getElementById('nr-gate');
-        if (g) { g.classList.remove('nr-hide','nr-gone'); }
-        nrShow('nr-scr-login');
-      }, 2200);
-    }
-  } catch(e) { console.warn('[validateSession]', e.message); }
-}
-
-// Poll every 5 min + on tab focus
-setInterval(validateSession, 5 * 60 * 1000);
-document.addEventListener('visibilitychange', function() {
-  if (document.visibilityState === 'visible') validateSession();
-});
-
-// ── Inactivity auto-logout (30 min) ──
-var _inactivityTimer = null;
-var _INACTIVITY_MS   = 30 * 60 * 1000;
-
-function _resetInactivity() {
-  clearTimeout(_inactivityTimer);
-  _inactivityTimer = setTimeout(function() {
-    if (!_nrAuthUser) return; // already logged out
-    // Show modal
-    var modal = document.createElement('div');
-    modal.id = 'nr-inactivity-modal';
-    modal.style.cssText = 'position:fixed;inset:0;z-index:999997;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;font-family:DM Sans,sans-serif';
-    modal.innerHTML = '<div style="background:#fff;border-radius:18px;padding:32px 28px;max-width:320px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.35)">'
-      + '<div style="font-size:38px;margin-bottom:12px">⏱️</div>'
-      + '<div style="font-size:18px;font-weight:700;color:#1a2e1c;margin-bottom:8px">Session Expired</div>'
-      + '<div style="font-size:13px;color:#5a6b5a;margin-bottom:22px;line-height:1.5">Your session expired after 30 minutes of inactivity.</div>'
-      + '<button onclick="window.location.reload()" style="background:var(--sage-deep,#2e5c30);color:#fff;border:none;border-radius:10px;padding:11px 28px;font-size:14px;font-weight:600;cursor:pointer;width:100%">Log back in</button>'
-      + '</div>';
-    document.body.appendChild(modal);
-  }, _INACTIVITY_MS);
-}
-
-['mousemove','keydown','touchstart','scroll','click'].forEach(function(ev) {
-  document.addEventListener(ev, _resetInactivity, {passive:true});
-});
-_resetInactivity(); // start timer on load
-
-// ════════════════════════════════════════
-// PHASE 3 · USAGE ANALYTICS TELEMETRY
-// Collection: naturaref_analytics
-// Document:   {uid}_{YYYY-MM-DD}
-// ════════════════════════════════════════
-function _analKey() {
-  var d = new Date();
-  var dateStr = d.getFullYear() + '-' +
-    String(d.getMonth()+1).padStart(2,'0') + '-' +
-    String(d.getDate()).padStart(2,'0');
-  return (window._nrUid || 'anon') + '_' + dateStr;
-}
-
-function trackEvent(type, payload) {
-  // Fire and forget — never await this
-  try {
-    if (!_fbDb || !window._nrUid) return;
-    var key = _analKey();
-    var update = { uid: window._nrUid, last_active: Date.now() };
-    if (type === 'section_open') {
-      update['sections_opened.' + payload.secId] = firebase.firestore.FieldValue.increment(1);
-    } else if (type === 'ai_call') {
-      update['ai_calls'] = firebase.firestore.FieldValue.increment(1);
-      if (payload && payload.tokens) {
-        update['ai_tokens'] = firebase.firestore.FieldValue.increment(payload.tokens);
-      }
-    } else if (type === 'ai_failure') {
-      update['ai_failures'] = firebase.firestore.FieldValue.increment(1);
-    } else if (type === 'session_start') {
-      update['session_start'] = Date.now();
-      update['page_loads']    = firebase.firestore.FieldValue.increment(1);
-      update['date']          = _analKey().split('_')[1];
-    }
-    _fbDb.collection('naturaref_analytics').doc(key).set(update, {merge:true});
-  } catch(e) { /* silent — never break UI */ }
-}
-
-// ════════════════════════════════════════
-// PHASE 1 · REMOTE CONFIG (onSnapshot live)
-// Collection: naturaref_settings / app_config
-// ════════════════════════════════════════
-var _remoteConfigUnsubscribe = null;
-var _lastForceRefreshFlag = null;
-window._aiKillSwitch = false;
-window._maxAiCalls = 100;
-window._aiCallCount = 0;
-
-function applyRemoteConfig(cfg) {
-  if (!cfg) return;
-
-  // ── Maintenance mode ──
-  var overlay = document.getElementById('nr-maintenance-overlay');
-  if (overlay) {
-    if (cfg.maintenance_mode === true) {
-      overlay.style.display = 'flex';
-      var msgEl = document.getElementById('nr-maintenance-msg');
-      if (msgEl) msgEl.textContent = cfg.maintenance_msg || 'We are performing scheduled maintenance. Please check back shortly.';
-    } else {
-      overlay.style.display = 'none';
-    }
-  }
-
-  // ── AI kill switch ──
-  window._aiKillSwitch = (cfg.ai_kill_switch === true || cfg.ai_enabled === false);
-
-  // ── Max AI calls per session ──
-  if (typeof cfg.max_ai_calls_per_session === 'number') {
-    window._maxAiCalls = cfg.max_ai_calls_per_session;
-  }
-
-  // ── Announcement banner ──
-  var banner = document.getElementById('nr-announcement');
-  var bannerText = document.getElementById('nr-announcement-text');
-  if (banner && bannerText) {
-    if (cfg.announcement && cfg.announcement.trim()) {
-      bannerText.textContent = cfg.announcement;
-      var colors = {
-        sage:  { bg: '#e8f5e9', color: '#2e7d32', border: '#a5d6a7' },
-        amber: { bg: '#fff8e1', color: '#e65100', border: '#ffe082' },
-        red:   { bg: '#ffebee', color: '#b71c1c', border: '#ef9a9a' }
-      };
-      var c = colors[cfg.announcement_color] || colors.sage;
-      banner.style.cssText = 'display:block;position:fixed;top:0;left:0;right:0;z-index:99990;padding:10px 48px 10px 16px;font-size:13px;font-weight:600;font-family:DM Sans,sans-serif;line-height:1.4;text-align:center;background:' + c.bg + ';color:' + c.color + ';border-bottom:1px solid ' + c.border + ';';
-    } else {
-      banner.style.display = 'none';
-    }
-  }
-
-  // ── Hide sections ──
-  if (Array.isArray(cfg.visible_sections) && cfg.visible_sections.length > 0) {
-    cfg.visible_sections.forEach(function(secId) {
-      var btn = document.getElementById('sbh-' + secId);
-      if (btn) btn.style.display = 'none';
-    });
-  }
-
-  // ── Force refresh flag ──
-  if (cfg.force_refresh_flag !== undefined && cfg.force_refresh_flag !== '') {
-    var stored = sessionStorage.getItem('nr_force_refresh_flag');
-    if (stored === null) {
-      sessionStorage.setItem('nr_force_refresh_flag', cfg.force_refresh_flag);
-    } else if (stored !== String(cfg.force_refresh_flag)) {
-      sessionStorage.setItem('nr_force_refresh_flag', cfg.force_refresh_flag);
-      window.location.reload();
-    }
-  }
-
-  // ── Store app version ──
-  if (cfg.app_version) window._remoteAppVersion = cfg.app_version;
-}
-
-async function fetchRemoteConfig() {
-  if (!_fbDb) return;
-  try {
-    // Initial read
-    var doc = await _fbDb.collection('naturaref_settings').doc('app_config').get();
-    if (doc.exists) applyRemoteConfig(doc.data());
-
-    // Live listener
-    if (_remoteConfigUnsubscribe) _remoteConfigUnsubscribe();
-    _remoteConfigUnsubscribe = _fbDb.collection('naturaref_settings').doc('app_config')
-      .onSnapshot(function(snap) {
-        if (snap.exists) applyRemoteConfig(snap.data());
-      }, function(e) {
-        console.warn('[RemoteConfig] onSnapshot error:', e.message);
-      });
-  } catch(e) {
-    console.warn('[RemoteConfig] fetchRemoteConfig error:', e.message);
-  }
-}
 
 // ════════════════════════════════════════
 // LIVE NEWS & RESEARCH via Gemini
@@ -10195,9 +9975,6 @@ async function ccLoad() {
 
       // Load admin-managed API keys from Firestore
       fetchAdminApiKeys();
-
-      // Phase 1: Start Remote Config live listener
-      fetchRemoteConfig();
 
       _ccLoaded = true;   // mark success only after actual data is in memory
     } catch(e) {
