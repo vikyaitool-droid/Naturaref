@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NaturaRef">
 <meta name="theme-color" content="#3a5c3d">
-<title>NaturaRef</title>
+<title>NaturaRef v19</title>
 
 <!-- ═══════════════════════════════════════════════
      PWA PART A — WEB APP MANIFEST (data URI)
@@ -2533,6 +2533,10 @@ async function _nrInitFirebase() {
   }
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
   _nrDb = firebase.firestore();
+  // Flush any tracking calls that were queued before Firestore was ready
+  if (typeof _nrFlushTrackQueue === 'function') {
+    setTimeout(_nrFlushTrackQueue, 200);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -3382,7 +3386,10 @@ async function nrCheckSessionStatus() {
         /* Installed PWA reopen → show PIN / biometric lock */
         nrShowPinLock(sess);
       } else {
-        /* Browser tab, or no PIN set — unlock directly */
+        /* Browser tab, or no PIN set — init Firebase FIRST so _nrDb is
+           ready before the user can trigger any AI call. SDK is already
+           preloaded so this resolves in <50 ms in most cases. */
+        try { await _nrInitFirebase(); } catch(e) {}
         nrUnlock();
         setTimeout(function() {
           if (typeof nrFetchInbox === 'function') nrFetchInbox(sess.docId);
@@ -7852,6 +7859,66 @@ function updateTokenBadge(){
 
 function buildHeaders(){ return {'Content-Type':'application/json'}; }
 
+// ── NaturaRef Firestore usage tracker ────────────────────────────────────────
+// Writes every AI call to naturaref_api_usage + naturaref_usage_stats.
+// Called automatically from _callProvider — no manual wiring needed.
+
+/* Pending queue — holds tracking calls made before _nrDb is ready */
+var _nrTrackQueue = [];
+
+async function _nrFlushTrackQueue() {
+  if (!_nrDb || !_nrTrackQueue.length) return;
+  var queue = _nrTrackQueue.splice(0); // drain queue
+  for (var qi = 0; qi < queue.length; qi++) {
+    var q = queue[qi];
+    try { await _nrTrackApiCall(q.provider, q.model, q.inputTokens, q.outputTokens); } catch(e) {}
+  }
+}
+
+async function _nrTrackApiCall(provider, model, inputTokens, outputTokens) {
+  try {
+    if (!_nrDb) {
+      // Firestore not ready yet — queue for later flush
+      _nrTrackQueue.push({ provider: provider, model: model, inputTokens: inputTokens, outputTokens: outputTokens });
+      return;
+    }
+    var userId   = (_nrAuthUser && _nrAuthUser.uid)      || 'unknown';
+    var username = (_nrAuthUser && _nrAuthUser.username) || 'unknown';
+    var totalTokens = (parseInt(inputTokens,10)||0) + (parseInt(outputTokens,10)||0);
+    var today = new Date().toISOString().slice(0,10);
+    var inc = firebase.firestore.FieldValue.increment;
+    var sts = firebase.firestore.FieldValue.serverTimestamp;
+    var perUser = {};
+    perUser['perUser.'+userId+'.calls']        = inc(1);
+    perUser['perUser.'+userId+'.tokens']       = inc(totalTokens);
+    perUser['perUser.'+userId+'.inputTokens']  = inc(parseInt(inputTokens,10)||0);
+    perUser['perUser.'+userId+'.outputTokens'] = inc(parseInt(outputTokens,10)||0);
+    perUser['perUser.'+userId+'.username']     = username;
+    perUser['perUser.'+userId+'.lastSeen']     = today;
+    await Promise.all([
+      _nrDb.collection('naturaref_api_usage').add({
+        userId: userId, username: username,
+        feature: 'disease_card', provider: provider, model: model,
+        inputTokens: parseInt(inputTokens,10)||0,
+        outputTokens: parseInt(outputTokens,10)||0,
+        totalTokens: totalTokens,
+        date: today, ts: sts(),
+      }),
+      _nrDb.collection('naturaref_usage_stats').doc('totals').set(
+        Object.assign({
+          totalCalls:        inc(1),
+          totalInputTokens:  inc(parseInt(inputTokens,10)||0),
+          totalOutputTokens: inc(parseInt(outputTokens,10)||0),
+          totalTokens:       inc(totalTokens),
+        }, perUser),
+        { merge: true }
+      ),
+    ]);
+  } catch(e) {
+    console.warn('[NR track] write failed:', e.message);
+  }
+}
+
 // ---- MULTI-PROVIDER callAI with fallback chain + token tracking ----
 async function _callProvider(pid, messages, maxTokens) {
   var p = AI_PROVIDERS[pid];
@@ -7877,7 +7944,9 @@ async function _callProvider(pid, messages, maxTokens) {
       text = JSON.stringify(resp);
     }
     if (!text) throw new Error('Puter returned empty response');
-    recordTokens('puter', Math.round(text.length/4));
+    var puterTok = Math.round(text.length/4);
+    recordTokens('puter', puterTok);
+    _nrTrackApiCall('puter', 'gpt-4o-mini', 0, puterTok);
     return text;
   }
 
@@ -7893,7 +7962,10 @@ async function _callProvider(pid, messages, maxTokens) {
     var data = await res.json();
     var text = data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text || '';
     var tokensUsed = (data.usageMetadata&&data.usageMetadata.totalTokenCount) || Math.round(text.length/4);
+    var gemInTok  = (data.usageMetadata&&data.usageMetadata.promptTokenCount)     || 0;
+    var gemOutTok = (data.usageMetadata&&data.usageMetadata.candidatesTokenCount)  || tokensUsed;
     recordTokens(pid, tokensUsed);
+    _nrTrackApiCall('gemini', p.model, gemInTok, gemOutTok);
     return text;
   }
 
@@ -7907,7 +7979,10 @@ async function _callProvider(pid, messages, maxTokens) {
     if (data.error) throw new Error(data.error.message||'API error');
     var text = data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content || '';
     var tokensUsed = (data.usage&&data.usage.total_tokens) || Math.round(text.length/4);
+    var cerInTok  = (data.usage&&data.usage.prompt_tokens)     || 0;
+    var cerOutTok = (data.usage&&data.usage.completion_tokens) || tokensUsed;
     recordTokens(pid, tokensUsed);
+    _nrTrackApiCall('cerebras', p.model, cerInTok, cerOutTok);
     return text;
   }
 
@@ -7921,7 +7996,10 @@ async function _callProvider(pid, messages, maxTokens) {
   if (data.error) throw new Error(data.error.message||'API error');
   var text = data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content || '';
   var tokensUsed = (data.usage&&data.usage.total_tokens) || Math.round(text.length/4);
+  var oaiInTok  = (data.usage&&data.usage.prompt_tokens)     || 0;
+  var oaiOutTok = (data.usage&&data.usage.completion_tokens) || tokensUsed;
   recordTokens(pid, tokensUsed);
+  _nrTrackApiCall(pid, p.model||pid, oaiInTok, oaiOutTok);
   return text;
 }
 
@@ -13270,7 +13348,9 @@ async function _callProviderStream(pid, messages, maxTokens, onChunk, signal) {
           var tok = (chunk && (chunk.text || (chunk.delta && chunk.delta.content))) || '';
           if (tok) { full += tok; onChunk(tok); }
         }
-        recordTokens('puter', Math.round(full.length / 4));
+        var puterTokS = Math.round(full.length / 4);
+        recordTokens('puter', puterTokS);
+        _nrTrackApiCall('puter', 'gpt-4o-mini', 0, puterTokS);
         return full;
       }
     } catch(streamErr) {
@@ -13292,7 +13372,9 @@ async function _callProviderStream(pid, messages, maxTokens, onChunk, signal) {
     }
     if (!fbText) throw new Error('Puter returned empty response');
     onChunk(fbText);
-    recordTokens('puter', Math.round(fbText.length / 4));
+    var puterFbTok = Math.round(fbText.length / 4);
+    recordTokens('puter', puterFbTok);
+    _nrTrackApiCall('puter', 'gpt-4o-mini', 0, puterFbTok);
     return fbText;
   }
 
@@ -13326,7 +13408,9 @@ async function _callProviderStream(pid, messages, maxTokens, onChunk, signal) {
         } catch(e2) {}
       }
     }
-    recordTokens(pid, Math.round(full.length / 4));
+    var gemStreamTok = Math.round(full.length / 4);
+    recordTokens(pid, gemStreamTok);
+    _nrTrackApiCall('gemini', p.model, 0, gemStreamTok);
     return full;
   }
 
@@ -13360,7 +13444,9 @@ async function _callProviderStream(pid, messages, maxTokens, onChunk, signal) {
       } catch(e3) {}
     }
   }
-  recordTokens(pid, Math.round(full2.length / 4));
+  var streamTok = Math.round(full2.length / 4);
+  recordTokens(pid, streamTok);
+  _nrTrackApiCall(pid, p.model||pid, 0, streamTok);
   return full2;
 }
 
