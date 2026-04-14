@@ -446,8 +446,27 @@ body.dark .sb-toggle::after{background:#fff;transform:translateX(14px)}
   position:absolute;bottom:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg,transparent 0%,rgba(184,150,46,.3) 30%,rgba(184,150,46,.3) 70%,transparent 100%);
 }
-.nr-greet-avatar{ display:none; }
-.nr-greet-body{width:100%;}
+.nr-greet-avatar{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:72px;
+  height:72px;
+  min-width:72px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#3a5c3d,#6b8f6e);
+  color:#fff;
+  font-size:22px;
+  font-weight:700;
+  letter-spacing:.03em;
+  overflow:hidden;
+  margin-right:14px;
+  border:2px solid rgba(184,150,46,.35);
+  box-shadow:0 2px 8px rgba(0,0,0,.12);
+  flex-shrink:0;
+}
+.nr-greet-card{display:flex;align-items:center;}
+.nr-greet-body{flex:1;min-width:0;}
 .nr-greet-line1{
   font-size:9.5px;font-weight:700;
   color:#a07828;
@@ -2930,7 +2949,7 @@ function nrUnlock() {
 
     /* Greeting card */
     var av = document.getElementById('nr-greet-avatar');
-    if (av) { av.textContent = initials; av.style.fontSize = '16px'; }
+    if (av) { av.style.display='flex'; av.textContent = initials; av.style.fontSize = '16px'; }
 
     var sal = document.getElementById('nr-greet-salutation');
     if (sal) sal.textContent = salutation;
@@ -3019,18 +3038,17 @@ function nrProfilePhotoSelected(input) {
   reader.onload = function(e) {
     var img = new Image();
     img.onload = function() {
-      // Compress to 220×220 max
-      var MAX = 220;
+      // Compress to 160x160 square crop for localStorage/Firestore safety
+      var MAX = 160;
       var w = img.width, h = img.height;
-      var scale = Math.min(MAX/w, MAX/h, 1);
-      var nw = Math.round(w * scale), nh = Math.round(h * scale);
+      var side = Math.min(w, h);
+      var sx = Math.round((w - side) / 2), sy = Math.round((h - side) / 2);
       var canvas = document.getElementById('nr-prof-canvas');
-      canvas.width = nw; canvas.height = nh;
+      canvas.width = MAX; canvas.height = MAX;
       var ctx = canvas.getContext('2d');
-      // Draw circular crop
-      ctx.clearRect(0, 0, nw, nh);
-      ctx.drawImage(img, 0, 0, nw, nh);
-      var b64 = canvas.toDataURL('image/jpeg', 0.78);
+      ctx.clearRect(0, 0, MAX, MAX);
+      ctx.drawImage(img, sx, sy, side, side, 0, 0, MAX, MAX);
+      var b64 = canvas.toDataURL('image/jpeg', 0.70);
       _nrPendingPhotoB64 = b64;
       // Preview in circle
       var circle = document.getElementById('nr-prof-photo-circle');
@@ -3120,6 +3138,7 @@ function _nrRefreshAllAvatars() {
   // Greeting card avatar
   var grAv = document.getElementById('nr-greet-avatar');
   if (grAv) {
+    grAv.style.display = 'flex';
     if (photo) { grAv.innerHTML = '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'; grAv.style.fontSize = 'unset'; }
     else { grAv.textContent = initials; grAv.style.fontSize = '16px'; }
   }
