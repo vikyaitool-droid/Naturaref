@@ -8528,17 +8528,17 @@ Respond ONLY with valid JSON (no markdown, no backticks):
 }`;
 
   try {
-    var raw = await callAI([{ role: 'user', content: prompt }], 6000);
+    var raw = await callAI([{ role: 'system', content: 'You are an expert BNYS clinician, functional medicine doctor, and clinical biochemist. Respond ONLY with valid JSON (no markdown, no backticks).' }, { role: 'user', content: prompt }], 6000);
     var out = extractJSON(raw);
     if (!out) {
       result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Could not parse response — please try again.</div>';
-      btn.disabled=false; btn.textContent='&#128300; Interpret Lab Results'; return;
+      btn.disabled=false; btn.innerHTML='&#128300; Interpret Lab Results'; return;
     }
     renderLabInterp(out);
   } catch(e) {
     result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; ' + (e.message||'Connection error') + ' — check your API key and internet, then retry.</div>';
   }
-  btn.disabled=false; btn.textContent='&#128300; Interpret Lab Results';
+  btn.disabled=false; btn.innerHTML='&#128300; Interpret Lab Results';
 }
 
 // ═══════════════════════════════════════════════════
@@ -8821,7 +8821,8 @@ async function generateHerbDrug() {
   if (!isOnline()) { showOfflineBanner('herbdrug-result', 'Check Interaction'); return; }
   btn.disabled = true; btn.textContent = 'Generating...';
   result.innerHTML = '<div style="text-align:center;padding:36px 20px;font-size:13px;color:#555"><div style="font-size:30px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:10px">&#127807;</div><br>' + 'Checking interaction: <b>' + _mainInput + '</b>...<br><span style="font-size:11px;opacity:.6;margin-top:4px;display:block">Usually 10-15 seconds</span></div>';
-  var prompt = 'You are an expert BNYS clinical pharmacologist and herbalist. Check ALL herb-drug interactions comprehensively.'
+  var _hdSys = 'You are an expert BNYS clinical pharmacologist and herbalist. Respond ONLY with valid JSON (no markdown, no backticks).';
+  var prompt = 'Check ALL herb-drug interactions comprehensively.'
     + '\nHerbs and supplements: ' + _herb
     + '\nDrugs and medications: ' + _drug
     + (_cond?'\nPatient condition: '+_cond:'')
@@ -8832,14 +8833,14 @@ async function generateHerbDrug() {
     + '\nPre-surgery context: ' + _surgery
     + '\n\nAnalyse ALL possible interactions between the listed herbs and drugs. For each interaction pair provide full clinical detail. Respond ONLY with valid JSON (no markdown):{"title":"Herb-Drug Interaction Report","patientContext":"brief patient context summary","overallRisk":"Low|Moderate|High|Critical","interactions":[{"herb":"herb name","drug":"drug name","severity":"None|Minor|Moderate|Major|Contraindicated","mechanism":"pharmacokinetic or pharmacodynamic mechanism","clinicalEffect":"what happens clinically","timing":"when interaction occurs","management":"specific clinical management","separation":"timing separation if applicable (e.g. take 2 hrs apart)","monitoring":"what to monitor and how often","alternative":"safer herbal alternative if interaction is significant"}],"preSurgeryAdvice":"specific pre-surgery advice for all listed herbs","renalAdjustments":"dose adjustments needed for renal function","liverAdjustments":"dose adjustments for liver function","safeToUse":["combination considered safe"],"avoid":["combination to avoid"],"note":"clinical disclaimer"}'
   try {
-    var raw = await callAI([{ role: 'user', content: prompt }], 4000);
+    var raw = await callAI([{ role: 'system', content: _hdSys }, { role: 'user', content: prompt }], 5000);
     var out = extractJSON(raw);
-    if (!out) { result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>'; btn.disabled=false; btn.textContent='&#10024; Check Interaction'; return; }
+    if (!out) { result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>'; btn.disabled=false; btn.innerHTML='&#10024; Check Interaction'; return; }
     renderHerbDrug(out);
   } catch(e) {
     result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; ' + (e.message || 'Connection error') + ' &mdash; check your API key and internet connection, then retry.</div>';
   }
-  btn.disabled=false; btn.textContent='&#10024; Check Interaction';
+  btn.disabled=false; btn.innerHTML='&#10024; Check Interaction';
 }
 
 function renderHerbDrug(out) {
@@ -8904,8 +8905,7 @@ async function generateSOAP() {
   if (!isOnline()) { showOfflineBanner('soap-result', 'Build SOAP Note + BNYS Plan'); return; }
   btn.disabled = true; btn.textContent = 'Generating...';
   result.innerHTML = '<div style="text-align:center;padding:36px 20px;font-size:13px;color:#555"><div style="font-size:30px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:10px">&#128203;</div><br>' + 'Building SOAP note for <b>' + _mainInput + '</b>...<br><span style="font-size:11px;opacity:.6;margin-top:4px;display:block">Usually 10-15 seconds</span></div>';
-  var prompt = _sys2
-    + '\nChief complaint: ' + _mainInput
+  var prompt = 'Chief complaint: ' + _mainInput
     + '\nDemographics: ' + (_demo||'not specified')
     + '\nVisit type: ' + _visit
     + '\nSpeciality focus: ' + _spec
@@ -8916,14 +8916,14 @@ async function generateSOAP() {
     + (_prev ? '\nPrevious treatments: ' + _prev : '')
     + '\n\nGenerate a complete BNYS SOAP note with full assessment and treatment plan. Use specific times in the plan. Never use cd. Sign as Dr. Vikranth only.\n\nRespond ONLY with valid JSON (no markdown):{"title":"SOAP Note — Dr. Vikranth","date":"today","visitType":"'+_visit+'","S":{"cc":"chief complaint","hpi":"history of presenting illness","pmh":"relevant past medical history","meds":"current medications","allergies":"known allergies"},"O":{"vitals":"vitals summary","exam":"examination findings","labs":"lab findings"},"A":{"primary":"primary diagnosis","differentials":["differential 1","differential 2","differential 3"],"icd10":"ICD-10 code suggestion","naturopathicAssessment":"naturopathic clinical assessment including constitutional type if relevant"},"P":{"investigations":["investigation to order"],"naturopathic":{"diet":"specific diet plan summary with times","yoga":"yoga and pranayama","hydrotherapy":"hydrotherapy plan","herbs":"herbal prescription with doses","acupressure":"specific acupressure points","lifestyle":"lifestyle modifications with times"},"conventional":"conventional referral or co-management if needed","followUp":"specific follow-up plan with timeline"},"patientInstructions":"plain English instructions for the patient","clinicalPearl":"key clinical pearl","signature":"Dr. Vikranth"}'
   try {
-    var raw = await callAI([{ role: 'user', content: prompt }], 4000);
+    var raw = await callAI([{ role: 'system', content: _sys2 }, { role: 'user', content: prompt }], 6000);
     var out = extractJSON(raw);
-    if (!out) { result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>'; btn.disabled=false; btn.textContent='&#10024; Build SOAP Note + BNYS Plan'; return; }
+    if (!out) { result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>'; btn.disabled=false; btn.innerHTML='&#10024; Build SOAP Note + BNYS Plan'; return; }
     renderSOAP(out);
   } catch(e) {
     result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; ' + (e.message || 'Connection error') + ' &mdash; check your API key and internet connection, then retry.</div>';
   }
-  btn.disabled=false; btn.textContent='&#10024; Build SOAP Note + BNYS Plan';
+  btn.disabled=false; btn.innerHTML='&#10024; Build SOAP Note + BNYS Plan';
 }
 
 function renderSOAP(out) {
@@ -9009,8 +9009,7 @@ async function generateDiseaseProto() {
   btn.disabled = true; btn.textContent = 'Generating...';
   result.innerHTML = '<div style="text-align:center;padding:36px 20px;font-size:13px;color:#555"><div style="font-size:30px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:10px">&#127973;</div><br>' + 'Generating BNYS protocol for <b>' + _mainInput + '</b>...<br><span style="font-size:11px;opacity:.6;margin-top:4px;display:block">Usually 10-15 seconds</span></div>';
   var _sys2 = 'You are an expert clinical AI assistant supporting a Naturopathy and Yogic Sciences (BNYS) practice. Your primary responsibility is to generate structured, practical, and medically sound wellness and diet plans based on the patient symptoms, vitals, or diagnoses provided by the attending physician.\n\nClinical Guidelines:\n- Ground all recommendations in evidence-based naturopathic principles, clinical nutrition, hydrotherapy, and therapeutic yoga.\n- When relevant, factor in metabolic health and biochemical pathways (e.g., intracellular mineral balance such as magnesium and phosphate) to support deep cellular healing.\n- Maintain a highly professional, clinical, yet patient-friendly tone.\n\nStrict Formatting Rules:\n- All daily routines and diet plans MUST use specific times (e.g., 6:00 AM, 8:00 AM, 12:30 PM). Never group by broad categories alone.\n- NEVER use the abbreviation cd under any circumstances. Write all instructions clearly.\n- Every plan must end with the signature: Dr. Vikranth — the name only, no preceding words like Regards or Sincerely.\n\nRespond ONLY with valid JSON (no markdown, no backticks).';
-  var prompt = _sys2
-    + '\nDisease: ' + _mainInput
+  var prompt = 'Disease: ' + _mainInput
     + '\nStage: ' + _stage
     + '\nAge: ' + (_age||'adult')
     + '\nTreatment setting: ' + _setting
@@ -9019,14 +9018,14 @@ async function generateDiseaseProto() {
     + (_dpContra?'\nComorbidities and contraindications: '+_dpContra:'')
     + '\n\nGenerate a complete BNYS management protocol. Use specific times for all schedules. Address metabolic pathways. Never use cd. Sign as Dr. Vikranth only.\n\nReturn JSON: {"title":"BNYS Protocol for DISEASE","overview":"3-4 sentence overview with metabolic rationale","goals":["goal 1","goal 2","goal 3"],"dailyRoutine":[{"time":"6:00 AM","activity":"specific"},{"time":"7:00 AM","activity":"activity"},{"time":"8:00 AM","activity":"breakfast"},{"time":"10:00 AM","activity":"treatment"},{"time":"12:30 PM","activity":"lunch"},{"time":"4:00 PM","activity":"treatment"},{"time":"6:00 PM","activity":"yoga or walk"},{"time":"8:30 PM","activity":"night routine"}],"diet":{"principles":"principles with metabolic rationale","include":["food 1 - reason","food 2","food 3","food 4","food 5"],"avoid":["food 1 - reason","food 2","food 3"],"fasting":"specific fasting recommendation"},"yoga":{"asanas":[{"name":"asana","duration":"duration","benefit":"specific benefit"}],"pranayama":"specific pranayama with duration","duration":"total session duration"},"hydrotherapy":[{"treatment":"name","temperature":"specific temp in Celsius","technique":"technique","duration":"duration","frequency":"times per week"}],"herbs":[{"name":"herb","dose":"specific dose","timing":"time of day","benefit":"specific benefit"}],"acupressure":[{"point":"code and name","location":"precise location","benefit":"specific benefit"}],"lifestyle":["tip 1","tip 2","tip 3","tip 4"],"monitoring":["parameter to monitor"],"contraindications":["caution 1","caution 2"],"referral":"specific criteria for conventional referral","note":"clinical disclaimer","signature":"Dr. Vikranth"}';
   try {
-    var raw = await callAI([{ role: 'user', content: prompt }], 4000);
+    var raw = await callAI([{ role: 'system', content: _sys2 }, { role: 'user', content: prompt }], 6000);
     var out = extractJSON(raw);
-    if (!out) { result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>'; btn.disabled=false; btn.textContent='&#10024; Generate BNYS Protocol'; return; }
+    if (!out) { result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>'; btn.disabled=false; btn.innerHTML='&#10024; Generate BNYS Protocol'; return; }
     renderDiseaseProto(out);
   } catch(e) {
     result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; ' + (e.message || 'Connection error') + ' &mdash; check your API key and internet connection, then retry.</div>';
   }
-  btn.disabled=false; btn.textContent='&#10024; Generate BNYS Protocol';
+  btn.disabled=false; btn.innerHTML='&#10024; Generate BNYS Protocol';
 }
 
 function renderDiseaseProto(out) {
@@ -9220,17 +9219,17 @@ async function generateAcuPoints() {
   var prompt = 'You are an expert BNYS acupuncture, acupressure, and Ayurvedic Marma therapist with 20 years clinical experience. Generate a complete point prescription.\n\nCondition: '+disease+'\nTherapeutic goal: '+goal+'\nPoint system: '+system+(pattern?'\nTCM/Ayurvedic pattern: '+pattern:'')+'\nPatient type: '+patient+'\nTarget number of points: '+count+'\n\nRespond ONLY with valid JSON, no markdown, no backticks:\n{\n  "title": "Point Prescription for CONDITION",\n  "intro": "2-3 sentence TCM/naturopathic rationale for this prescription",\n  "tcmPattern": "TCM diagnosis or Ayurvedic imbalance",\n  "principleOfTreatment": "TCM treatment principle (e.g. Tonify Kidney Yin, Regulate Liver Qi)",\n  "primaryPoints": [\n    {\n      "code": "e.g. LI4, ST36, PC6",\n      "name": "Full point name",\n      "meridian": "meridian channel name",\n      "location": "precise anatomical location using body landmarks",\n      "acupressureMethod": "pressure technique, direction, rotation",\n      "needleDepth": "depth in cun for acupuncture (e.g. 0.5-1 cun perpendicular)",\n      "stimulation": "tonification or sedation method",\n      "duration": "duration for acupressure per point per session",\n      "benefit": "specific therapeutic action for this condition",\n      "caution": "any specific caution for this point"\n    }\n  ],\n  "marmaPoints": [\n    {\n      "name": "Marma name",\n      "location": "anatomical location",\n      "technique": "specific technique including oil or pressure",\n      "benefit": "therapeutic benefit"\n    }\n  ],\n  "earAcupuncture": [\n    {\n      "point": "ear point name",\n      "location": "location on auricle",\n      "indication": "therapeutic use"\n    }\n  ],\n  "sessionProtocol": {\n    "frequency": "sessions per week",\n    "totalSessions": "recommended course length",\n    "duration": "minutes per session",\n    "pressure": "pressure level for acupressure",\n    "timing": "best time of day",\n    "sequence": "order of point stimulation"\n  },\n  "lifestyle": [\n    "dietary recommendation relevant to TCM pattern",\n    "lifestyle recommendation"\n  ],\n  "selfCareInstructions": [\n    "self-acupressure instruction the patient can do at home"\n  ],\n  "contraindications": ["absolute contraindication for this prescription"],\n  "note": "safety disclaimer"\n}';
 
   try {
-    var raw = await callAI([{ role: 'user', content: prompt }], 5000);
+    var raw = await callAI([{ role: 'system', content: 'You are an expert BNYS acupuncture, acupressure, and Ayurvedic Marma therapist with 20 years clinical experience. Respond ONLY with valid JSON (no markdown, no backticks).' }, { role: 'user', content: prompt }], 5000);
     var out = extractJSON(raw);
     if (!out) {
       result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Could not parse response — please try again.</div>';
-      btn.disabled=false; btn.textContent='&#128070; Generate Point Prescription'; return;
+      btn.disabled=false; btn.innerHTML='&#128070; Generate Point Prescription'; return;
     }
     renderAcuPoints(out);
   } catch(e) {
     result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; ' + (e.message||'Connection error') + ' — check your API key and internet connection, then retry.</div>';
   }
-  btn.disabled=false; btn.textContent='&#128070; Generate Point Prescription';
+  btn.disabled=false; btn.innerHTML='&#128070; Generate Point Prescription';
 }
 
 function renderAcuPoints(out) {
@@ -9365,8 +9364,8 @@ async function generateFastingPlan() {
   if (!isOnline()) { showOfflineBanner('fast-result', 'Generate Fasting Protocol'); return; }
   btn.disabled = true; btn.textContent = 'Generating...';
   result.innerHTML = '<div style="text-align:center;padding:36px 20px;font-size:13px;color:#555"><div style="font-size:30px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:10px">&#9889;</div><br>' + 'Designing fasting protocol for <b>' + _mainInput + '</b>...<br><span style="font-size:11px;opacity:.6;margin-top:4px;display:block">Usually 10-15 seconds</span></div>';
-  var prompt = 'You are an expert BNYS naturopathic physician specialising in therapeutic fasting.'
-    + '\nDisease: ' + _mainInput
+  var _fastSys = 'You are an expert BNYS naturopathic physician specialising in therapeutic fasting. Respond ONLY with valid JSON (no markdown, no backticks).';
+  var prompt = 'Disease: ' + _mainInput
     + '\nAge: ' + (_age||'adult')
     + '\nHealth status: ' + _status
     + '\nFasting experience: ' + _exp
@@ -9375,14 +9374,14 @@ async function generateFastingPlan() {
     + (_fastMeds?'\nCurrent medications (safety check required): '+_fastMeds:'')
     + '\n\nDesign a complete therapeutic fasting protocol. All schedules must use specific times. Flag any medication interactions or contraindications. Provide day-by-day schedule. Never use cd. Sign as Dr. Vikranth.\n\nRespond ONLY with valid JSON (no markdown):{"title":"Therapeutic Fasting Protocol — Dr. Vikranth","intro":"rationale for fasting in this condition (3-4 sentences with metabolic basis)","safetyCheck":"medication safety assessment and any adjustments needed","fastingType":"recommended fasting type","duration":"recommended duration","phases":[{"phase":"phase name","duration":"duration","instructions":"detailed time-based instructions"}],"dailySchedule":[{"time":"6:00 AM","activity":"specific activity"},{"time":"7:00 AM","activity":"activity"},{"time":"9:00 AM","activity":"activity"},{"time":"12:00 PM","activity":"activity"},{"time":"3:00 PM","activity":"activity"},{"time":"6:00 PM","activity":"activity"},{"time":"8:30 PM","activity":"activity"}],"allowed":["allowed item with quantity and timing"],"prohibited":["prohibited item with reason"],"herbalSupport":["herb — dose — timing — benefit"],"monitoring":[{"symptom":"symptom to watch","action":"what to do"}],"refeeding":{"day1":"first day after fasting","day2-3":"gradual reintroduction","week1":"first week after"},"seasonalAdaptations":"specific adjustments for the stated season","contraindications":["contraindication"],"note":"safety disclaimer","signature":"Dr. Vikranth"}'
   try {
-    var raw = await callAI([{ role: 'user', content: prompt }], 4000);
+    var raw = await callAI([{ role: 'system', content: _fastSys }, { role: 'user', content: prompt }], 5000);
     var out = extractJSON(raw);
-    if (!out) { result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>'; btn.disabled=false; btn.textContent='&#10024; Generate Fasting Protocol'; return; }
+    if (!out) { result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>'; btn.disabled=false; btn.innerHTML='&#10024; Generate Fasting Protocol'; return; }
     renderFastingPlan(out);
   } catch(e) {
     result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; ' + (e.message || 'Connection error') + ' &mdash; check your API key and internet connection, then retry.</div>';
   }
-  btn.disabled=false; btn.textContent='&#10024; Generate Fasting Protocol';
+  btn.disabled=false; btn.innerHTML='&#10024; Generate Fasting Protocol';
 }
 
 function renderFastingPlan(out) {
@@ -9448,8 +9447,8 @@ async function generateHydroProto() {
   if (!isOnline()) { showOfflineBanner('hydro-result', 'Generate Hydrotherapy Protocol'); return; }
   btn.disabled = true; btn.textContent = 'Generating...';
   result.innerHTML = '<div style="text-align:center;padding:36px 20px;font-size:13px;color:#555"><div style="font-size:30px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:10px">&#128167;</div><br>' + 'Designing hydrotherapy for <b>' + _mainInput + '</b>...<br><span style="font-size:11px;opacity:.6;margin-top:4px;display:block">Usually 10-15 seconds</span></div>';
-  var prompt = 'You are an expert BNYS hydrotherapy clinician with 20 years of clinical experience.'
-    + '\nCondition: ' + _mainInput
+  var _hydroSys = 'You are an expert BNYS hydrotherapy clinician with 20 years of clinical experience. Respond ONLY with valid JSON (no markdown, no backticks).';
+  var prompt = 'Condition: ' + _mainInput
     + '\nAge: ' + (_age||'adult')
     + '\nDisease stage: ' + _stage
     + '\nBody part focus: ' + _focus
@@ -9458,14 +9457,14 @@ async function generateHydroProto() {
     + (_contra?'\nContraindications: '+_contra:'')
     + '\n\nDesign a comprehensive hydrotherapy protocol. Give precise temperatures in Celsius and Fahrenheit. Provide step-by-step procedures. Time-structure the daily plan. Never use cd. Sign as Dr. Vikranth.\n\nRespond ONLY with valid JSON (no markdown):{"title":"Hydrotherapy Protocol — Dr. Vikranth","rationale":"2-3 sentence therapeutic rationale with physiological basis","treatments":[{"name":"treatment name","type":"Hot|Cold|Contrast|Neutral|Steam","technique":"numbered step-by-step procedure","temperatureC":"temperature in Celsius","temperatureF":"temperature in Fahrenheit","duration":"duration in minutes","frequency":"times per week","bestTime":"best time of day","benefit":"specific therapeutic benefit","precaution":"precaution"}],"dailyPlan":[{"time":"6:00 AM","treatment":"specific treatment"},{"time":"10:00 AM","treatment":"treatment"},{"time":"4:00 PM","treatment":"treatment"},{"time":"8:00 PM","treatment":"treatment"}],"homeRemedies":["home treatment with detailed instructions"],"progressionPlan":{"week1":"week 1 protocol","week2":"week 2 progression","week3-4":"weeks 3-4 advancement"},"seasonalAdaptations":"specific adjustments for temperature sensitivity or climate","contraindications":["contraindication"],"note":"safety disclaimer","signature":"Dr. Vikranth"}'
   try {
-    var raw = await callAI([{ role: 'user', content: prompt }], 4000);
+    var raw = await callAI([{ role: 'system', content: _hydroSys }, { role: 'user', content: prompt }], 5000);
     var out = extractJSON(raw);
-    if (!out) { result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>'; btn.disabled=false; btn.textContent='&#10024; Generate Hydrotherapy Protocol'; return; }
+    if (!out) { result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>'; btn.disabled=false; btn.innerHTML='&#10024; Generate Hydrotherapy Protocol'; return; }
     renderHydroProto(out);
   } catch(e) {
     result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; ' + (e.message || 'Connection error') + ' &mdash; check your API key and internet connection, then retry.</div>';
   }
-  btn.disabled=false; btn.textContent='&#10024; Generate Hydrotherapy Protocol';
+  btn.disabled=false; btn.innerHTML='&#10024; Generate Hydrotherapy Protocol';
 }
 
 function renderHydroProto(out) {
@@ -9554,8 +9553,7 @@ async function generateDietChart() {
     + '<span style="font-size:11px;opacity:.7;margin-top:4px;display:block">Usually 10-15 seconds</span></div>';
 
   var _sys = 'You are an expert clinical AI assistant supporting a Naturopathy and Yogic Sciences (BNYS) practice. Your primary responsibility is to generate structured, practical, and medically sound wellness and diet plans based on the patient symptoms, vitals, or diagnoses provided by the attending physician.\n\nClinical Guidelines:\n- Ground all recommendations in evidence-based naturopathic principles, clinical nutrition, hydrotherapy, and therapeutic yoga.\n- When relevant, factor in metabolic health and biochemical pathways (e.g., intracellular mineral balance such as magnesium and phosphate) to support deep cellular healing.\n- Maintain a highly professional, clinical, yet patient-friendly tone.\n\nStrict Formatting Rules:\n- All daily routines and diet plans MUST use specific times (e.g., 6:00 AM, 8:00 AM, 12:30 PM). Never group by broad categories alone.\n- NEVER use the abbreviation cd under any circumstances. Write all instructions clearly.\n- Every plan must end with the signature: Dr. Vikranth — the name only, no preceding words like Regards or Sincerely.\n\nRespond ONLY with valid JSON (no markdown, no backticks).';
-  var prompt = _sys
-    + '\n\nPatient condition: ' + disease
+  var prompt = 'Patient condition: ' + disease
     + '\nAge: ' + (age||'adult')
     + (wt ? '\nWeight: ' + wt + 'kg' : '')
     + '\nActivity level: ' + activity
@@ -9567,18 +9565,18 @@ async function generateDietChart() {
     + '\n\nGenerate a complete time-structured naturopathic diet plan with EXACTLY 8 time slots. Factor in relevant biochemical pathways for the condition. Never use the abbreviation cd. Sign off as Dr. Vikranth only.\n\nReturn JSON: {"title":"Naturopathic Diet Plan for CONDITION","intro":"2-3 sentence evidence-based rationale with metabolic pathway relevance","slots":[{"time":"6:00 AM","label":"Warm Water Therapy and Movement","options":["2-4 glasses warm water plus specific exercise with duration","option 2","option 3","option 4"]},{"time":"7:00 AM","label":"Morning Therapeutic Drink","options":["specific drink with ingredients","option 2","option 3","option 4"]},{"time":"8:00 AM - 9:00 AM","label":"Breakfast","options":["specific with portions","option 2","option 3","option 4","option 5"]},{"time":"11:00 AM","label":"Mid-Morning","options":["specific","option 2","option 3","option 4","option 5"]},{"time":"12:30 PM - 1:30 PM","label":"Lunch","options":["specific with portions","option 2","option 3","option 4"]},{"time":"4:00 PM - 5:00 PM","label":"Evening","options":["specific","option 2","option 3","option 4"]},{"time":"6:30 PM - 7:30 PM","label":"Dinner","options":["specific with note","option 2","option 3","option 4"]},{"time":"8:30 PM","label":"Night Drink","options":["specific with benefit","option 2","option 3"]}],"eatMore":["food 1 - reason","food 2","food 3","food 4","food 5","food 6","food 7","food 8"],"avoid":["food 1 - reason","food 2","food 3","food 4","food 5"],"herbs":["herb - dose - benefit","herb 2 - dose - benefit","herb 3 - dose - benefit","herb 4 - dose - benefit"],"supplements":["supplement - dose - timing - rationale","supplement 2","supplement 3"],"weeklyTips":["Monday to Wednesday variation","Thursday to Friday variation","Weekend or fasting day"],"lifestyle":["specific sleep tip with time","stress management tip","hydration tip with quantities","additional tip"],"metabolicNote":"brief note on key metabolic targets addressed","note":"clinical disclaimer and follow-up","signature":"Dr. Vikranth"}';
 
   try {
-    var raw = await callAI([{ role: 'user', content: prompt }], 4000);
+    var raw = await callAI([{ role: 'system', content: _sys }, { role: 'user', content: prompt }], 6000);
     var chart = extractJSON(raw);
     if (!chart) {
       result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>';
-      btn.disabled = false; btn.textContent = '&#10024; Generate AI Diet Chart'; return;
+      btn.disabled = false; btn.innerHTML='&#10024; Generate AI Diet Chart'; return;
     }
     renderDietChart(chart, disease, pref);
   } catch(err) {
     result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; ' + (err.message || 'Connection error') + ' &mdash; check your API key (&#128273; button) and internet, then retry.</div>';
   }
   btn.disabled = false;
-  btn.textContent = '&#10024; Generate AI Diet Chart';
+  btn.innerHTML='&#10024; Generate AI Diet Chart';
 }
 
 function renderDietChart(chart, disease, pref) {
@@ -9775,8 +9773,8 @@ async function generateYogaChart() {
     + '<br>Building yoga protocol for <b>' + disease + '</b>...<br>'
     + '<span style="font-size:11px;opacity:.7;margin-top:4px;display:block">Usually 10-15 seconds</span></div>';
 
-  var prompt = 'You are an expert BNYS yoga therapist.\n'
-    + 'Generate a therapeutic yoga protocol for:\n'
+  var _yogaSys = 'You are an expert BNYS yoga therapist. Respond ONLY with valid JSON (no markdown, no backticks).';
+  var prompt = 'Generate a therapeutic yoga protocol for:\n'
     + 'Disease: ' + disease + '\nAge: ' + (age || 'adult')
     + '\nGender: ' + gender + '\nFitness Level: ' + level
     + '\nContraindications: ' + (contra || 'none') + '\n\n'
@@ -9794,18 +9792,18 @@ async function generateYogaChart() {
     + '\nInclude 6-10 asanas, 2-4 pranayama, all 7 days. Be specific.';
 
   try {
-    var raw = await callAI([{ role: 'user', content: prompt }], 4000);
+    var raw = await callAI([{ role: 'system', content: _yogaSys }, { role: 'user', content: prompt }], 5000);
     var chart = extractJSON(raw);
     if (!chart) {
       result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>';
-      btn.disabled = false; btn.textContent = '&#10024; Generate AI Yoga Protocol'; return;
+      btn.disabled = false; btn.innerHTML='&#10024; Generate AI Yoga Protocol'; return;
     }
     renderYogaChart(chart);
   } catch(err) {
     result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; ' + (err.message || 'Connection error') + ' &mdash; check your API key (&#128273; button) and internet, then retry.</div>';
   }
   btn.disabled = false;
-  btn.textContent = '&#10024; Generate AI Yoga Protocol';
+  btn.innerHTML='&#10024; Generate AI Yoga Protocol';
 }
 
 function renderYogaChart(chart) {
@@ -9908,7 +9906,7 @@ async function generateNaturoPlanner() {
   result.innerHTML = '<div style="text-align:center;padding:36px 20px;font-size:13px;color:#555"><div style="font-size:30px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:10px">🌿</div><br>Generating naturopathy plan for <b>' + disease + '</b>...<br><span style="font-size:11px;opacity:.6;margin-top:4px;display:block">Usually 15–20 seconds</span></div>';
   var prompt = 'You are an expert BNYS naturopathy physician. Generate a comprehensive personalised naturopathy treatment plan.\nDisease: ' + disease + '\nStage: ' + stage + '\nAge: ' + (age || 'adult') + '\nContraindications: ' + (contra || 'none') + '\nSetting: ' + setting + '\n\nRespond ONLY with valid JSON (no markdown):\n{"title":"Naturopathy Treatment Plan for DISEASE","overview":"2-3 sentence naturopathic overview","hydrotherapy":[{"treatment":"name","temperature":"temp","duration":"duration","frequency":"freq/week","benefits":"benefits","contraindications":"contraindications","procedure":"brief steps"}],"mudTherapy":[{"application":"type","area":"body area","duration":"duration","frequency":"freq","benefits":"benefits","contraindications":"contraindications"}],"massage":[{"type":"type","area":"area","oil":"oil","duration":"duration","frequency":"freq","benefits":"benefits"}],"dietPlan":{"principle":"core principle","eatMore":["food1","food2","food3","food4","food5"],"avoid":["food1","food2","food3"],"fasting":"fasting recommendation","timing":"meal timing"},"yogaAsanas":[{"name":"name","duration":"duration","benefit":"benefit"}],"pranayama":[{"name":"name","duration":"duration","benefit":"benefit"}],"acupressure":[{"point":"point name","location":"location","benefit":"benefit"}],"chromotherapy":"colour and application","magneto":"pole and application","lifestyle":["tip1","tip2","tip3","tip4"],"duration":"total programme duration","followUp":"follow-up plan","contraindications":["caution1","caution2"],"note":"disclaimer"}';
   try {
-    var raw = await callAI([{ role: 'user', content: prompt }], 4000);
+    var raw = await callAI([{ role: 'system', content: 'You are an expert BNYS naturopathy physician. Respond ONLY with valid JSON (no markdown, no backticks).' }, { role: 'user', content: prompt }], 6000);
     var out = extractJSON(raw);
     if (!out) {
       result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>';
