@@ -955,14 +955,13 @@ body.dark .lux-calc-back { background:#221e18; border-color:#3a3028; }
 .sec-view{flex:1;display:none;flex-direction:column;overflow:hidden;min-height:0}
 .sec-view.active{display:flex!important;flex-direction:column;overflow:hidden}
 .sec-hdr{
-  padding:10px 16px;border-bottom:1.5px solid var(--border);
+  padding:6px 14px;border-bottom:1px solid var(--border);
   background:var(--warm);flex-shrink:0;
-  box-shadow:0 2px 6px rgba(80,60,40,.05);
 }
-.sec-hdr-row{display:flex;align-items:center;gap:10px}
-.sec-hicon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.sec-title{font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--tx)}
-.sec-sub{font-size:10px;color:var(--mu);margin-top:1px}
+.sec-hdr-row{display:flex;align-items:center;gap:8px}
+.sec-hicon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.sec-title{font-family:'Lora',serif;font-size:14px;font-weight:700;color:var(--tx)}
+.sec-sub{font-size:9.5px;color:var(--mu);margin-top:0px}
 
 /* stabs */
 .stabs{background:var(--warm);border-bottom:1.5px solid var(--border);flex-shrink:0;overflow:visible}
@@ -2371,7 +2370,9 @@ body.dark .tab-index{background:#1a1612}
           <select id="nr-f-qual">
             <option value="">— Select —</option>
             <option value="BNYS">BNYS</option>
-            <option value="MD">MD</option>
+            <option value="MD">MD (Naturopathy)</option>
+            <option value="BPT">BPT (Physiotherapy)</option>
+            <option value="MPT">MPT (Physiotherapy)</option>
             <option value="BAMS">BAMS</option>
             <option value="BHMS">BHMS</option>
             <option value="BDS">BDS</option>
@@ -3794,6 +3795,8 @@ async function nrCheckSessionStatus() {
             onfocus="this.style.borderColor='#6b8f6e'" onblur="this.style.borderColor='#e0d4c0'">
             <option value="BNYS">BNYS</option>
             <option value="MD">MD (Naturopathy)</option>
+            <option value="BPT">BPT (Physiotherapy)</option>
+            <option value="MPT">MPT (Physiotherapy)</option>
             <option value="BAMS">BAMS</option>
             <option value="BHMS">BHMS</option>
             <option value="BDS">BDS</option>
@@ -4996,14 +4999,13 @@ SECS.forEach(sec => {
         <div class="sec-sub">Evidence-based time-structured meal plan · Metabolic-pathway targeted · Patient-ready</div></div>
       </div></div>
       <div class="ca" id="ca-dietchart" style="overflow-y:auto">
-        <div style="max-width:980px;margin:0 auto;padding:20px 20px 60px">
-          <div style="background:linear-gradient(135deg,#065f46,#022c1a);border-radius:16px;padding:22px 24px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:relative;overflow:hidden">
-            <div style="position:absolute;right:-20px;top:-20px;width:140px;height:140px;background:radial-gradient(circle,rgba(201,168,76,.12),transparent);pointer-events:none"></div>
-            <div style="font-size:46px;flex-shrink:0">🥗</div>
-            <div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:4px;letter-spacing:.02em">AI Naturopathic Diet Chart</div>
-            <div style="font-size:12px;opacity:.85;line-height:1.6">Time-structured · Metabolically targeted · Evidence-based · Patient-ready</div></div>
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 50px">
+          <div style="background:linear-gradient(135deg,#065f46,#022c1a);border-radius:10px;padding:9px 13px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:10px">
+            <div style="font-size:24px;flex-shrink:0">🥗</div>
+            <div><div style="font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;margin-bottom:2px">AI Naturopathic Diet Chart</div>
+            <div style="font-size:10px;opacity:.8;line-height:1.4">Time-structured · Metabolically targeted · Evidence-based · Patient-ready</div></div>
           </div>
-          <div style="background:var(--surf);border:1.5px solid rgba(6,95,70,.18);border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 4px 24px rgba(0,0,0,.06)">
+          <div style="background:var(--surf);border:1.5px solid rgba(6,95,70,.18);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 2px 12px rgba(0,0,0,.05)">
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:11px;margin-bottom:14px">
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Disease / Condition *</label><input id="diet-disease" class="calc-input" placeholder="e.g. T2DM, Hypertension, PCOS"/></div>
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Age</label><input id="diet-age" type="number" class="calc-input" placeholder="e.g. 45"/></div>
@@ -5045,14 +5047,14 @@ SECS.forEach(sec => {
         <div class="sec-sub">Condition-specific asana sequence · Pranayama protocol · Progression plan</div></div>
       </div></div>
       <div class="ca" id="ca-yogachart" style="overflow-y:auto">
-        <div style="max-width:980px;margin:0 auto;padding:20px 20px 60px">
-          <div style="background:linear-gradient(135deg,#5b21b6,#2e1065);border-radius:16px;padding:22px 24px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:relative;overflow:hidden">
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 50px">
+          <div style="background:linear-gradient(135deg,#5b21b6,#2e1065);border-radius:10px;padding:9px 13px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:10px">
             <div style="position:absolute;right:-20px;top:-20px;width:140px;height:140px;background:radial-gradient(circle,rgba(201,168,76,.1),transparent);pointer-events:none"></div>
-            <div style="font-size:46px;flex-shrink:0">🧘</div>
+            <div style="font-size:24px;flex-shrink:0">🧘</div>
             <div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:4px">AI Therapeutic Yoga Planner</div>
-            <div style="font-size:12px;opacity:.85;line-height:1.6">Personalised asana sequences · Pranayama · Meditation · Shavasana · Weekly progression</div></div>
+            <div style="font-size:10px;opacity:.8;line-height:1.4">Personalised asana sequences · Pranayama · Meditation · Shavasana · Weekly progression</div></div>
           </div>
-          <div style="background:var(--surf);border:1.5px solid rgba(124,58,237,.18);border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 4px 24px rgba(0,0,0,.06)">
+          <div style="background:var(--surf);border:1.5px solid rgba(124,58,237,.18);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 2px 12px rgba(0,0,0,.05)">
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:11px;margin-bottom:14px">
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Disease / Condition *</label><input id="yoga-disease" class="calc-input" placeholder="e.g. PCOS, Back Pain, Anxiety"/></div>
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Age</label><input id="yoga-age" type="number" class="calc-input" placeholder="e.g. 35"/></div>
@@ -5200,8 +5202,8 @@ SECS.forEach(sec => {
         <div style="max-width:980px;margin:0 auto;padding-bottom:40px">
 
           <!-- Header banner -->
-          <div style="background:linear-gradient(135deg,#1a6b3c,#0f4025);border-radius:16px;padding:22px 24px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-            <div style="font-size:46px;flex-shrink:0">🔬</div>
+          <div style="background:linear-gradient(135deg,#1a6b3c,#0f4025);border-radius:10px;padding:9px 13px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:10px">
+            <div style="font-size:24px;flex-shrink:0">🔬</div>
             <div>
               <div style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px">Advanced Lab Value Interpreter</div>
               <div style="font-size:12px;opacity:.85;line-height:1.6">Paste any lab report — AI provides: value-by-value interpretation · pattern recognition · functional ranges · nutrient deficiency links · naturopathic protocol · urgent flags · follow-up recommendations</div>
@@ -5390,14 +5392,13 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
         <div class="sec-sub">Multi-herb · Multi-drug · Mechanism · Severity · Clinical management</div></div>
       </div></div>
       <div class="ca" id="ca-herbdrug" style="overflow-y:auto">
-        <div style="max-width:980px;margin:0 auto;padding:20px 20px 60px">
-          <div style="background:linear-gradient(135deg,#78350f,#3b1407);border-radius:16px;padding:22px 24px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:relative;overflow:hidden">
-            <div style="position:absolute;right:-20px;top:-20px;width:140px;height:140px;background:radial-gradient(circle,rgba(201,168,76,.12),transparent);pointer-events:none"></div>
-            <div style="font-size:46px;flex-shrink:0">⚠️</div>
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 50px">
+          <div style="background:linear-gradient(135deg,#78350f,#3b1407);border-radius:10px;padding:9px 13px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:10px">
+            <div style="font-size:24px;flex-shrink:0">⚠️</div>
             <div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:4px">Herb-Drug Interaction Checker</div>
-            <div style="font-size:12px;opacity:.85;line-height:1.6">Check multiple herbs against multiple drugs · Severity rating · Mechanism · Clinical management · Monitoring advice</div></div>
+            <div style="font-size:10px;opacity:.8;line-height:1.4">Check multiple herbs against multiple drugs · Severity rating · Mechanism · Clinical management · Monitoring advice</div></div>
           </div>
-          <div style="background:var(--surf);border:1.5px solid rgba(180,83,9,.18);border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 4px 24px rgba(0,0,0,.06)">
+          <div style="background:var(--surf);border:1.5px solid rgba(180,83,9,.18);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 2px 12px rgba(0,0,0,.05)">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Herb(s) / Supplement(s)</label><textarea id="hd-herb" class="calc-input" rows="3" style="resize:vertical;font-family:Outfit,sans-serif;font-size:12.5px" placeholder="e.g. St John's Wort, Garlic 600mg, Ashwagandha&#10;Enter one per line or comma-separated"></textarea></div>
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Drug(s) / Medication(s)</label><textarea id="hd-drug" class="calc-input" rows="3" style="resize:vertical;font-family:Outfit,sans-serif;font-size:12.5px" placeholder="e.g. Warfarin, Metformin, Levothyroxine&#10;Enter one per line or comma-separated"></textarea></div>
@@ -5430,14 +5431,13 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
         <div class="sec-sub">Structured clinical note · BNYS diagnosis · Full treatment plan · ICD-10 suggestions</div></div>
       </div></div>
       <div class="ca" id="ca-soapbuilder" style="overflow-y:auto">
-        <div style="max-width:980px;margin:0 auto;padding:20px 20px 60px">
-          <div style="background:linear-gradient(135deg,#92400e,#451a03);border-radius:16px;padding:22px 24px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:relative;overflow:hidden">
-            <div style="position:absolute;right:-20px;top:-20px;width:140px;height:140px;background:radial-gradient(circle,rgba(201,168,76,.12),transparent);pointer-events:none"></div>
-            <div style="font-size:46px;flex-shrink:0">📋</div>
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 50px">
+          <div style="background:linear-gradient(135deg,#92400e,#451a03);border-radius:10px;padding:9px 13px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:10px">
+            <div style="font-size:24px;flex-shrink:0">📋</div>
             <div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:4px">AI SOAP Note Builder</div>
-            <div style="font-size:12px;opacity:.85;line-height:1.6">Clinical case sheet · BNYS assessment · Complete treatment plan · Referral criteria</div></div>
+            <div style="font-size:10px;opacity:.8;line-height:1.4">Clinical case sheet · BNYS assessment · Complete treatment plan · Referral criteria</div></div>
           </div>
-          <div style="background:var(--surf);border:1.5px solid rgba(194,65,12,.18);border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 4px 24px rgba(0,0,0,.06)">
+          <div style="background:var(--surf);border:1.5px solid rgba(194,65,12,.18);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 2px 12px rgba(0,0,0,.05)">
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:11px;margin-bottom:14px">
               <div style="grid-column:1/-1"><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Chief Complaint *</label><input id="soap-cc" class="calc-input" placeholder="e.g. 45F with 6-month history of fatigue, weight gain, hair loss"/></div>
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Demographics</label><input id="soap-demo" class="calc-input" placeholder="Age, gender, occupation"/></div>
@@ -5469,14 +5469,14 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
         <div class="sec-sub">Evidence-based complete protocol · Daily schedule · All BNYS modalities</div></div>
       </div></div>
       <div class="ca" id="ca-diseaseproto" style="overflow-y:auto">
-        <div style="max-width:980px;margin:0 auto;padding:20px 20px 60px">
-          <div style="background:linear-gradient(135deg,#1a6b3c,#052e1c);border-radius:16px;padding:22px 24px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:relative;overflow:hidden">
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 50px">
+          <div style="background:linear-gradient(135deg,#1a6b3c,#052e1c);border-radius:10px;padding:9px 13px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:10px">
             <div style="position:absolute;right:-20px;top:-20px;width:140px;height:140px;background:radial-gradient(circle,rgba(201,168,76,.1),transparent);pointer-events:none"></div>
-            <div style="font-size:46px;flex-shrink:0">📊</div>
+            <div style="font-size:24px;flex-shrink:0">📊</div>
             <div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:4px">BNYS Disease Protocol Generator</div>
-            <div style="font-size:12px;opacity:.85;line-height:1.6">Complete evidence-based protocol · Time-structured daily schedule · All BNYS modalities · Week-by-week progression</div></div>
+            <div style="font-size:10px;opacity:.8;line-height:1.4">Complete evidence-based protocol · Time-structured daily schedule · All BNYS modalities · Week-by-week progression</div></div>
           </div>
-          <div style="background:var(--surf);border:1.5px solid rgba(26,107,60,.18);border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 4px 24px rgba(0,0,0,.06)">
+          <div style="background:var(--surf);border:1.5px solid rgba(26,107,60,.18);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 2px 12px rgba(0,0,0,.05)">
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:11px;margin-bottom:14px">
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Disease / Condition *</label><input id="dp-disease" class="calc-input" placeholder="e.g. Type 2 Diabetes, PCOS, Psoriasis"/></div>
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Age</label><input id="dp-age" type="number" class="calc-input" placeholder="e.g. 45"/></div>
@@ -5519,8 +5519,8 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
       </div>
       <div class="ca" id="ca-acupoints" style="overflow-y:auto">
         <div style="max-width:960px;margin:0 auto;padding-bottom:40px">
-          <div style="background:linear-gradient(135deg,#b45309,#7c2d12);border-radius:16px;padding:22px 24px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-            <div style="font-size:46px;flex-shrink:0">👆</div>
+          <div style="background:linear-gradient(135deg,#b45309,#7c2d12);border-radius:10px;padding:9px 13px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:10px">
+            <div style="font-size:24px;flex-shrink:0">👆</div>
             <div>
               <div style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px">Acupuncture & Acupressure Point Generator</div>
               <div style="font-size:12px;opacity:.85;line-height:1.6">Enter any disease or symptom — AI generates a complete point prescription with meridian channels, precise locations, needle depth (acupuncture), pressure technique (acupressure), marma points, and full session protocol</div>
@@ -5647,14 +5647,14 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
         <div class="sec-sub">Therapeutic fasting · Time-structured · Medication-safe · Refeeding protocol</div></div>
       </div></div>
       <div class="ca" id="ca-fastingplan" style="overflow-y:auto">
-        <div style="max-width:980px;margin:0 auto;padding:20px 20px 60px">
-          <div style="background:linear-gradient(135deg,#065f46,#022c1a);border-radius:16px;padding:22px 24px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:relative;overflow:hidden">
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 50px">
+          <div style="background:linear-gradient(135deg,#065f46,#022c1a);border-radius:10px;padding:9px 13px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:10px">
             <div style="position:absolute;right:-20px;top:-20px;width:140px;height:140px;background:radial-gradient(circle,rgba(201,168,76,.1),transparent);pointer-events:none"></div>
-            <div style="font-size:46px;flex-shrink:0">🍃</div>
+            <div style="font-size:24px;flex-shrink:0">🍃</div>
             <div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:4px">Therapeutic Fasting Protocol</div>
-            <div style="font-size:12px;opacity:.85;line-height:1.6">Condition-specific · Time-structured · Medication-safe · Day-by-day schedule · Refeeding guide</div></div>
+            <div style="font-size:10px;opacity:.8;line-height:1.4">Condition-specific · Time-structured · Medication-safe · Day-by-day schedule · Refeeding guide</div></div>
           </div>
-          <div style="background:var(--surf);border:1.5px solid rgba(6,95,70,.18);border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 4px 24px rgba(0,0,0,.06)">
+          <div style="background:var(--surf);border:1.5px solid rgba(6,95,70,.18);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 2px 12px rgba(0,0,0,.05)">
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:11px;margin-bottom:14px">
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Disease / Condition *</label><input id="fast-disease" class="calc-input" placeholder="e.g. Obesity, Hypertension, IBS"/></div>
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Age</label><input id="fast-age" type="number" class="calc-input" placeholder="e.g. 40"/></div>
@@ -5694,14 +5694,14 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
         <div class="sec-sub">Condition-specific · Temperature-precise · Step-by-step procedures · Home and clinic options</div></div>
       </div></div>
       <div class="ca" id="ca-hydroproto" style="overflow-y:auto">
-        <div style="max-width:980px;margin:0 auto;padding:20px 20px 60px">
-          <div style="background:linear-gradient(135deg,#0369a1,#0c4a6e);border-radius:16px;padding:22px 24px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:relative;overflow:hidden">
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 50px">
+          <div style="background:linear-gradient(135deg,#0369a1,#0c4a6e);border-radius:10px;padding:9px 13px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:10px">
             <div style="position:absolute;right:-20px;top:-20px;width:140px;height:140px;background:radial-gradient(circle,rgba(201,168,76,.1),transparent);pointer-events:none"></div>
-            <div style="font-size:46px;flex-shrink:0">💧</div>
+            <div style="font-size:24px;flex-shrink:0">💧</div>
             <div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:4px">AI Hydrotherapy Protocol Generator</div>
-            <div style="font-size:12px;opacity:.85;line-height:1.6">Precise temperatures · Step-by-step procedures · Acute vs chronic protocol · Home remedies · Progression plan</div></div>
+            <div style="font-size:10px;opacity:.8;line-height:1.4">Precise temperatures · Step-by-step procedures · Acute vs chronic protocol · Home remedies · Progression plan</div></div>
           </div>
-          <div style="background:var(--surf);border:1.5px solid rgba(3,105,161,.18);border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 4px 24px rgba(0,0,0,.06)">
+          <div style="background:var(--surf);border:1.5px solid rgba(3,105,161,.18);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 2px 12px rgba(0,0,0,.05)">
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:11px;margin-bottom:14px">
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Disease / Condition *</label><input id="hydro-disease" class="calc-input" placeholder="e.g. Arthritis, Hypertension, Insomnia"/></div>
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Age</label><input id="hydro-age" type="number" class="calc-input" placeholder="e.g. 50"/></div>
@@ -5740,14 +5740,14 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
         <div class="sec-sub">Comprehensive personalised plan · All modalities · Seasonal · Lab-integrated · Time-structured</div></div>
       </div></div>
       <div class="ca" id="ca-naturoplan" style="overflow-y:auto">
-        <div style="max-width:980px;margin:0 auto;padding:20px 20px 60px">
-          <div style="background:linear-gradient(135deg,#2d6a4f,#081c15);border-radius:16px;padding:22px 24px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:relative;overflow:hidden">
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 50px">
+          <div style="background:linear-gradient(135deg,#2d6a4f,#081c15);border-radius:10px;padding:9px 13px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:10px">
             <div style="position:absolute;right:-20px;top:-20px;width:140px;height:140px;background:radial-gradient(circle,rgba(201,168,76,.1),transparent);pointer-events:none"></div>
-            <div style="font-size:46px;flex-shrink:0">🌿</div>
+            <div style="font-size:24px;flex-shrink:0">🌿</div>
             <div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:4px">Comprehensive Naturopathy Planner</div>
-            <div style="font-size:12px;opacity:.85;line-height:1.6">Hydrotherapy · Mud · Massage · Diet · Yoga · Pranayama · Acupressure · Chromo · Magneto · Supplements · All in one plan</div></div>
+            <div style="font-size:10px;opacity:.8;line-height:1.4">Hydrotherapy · Mud · Massage · Diet · Yoga · Pranayama · Acupressure · Chromo · Magneto · Supplements · All in one plan</div></div>
           </div>
-          <div style="background:var(--surf);border:1.5px solid rgba(45,106,79,.18);border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 4px 24px rgba(0,0,0,.06)">
+          <div style="background:var(--surf);border:1.5px solid rgba(45,106,79,.18);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 2px 12px rgba(0,0,0,.05)">
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:11px;margin-bottom:14px">
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Disease / Condition *</label><input id="naturo-disease" class="calc-input" placeholder="e.g. Hypertension, PCOS, Psoriasis"/></div>
               <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Age</label><input id="naturo-age" type="number" class="calc-input" placeholder="e.g. 42"/></div>
