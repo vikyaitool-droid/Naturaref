@@ -3927,7 +3927,7 @@ async function nrCheckSessionStatus() {
             <div class="htc-div"></div>
             <div class="htc-stat"><div class="htc-num">44+</div><div class="htc-lbl">Imaging</div></div>
             <div class="htc-div"></div>
-            <div class="htc-stat"><div class="htc-num">12</div><div class="htc-lbl">AI Tools ✦</div></div>
+            <div class="htc-stat"><div class="htc-num">13</div><div class="htc-lbl">AI Tools ✦</div></div>
           </div>
         </div>
       </div>
@@ -3937,7 +3937,7 @@ async function nrCheckSessionStatus() {
       <div class="dt-stat-pill"><div class="dt-stat-pill-num">60+</div><div class="dt-stat-pill-lbl">BNYS Protocols</div></div>
       <div class="dt-stat-pill"><div class="dt-stat-pill-num">44+</div><div class="dt-stat-pill-lbl">Imaging Patterns</div></div>
       <div class="dt-stat-pill"><div class="dt-stat-pill-num">43+</div><div class="dt-stat-pill-lbl">Clinical Signs</div></div>
-      <div class="dt-stat-pill"><div class="dt-stat-pill-num">12</div><div class="dt-stat-pill-lbl">AI Tools</div></div>
+      <div class="dt-stat-pill"><div class="dt-stat-pill-num">13</div><div class="dt-stat-pill-lbl">AI Tools</div></div>
       <div class="dt-stat-pill"><div class="dt-stat-pill-num">8</div><div class="dt-stat-pill-lbl">Specialties</div></div>
     </div>
 
@@ -4615,6 +4615,7 @@ const D_LABINTERP = {};
 const D_HERBDRUG = {};
 const D_SOAPBUILDER = {};
 const D_NATURO = {};
+const D_PHYSIOPLAN = {};
 
 // ═══════════════════════════════════════════════════
 // NRData — Puter FS Dynamic Loader
@@ -4887,6 +4888,7 @@ var SECS = [
   { id:'acupoints',    icon:'👆', title:'Acupuncture & Acupressure Generator',        sub:'Enter disease — AI prescribes acupuncture points, acupressure, marma & ear points with needle depth, technique & session protocol',      color:'#b45309', bg:'#fff7ed', data:D_ACUPOINTS,    tabs:[['acu','👆','Point Generator','#b45309']],       customRender:true },
   { id:'fastingplan',  icon:'🍃',     title:'Fasting Protocol Planner',        sub:'Enter disease and profile - AI designs evidence-based therapeutic fasting protocol',  color:'#065f46', bg:'#d1fae5', data:D_FASTINGPLAN,  tabs:[['fast','🍃','Fasting Plan','#065f46']],          customRender:true },
   { id:'hydroproto',   icon:'💧', title:'Hydrotherapy Protocol Generator', sub:'Enter condition - AI prescribes hydrotherapy with technique, duration and precautions',color:'#0369a1', bg:'#dbeafe', data:D_HYDROPROTO,   tabs:[['hydro','💧','Hydro Protocol','#0369a1']],   customRender:true },
+  { id:'physioplan',   icon:'⚡', title:'AI Physiotherapy Treatment Planner', sub:'All modalities — TENS · IFT · Ultrasound · SWD · Laser · Wax Bath · Traction · Exercise · Manual Therapy · Electrotherapy · Posture · Home Programme', color:'#0f766e', bg:'#ccfbf1', data:D_PHYSIOPLAN, tabs:[['physio','⚡','Physio Planner','#0f766e']], customRender:true },
   { id:'anatomy', icon:'🫁', title:'Anatomy & Physiology', sub:'Cardiovascular · Respiratory · Nervous System · MSK · GI & Liver · Endocrine · Renal · Reproductive · Immune & Lymphatic · Blood', color:'#0e7490', bg:'#cffafe', data:D_ANATOMY,
     tabs:[['cvs','🫀','Cardiovascular','#c0392b'],['resp','🫁','Respiratory','#0369a1'],['neuro','🧠','Nervous System','#7c3aed'],['msk','🦴','MSK','#0e7490'],['gi','🔬','GI & Liver','#064E3B'],['endo','⚗️','Endocrine','#b45309'],['renal','💧','Renal','#0369a1'],['repro','🌸','Reproductive','#be185d'],['immune','🛡️','Immune & Lymphatic','#065f46'],['blood','🩸','Blood & Haematology','#c0392b']]
   },
@@ -4933,7 +4935,7 @@ const SB_GROUPS = [
   {
     label: '✦ AI Tools',
     key: 'ai',
-    ids: ['calculators','vitalsdash','labinterp','dietchart','yogachart','soapbuilder','herbdrug','acupoints','fastingplan','hydroproto','diseaseproto','naturoplan']
+    ids: ['calculators','vitalsdash','labinterp','dietchart','yogachart','soapbuilder','herbdrug','acupoints','fastingplan','hydroproto','physioplan','diseaseproto','naturoplan']
   },
   {
     label: '🏛️ Practice',
@@ -5728,6 +5730,68 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
       var w=document.getElementById('hydro-chips');
       if(!w)return;
       chips.forEach(function(ch){var b=document.createElement('button');b.textContent=ch;b.style.cssText='background:var(--bg);border:1px solid var(--bdr);border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--mu);font-family:Outfit,sans-serif;transition:all .15s';b.onmouseover=function(){b.style.borderColor='#0369a1';b.style.color='#0369a1';b.style.background='#e0f2fe';};b.onmouseout=function(){b.style.borderColor='';b.style.color='';b.style.background='';};b.onclick=function(){document.getElementById('hydro-disease').value=ch;};w.appendChild(b);});
+    },100);
+    return;
+  }
+
+  if (sec.id === 'physioplan') {
+    view.innerHTML = `
+      <div class="sec-hdr"><div class="sec-hdr-row">
+        <div class="sec-hicon" style="background:#ccfbf1;color:#0f766e">⚡</div>
+        <div><div class="sec-title" style="color:#0f766e">AI Physiotherapy Treatment Planner</div>
+        <div class="sec-sub">All modalities · TENS · IFT · Ultrasound · SWD · Laser · Wax Bath · Traction · Exercise Therapy · Manual Therapy · Home Programme</div></div>
+      </div></div>
+      <div class="ca" id="ca-physioplan" style="overflow-y:auto">
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 50px">
+          <div style="background:linear-gradient(135deg,#0f766e,#042f2e);border-radius:10px;padding:9px 13px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden">
+            <div style="position:absolute;right:-20px;top:-20px;width:140px;height:140px;background:radial-gradient(circle,rgba(20,184,166,.18),transparent);pointer-events:none"></div>
+            <div style="font-size:24px;flex-shrink:0">⚡</div>
+            <div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:4px">Advanced Physiotherapy Treatment Planner</div>
+            <div style="font-size:10px;opacity:.8;line-height:1.4">Electrotherapy · Thermotherapy · Manual Therapy · Exercise · Traction · Laser · Ultrasound · Home Programme · Progression Plan</div></div>
+          </div>
+          <div style="background:var(--surf);border:1.5px solid rgba(15,118,110,.18);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 2px 12px rgba(0,0,0,.05)">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:11px;margin-bottom:14px">
+              <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Condition / Diagnosis *</label><input id="physio-disease" class="calc-input" placeholder="e.g. Frozen Shoulder, LBA, Sciatica, OA Knee"/></div>
+              <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Age</label><input id="physio-age" type="number" class="calc-input" placeholder="e.g. 45"/></div>
+              <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Stage</label><select id="physio-stage" class="calc-input"><option value="acute (0-72 hours)">Acute (0–72 hrs)</option><option value="subacute (1-4 weeks)" selected>Subacute (1–4 wks)</option><option value="chronic (>4 weeks)">Chronic (&gt;4 wks)</option><option value="post-surgical rehabilitation">Post-Surgical Rehab</option></select></div>
+              <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Body Region</label><select id="physio-region" class="calc-input"><option value="cervical spine and neck">Cervical / Neck</option><option value="shoulder and upper arm">Shoulder / Upper Arm</option><option value="elbow and forearm">Elbow / Forearm</option><option value="wrist and hand">Wrist / Hand</option><option value="thoracic spine">Thoracic Spine</option><option value="lumbar spine and low back">Lumbar / Low Back</option><option value="sacroiliac and pelvis">SI Joint / Pelvis</option><option value="hip and thigh">Hip / Thigh</option><option value="knee">Knee</option><option value="ankle and foot">Ankle / Foot</option><option value="full body systemic">Full Body / Systemic</option></select></div>
+              <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Clinical Setting</label><select id="physio-setting" class="calc-input"><option value="hospital physiotherapy department (all equipment)">Hospital Physio Dept</option><option value="outpatient physiotherapy clinic">Outpatient Clinic</option><option value="home-based physiotherapy">Home-Based</option><option value="BNYS naturopathy hospital">BNYS Hospital</option></select></div>
+              <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Pain Score (0–10)</label><input id="physio-pain" type="number" min="0" max="10" class="calc-input" placeholder="e.g. 6"/></div>
+              <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Patient Goal</label><select id="physio-goal" class="calc-input"><option value="pain relief and inflammation control">Pain Relief</option><option value="restore full range of motion">Range of Motion</option><option value="strength and muscle rehabilitation">Strength Rehab</option><option value="return to sport or heavy work">Return to Sport / Work</option><option value="postural correction and prevention">Postural Correction</option><option value="neurological rehabilitation">Neuro Rehab</option></select></div>
+              <div><label style="font-size:10px;font-weight:700;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Implants / Precautions</label><input id="physio-contra" class="calc-input" placeholder="e.g. pacemaker, metal implant, DVT, pregnancy"/></div>
+            </div>
+            <div style="margin-bottom:8px">
+              <div style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Preferred Modalities (optional)</div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px" id="physio-modality-chips">
+                ${['TENS','IFT','Ultrasound','SWD','Laser','Wax Bath','Cryotherapy','Traction','TENS + IFT','Manual Therapy','Exercise Therapy','Kinesio Taping','TENS + Ultrasound','All Available'].map(m=>`<button class="physio-mod-chip" style="background:var(--bg);border:1px solid var(--bdr);border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--mu);font-family:Outfit,sans-serif;transition:all .15s" onclick="togglePhysioModality(this,'${m}')">${m}</button>`).join('')}
+              </div>
+            </div>
+            <div style="margin-bottom:14px">
+              <div style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px">Quick Select Condition</div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px" id="physio-chips"></div>
+            </div>
+            <button id="physio-btn" onclick="generatePhysioPlan()" style="width:100%;padding:14px;background:linear-gradient(135deg,#0f766e,#042f2e);color:#fff;border:none;border-radius:12px;cursor:pointer;font-size:14px;font-weight:700;font-family:Outfit,sans-serif;letter-spacing:.02em;transition:all .25s;box-shadow:0 4px 20px rgba(15,118,110,.3)">
+              ⚡ Generate Physiotherapy Treatment Plan
+            </button>
+          </div>
+          <div id="physio-result"></div>
+        </div>
+      </div>`;
+    secViews.appendChild(view);
+    // Quick-select condition chips
+    setTimeout(function(){
+      var conditions=['Frozen Shoulder','Low Back Pain','Sciatica','OA Knee','Cervical Spondylosis','Tennis Elbow','Plantar Fasciitis','Rotator Cuff Tear','Lumbar Disc Prolapse','Carpal Tunnel','Bell\'s Palsy','Post-Stroke Rehab','Rheumatoid Arthritis','Scoliosis','Piriformis Syndrome'];
+      var w=document.getElementById('physio-chips');
+      if(!w)return;
+      conditions.forEach(function(ch){
+        var b=document.createElement('button');
+        b.textContent=ch;
+        b.style.cssText='background:var(--bg);border:1px solid var(--bdr);border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--mu);font-family:Outfit,sans-serif;transition:all .15s';
+        b.onmouseover=function(){b.style.borderColor='#0f766e';b.style.color='#0f766e';b.style.background='#ccfbf1';};
+        b.onmouseout=function(){b.style.borderColor='';b.style.color='';b.style.background='';};
+        b.onclick=function(){document.getElementById('physio-disease').value=ch;};
+        w.appendChild(b);
+      });
     },100);
     return;
   }
@@ -6603,7 +6667,7 @@ function renderDiseaseCard(d) {
     if (mg.herbal && mg.herbal.length) html += mgmtTile('🌱 Herbal Medicine', miniList(mg.herbal.slice(0,6)) + aiToolLink('🌿 Herb Interactions', 'herbdrug', d.name));
     if (mg.massage && mg.massage.length) html += mgmtTile('💆 Massage Therapy', miniList(mg.massage.slice(0,5)));
     if (mg.lifestyle && mg.lifestyle.length) html += mgmtTile('🌅 Lifestyle Measures', miniList(mg.lifestyle.slice(0,6)));
-    if (mg.physiotherapy && mg.physiotherapy.length) html += mgmtTile('🦴 Physiotherapy', miniList(mg.physiotherapy.slice(0,5)));
+    if (mg.physiotherapy && mg.physiotherapy.length) html += mgmtTile('🦴 Physiotherapy', miniList(mg.physiotherapy.slice(0,5)) + aiToolLink('⚡ Physio Plan', 'physioplan', d.name));
     if (mg.modern_drugs && mg.modern_drugs.length) html += mgmtTile('💊 Co-Management (Modern)', miniList(mg.modern_drugs.slice(0,5)));
     if (mg.surgery && mg.surgery !== 'null') html += mgmtTile('🔪 Surgery', '<div style="font-size:12px;color:var(--ink2);line-height:1.5">'+mg.surgery+'</div>');
     html += '</div></div>';
@@ -10027,6 +10091,271 @@ function renderNaturoPlanner(out) {
 
 // ─── AI ASSISTANT JS ───
 
+// ─── PHYSIO PLANNER JS ───
+var _physioSelectedModalities = [];
+function togglePhysioModality(btn, mod) {
+  var idx = _physioSelectedModalities.indexOf(mod);
+  if (idx === -1) {
+    _physioSelectedModalities.push(mod);
+    btn.style.background='#ccfbf1'; btn.style.borderColor='#0f766e'; btn.style.color='#0f766e'; btn.style.fontWeight='700';
+  } else {
+    _physioSelectedModalities.splice(idx,1);
+    btn.style.background=''; btn.style.borderColor=''; btn.style.color=''; btn.style.fontWeight='';
+  }
+}
+
+async function generatePhysioPlan() {
+  var result = document.getElementById('physio-result');
+  var btn    = document.getElementById('physio-btn');
+  var disease  = document.getElementById('physio-disease').value.trim();
+  var age      = document.getElementById('physio-age').value;
+  var stage    = document.getElementById('physio-stage').value;
+  var region   = document.getElementById('physio-region').value;
+  var setting  = document.getElementById('physio-setting').value;
+  var pain     = document.getElementById('physio-pain').value;
+  var goal     = document.getElementById('physio-goal').value;
+  var contra   = document.getElementById('physio-contra').value;
+  var modPref  = _physioSelectedModalities.length ? _physioSelectedModalities.join(', ') : 'all appropriate modalities';
+  if (!disease) {
+    result.innerHTML = '<div style="color:#c0392b;padding:9px 12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">⚠️ Please enter a condition / diagnosis.</div>';
+    return;
+  }
+  if (needsKey()) { needsKeyCheck('physio-result', 'Generate Physiotherapy Plan'); return; }
+  if (!isOnline()) { showOfflineBanner('physio-result', 'Generate Physiotherapy Plan'); return; }
+  btn.disabled = true; btn.textContent = 'Generating…';
+  result.innerHTML = '<div style="text-align:center;padding:36px 20px;font-size:13px;color:#555"><div style="font-size:30px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:10px">⚡</div><br>Building physiotherapy plan for <b>'+disease+'</b>…<br><span style="font-size:11px;opacity:.6;margin-top:4px;display:block">Usually 15–20 seconds</span></div>';
+  var sys = 'You are a senior BNYS-trained physiotherapist with 20 years of clinical experience in electrotherapy, manual therapy, and neuro-musculoskeletal rehabilitation. Respond ONLY with valid JSON (no markdown, no backticks, no explanations outside JSON).';
+  var prompt = 'Condition: '+disease
+    +'\nAge: '+(age||'adult')
+    +'\nStage: '+stage
+    +'\nBody region: '+region
+    +'\nClinical setting: '+setting
+    +'\nPain score: '+(pain||'moderate')
+    +'/10\nPatient goal: '+goal
+    +'\nPreferred modalities: '+modPref
+    +(contra?'\nContraindications / precautions: '+contra:'')
+    +'\n\nGenerate a comprehensive, evidence-based physiotherapy treatment plan. Include all relevant modalities with precise parameters. Never use "cd". Sign as Dr. Vikranth.'
+    +'\n\nRespond ONLY with this exact JSON structure:'
+    +'{"title":"Physiotherapy Treatment Plan — Dr. Vikranth",'
+    +'"diagnosis":"full diagnosis with ICD description",'
+    +'"clinicalRationale":"2-3 sentence evidence-based rationale for modality selection",'
+    +'"assessment":{"postureObservation":"key postural findings to look for","specialTests":["test name: positive finding significance"],"functionalLimitations":["limitation"]},'
+    +'"modalities":['
+    +'{"name":"modality name e.g. TENS / IFT / Ultrasound / SWD / Laser / Wax Bath / Traction / Cryotherapy","category":"Electrotherapy|Thermotherapy|Mechanotherapy|Phototherapy|Manual Therapy|Exercise Therapy|Taping",'
+    +'"indication":"why this modality for this condition",'
+    +'"parameters":{"frequency":"e.g. 80 Hz / 4000 Hz carrier","intensity":"e.g. to sensory threshold / mA","duration":"e.g. 20 min","pulseWidth":"if applicable","mode":"e.g. continuous / burst / modulated","temperature":"if thermotherapy e.g. 40-44°C"},'
+    +'"technique":"step-by-step application procedure",'
+    +'"sessionsPerWeek":"e.g. 5 sessions / week",'
+    +'"totalSessions":"e.g. 10–15 sessions",'
+    +'"expectedOutcome":"measurable outcome",'
+    +'"contraindications":["specific contraindication"]}'
+    +'],'
+    +'"exerciseProtocol":{"phase1":{"name":"Acute / Pain Relief Phase","duration":"e.g. Week 1–2","exercises":["Exercise: sets x reps — technique note"]},"phase2":{"name":"Mobility & Flexibility Phase","duration":"e.g. Week 2–4","exercises":["Exercise: sets x reps"]},"phase3":{"name":"Strengthening Phase","duration":"e.g. Week 4–6","exercises":["Exercise: sets x reps"]},"phase4":{"name":"Functional / Return to Activity","duration":"e.g. Week 6–8","exercises":["Exercise: sets x reps"]}},'
+    +'"manualTherapy":["Technique: procedure with grade/pressure/duration"],'
+    +'"dailySessionPlan":[{"time":"e.g. 9:00 AM","activity":"specific modality or exercise"}],'
+    +'"homeProgramme":["Home exercise or self-care instruction with sets/reps/frequency"],'
+    +'"ergonomicsPosture":["Specific ergonomic advice for this condition"],'
+    +'"progressionCriteria":["Criteria to progress to next phase"],'
+    +'"redFlags":["Red flag symptom requiring medical referral"],'
+    +'"patientEducation":["Key education point for patient"],'
+    +'"expectedOutcome":"overall prognosis and timeline to recovery",'
+    +'"note":"clinical safety disclaimer",'
+    +'"signature":"Dr. Vikranth, BNYS"}';
+  try {
+    var raw = await callAI([{role:'system',content:sys},{role:'user',content:prompt}], 6000);
+    var out = extractJSON(raw);
+    if (!out) {
+      result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">⚠️ Parse error — please try again.</div>';
+      btn.disabled=false; btn.innerHTML='⚡ Generate Physiotherapy Treatment Plan'; return;
+    }
+    renderPhysioPlan(out);
+  } catch(e) {
+    result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">⚠️ '+(e.message||'Connection error')+' — check your API key and internet connection, then retry.</div>';
+  }
+  btn.disabled=false; btn.innerHTML='⚡ Generate Physiotherapy Treatment Plan';
+}
+
+function renderPhysioPlan(out) {
+  var r = document.getElementById('physio-result');
+  var catColor = {
+    'Electrotherapy':'#4f46e5','Thermotherapy':'#c0392b','Mechanotherapy':'#0369a1',
+    'Phototherapy':'#b45309','Manual Therapy':'#064E3B','Exercise Therapy':'#0f766e','Taping':'#7c3aed'
+  };
+  var catBg = {
+    'Electrotherapy':'#eef2ff','Thermotherapy':'#fef2f2','Mechanotherapy':'#dbeafe',
+    'Phototherapy':'#fff7ed','Manual Therapy':'#d1fae5','Exercise Therapy':'#ccfbf1','Taping':'#ede9fe'
+  };
+  var html = '';
+
+  // Header
+  html += '<div style="background:linear-gradient(135deg,#0f766e,#042f2e);border-radius:11px;padding:14px 16px;margin-bottom:14px;color:#fff">'
+    + '<div style="font-size:15px;font-weight:700">⚡ '+(out.title||'Physiotherapy Treatment Plan')+'</div>'
+    + (out.diagnosis?'<div style="font-size:12px;opacity:.75;margin-top:3px">'+out.diagnosis+'</div>':'')
+    + (out.clinicalRationale?'<div style="font-size:12px;opacity:.9;margin-top:7px;line-height:1.55;border-top:1px solid rgba(255,255,255,.2);padding-top:7px">'+out.clinicalRationale+'</div>':'')
+    + '</div>';
+
+  // Assessment
+  if (out.assessment) {
+    var a = out.assessment;
+    html += '<div style="background:#f0fdf9;border:1px solid #5eead4;border-radius:10px;padding:12px 14px;margin-bottom:12px">'
+      + '<div style="font-size:11px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">🔍 Clinical Assessment</div>';
+    if (a.postureObservation) html += '<div style="font-size:12px;color:var(--tx);margin-bottom:6px"><b>Posture / Observation:</b> '+a.postureObservation+'</div>';
+    if (a.specialTests && a.specialTests.length) {
+      html += '<div style="font-size:11px;font-weight:700;color:#0f766e;margin-bottom:4px">Special Tests</div>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">';
+      a.specialTests.forEach(function(t){html+='<span style="background:#ccfbf1;color:#0f766e;font-size:11px;padding:2px 8px;border-radius:10px">'+t+'</span>';});
+      html += '</div>';
+    }
+    if (a.functionalLimitations && a.functionalLimitations.length) {
+      html += '<div style="font-size:11px;font-weight:700;color:#0f766e;margin-bottom:4px">Functional Limitations</div>';
+      a.functionalLimitations.forEach(function(fl){html+='<div style="font-size:12px;color:var(--tx);padding:2px 0">• '+fl+'</div>';});
+    }
+    html += '</div>';
+  }
+
+  // Modalities
+  if (out.modalities && out.modalities.length) {
+    html += '<div style="font-size:11px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">⚡ Treatment Modalities</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">';
+    out.modalities.forEach(function(m) {
+      var cc = catColor[m.category]||'#0f766e';
+      var cb = catBg[m.category]||'#ccfbf1';
+      var p = m.parameters || {};
+      html += '<div style="background:var(--surf);border:1.5px solid '+cc+'30;border-radius:11px;overflow:hidden">'
+        + '<div style="background:'+cc+';color:#fff;padding:9px 14px;display:flex;align-items:center;justify-content:space-between">'
+        + '<div><div style="font-size:13px;font-weight:700">'+m.name+'</div>'
+        + (m.indication?'<div style="font-size:11px;opacity:.85">'+m.indication+'</div>':'')+'</div>'
+        + '<span style="background:rgba(255,255,255,.25);padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap">'+m.category+'</span></div>'
+        + '<div style="padding:11px 14px">'
+        // Parameters grid
+        + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-bottom:10px">';
+      if (p.frequency)    html += '<div style="background:'+cb+';border-radius:7px;padding:5px 8px"><div style="font-size:9px;font-weight:700;color:'+cc+';text-transform:uppercase">Frequency</div><div style="font-size:11px;color:var(--tx)">'+p.frequency+'</div></div>';
+      if (p.intensity)    html += '<div style="background:'+cb+';border-radius:7px;padding:5px 8px"><div style="font-size:9px;font-weight:700;color:'+cc+';text-transform:uppercase">Intensity</div><div style="font-size:11px;color:var(--tx)">'+p.intensity+'</div></div>';
+      if (p.duration)     html += '<div style="background:'+cb+';border-radius:7px;padding:5px 8px"><div style="font-size:9px;font-weight:700;color:'+cc+';text-transform:uppercase">Duration</div><div style="font-size:11px;color:var(--tx)">'+p.duration+'</div></div>';
+      if (p.pulseWidth)   html += '<div style="background:'+cb+';border-radius:7px;padding:5px 8px"><div style="font-size:9px;font-weight:700;color:'+cc+';text-transform:uppercase">Pulse Width</div><div style="font-size:11px;color:var(--tx)">'+p.pulseWidth+'</div></div>';
+      if (p.mode)         html += '<div style="background:'+cb+';border-radius:7px;padding:5px 8px"><div style="font-size:9px;font-weight:700;color:'+cc+';text-transform:uppercase">Mode</div><div style="font-size:11px;color:var(--tx)">'+p.mode+'</div></div>';
+      if (p.temperature)  html += '<div style="background:'+cb+';border-radius:7px;padding:5px 8px"><div style="font-size:9px;font-weight:700;color:'+cc+';text-transform:uppercase">Temperature</div><div style="font-size:11px;color:var(--tx)">'+p.temperature+'</div></div>';
+      html += '</div>';
+      // Sessions
+      html += '<div style="display:flex;gap:10px;margin-bottom:8px">';
+      if (m.sessionsPerWeek) html += '<div style="background:#f0fdf9;border:1px solid #5eead4;border-radius:7px;padding:4px 10px;font-size:11px;color:#0f766e"><b>📅 Sessions/week:</b> '+m.sessionsPerWeek+'</div>';
+      if (m.totalSessions)   html += '<div style="background:#f0fdf9;border:1px solid #5eead4;border-radius:7px;padding:4px 10px;font-size:11px;color:#0f766e"><b>🔢 Total:</b> '+m.totalSessions+'</div>';
+      html += '</div>';
+      // Technique
+      if (m.technique) html += '<div style="font-size:12px;color:var(--tx);line-height:1.6;margin-bottom:8px;white-space:pre-line">'+m.technique+'</div>';
+      // Outcome
+      if (m.expectedOutcome) html += '<div style="font-size:11px;background:#d1fae5;border-radius:6px;padding:4px 8px;color:#064E3B;margin-bottom:6px">🎯 '+m.expectedOutcome+'</div>';
+      // Contraindications
+      if (m.contraindications && m.contraindications.length) {
+        html += '<div style="background:#fef2f2;border-radius:6px;padding:5px 9px">';
+        m.contraindications.forEach(function(c){html+='<div style="font-size:11px;color:#991b1b">⚠️ '+c+'</div>';});
+        html += '</div>';
+      }
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  // Exercise Protocol
+  if (out.exerciseProtocol) {
+    var ep = out.exerciseProtocol;
+    var phases = ['phase1','phase2','phase3','phase4'];
+    var phaseColors = ['#4f46e5','#0369a1','#0f766e','#064E3B'];
+    html += '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">🏋️ Phased Exercise Protocol</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">';
+    phases.forEach(function(ph,i){
+      var pdata = ep[ph];
+      if (!pdata) return;
+      var pc = phaseColors[i];
+      html += '<div style="background:var(--surf);border:1.5px solid '+pc+'30;border-radius:10px;overflow:hidden">'
+        + '<div style="background:'+pc+';color:#fff;padding:7px 12px"><div style="font-size:12px;font-weight:700">'+(pdata.name||'Phase '+(i+1))+'</div>'
+        + (pdata.duration?'<div style="font-size:10px;opacity:.8">'+pdata.duration+'</div>':'')+'</div>'
+        + '<div style="padding:9px 12px">';
+      if (pdata.exercises && pdata.exercises.length) {
+        pdata.exercises.forEach(function(ex){html+='<div style="font-size:11px;color:var(--tx);padding:3px 0;border-bottom:0.5px solid var(--bdr)">• '+ex+'</div>';});
+      }
+      html += '</div></div>';
+    });
+    html += '</div></div>';
+  }
+
+  // Manual Therapy
+  if (out.manualTherapy && out.manualTherapy.length) {
+    html += '<div style="background:#d1fae5;border:1px solid #86efac;border-radius:9px;padding:11px 14px;margin-bottom:10px">'
+      + '<div style="font-size:11px;font-weight:700;color:#064E3B;text-transform:uppercase;margin-bottom:6px">🤲 Manual Therapy Techniques</div>';
+    out.manualTherapy.forEach(function(mt){html+='<div style="font-size:12px;color:#022c22;padding:3px 0;border-bottom:0.5px solid #6ee7b7">• '+mt+'</div>';});
+    html += '</div>';
+  }
+
+  // Daily Session Plan
+  if (out.dailySessionPlan && out.dailySessionPlan.length) {
+    html += '<div style="background:#f0fdf9;border:1px solid #5eead4;border-radius:9px;padding:11px 14px;margin-bottom:10px">'
+      + '<div style="font-size:11px;font-weight:700;color:#0f766e;text-transform:uppercase;margin-bottom:7px">🕘 Daily Session Plan</div>';
+    out.dailySessionPlan.forEach(function(dp){
+      html+='<div style="display:flex;gap:10px;padding:4px 0;border-bottom:0.5px solid #5eead4;font-size:12px"><span style="color:#0f766e;font-weight:700;min-width:70px">'+dp.time+'</span><span style="color:var(--tx)">'+dp.activity+'</span></div>';
+    });
+    html += '</div>';
+  }
+
+  // Home Programme
+  if (out.homeProgramme && out.homeProgramme.length) {
+    html += '<div style="background:#ccfbf1;border:1px solid #5eead4;border-radius:9px;padding:11px 14px;margin-bottom:10px">'
+      + '<div style="font-size:11px;font-weight:700;color:#0f766e;text-transform:uppercase;margin-bottom:6px">🏠 Home Programme</div>';
+    out.homeProgramme.forEach(function(h){html+='<div style="font-size:12px;color:#042f2e;padding:3px 0;border-bottom:0.5px solid #99f6e4">• '+h+'</div>';});
+    html += '</div>';
+  }
+
+  // Ergonomics & Posture
+  if (out.ergonomicsPosture && out.ergonomicsPosture.length) {
+    html += '<div style="background:#faf5ff;border:1px solid #d8b4fe;border-radius:9px;padding:11px 14px;margin-bottom:10px">'
+      + '<div style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;margin-bottom:6px">🪑 Ergonomics & Posture</div>';
+    out.ergonomicsPosture.forEach(function(e){html+='<div style="font-size:12px;color:#3b0764;padding:3px 0;border-bottom:0.5px solid #d8b4fe">• '+e+'</div>';});
+    html += '</div>';
+  }
+
+  // Two-column: Progression + Patient Education
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">';
+  if (out.progressionCriteria && out.progressionCriteria.length) {
+    html += '<div style="background:#e0f2fe;border:1px solid #7dd3fc;border-radius:9px;padding:11px 14px">'
+      + '<div style="font-size:11px;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:6px">📈 Progression Criteria</div>';
+    out.progressionCriteria.forEach(function(c){html+='<div style="font-size:11px;color:#0c4a6e;padding:2px 0">• '+c+'</div>';});
+    html += '</div>';
+  }
+  if (out.patientEducation && out.patientEducation.length) {
+    html += '<div style="background:#fef9c3;border:1px solid #fde047;border-radius:9px;padding:11px 14px">'
+      + '<div style="font-size:11px;font-weight:700;color:#713f12;text-transform:uppercase;margin-bottom:6px">📚 Patient Education</div>';
+    out.patientEducation.forEach(function(e){html+='<div style="font-size:11px;color:#422006;padding:2px 0">• '+e+'</div>';});
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Red Flags
+  if (out.redFlags && out.redFlags.length) {
+    html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;margin-bottom:10px">'
+      + '<div style="font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;margin-bottom:5px">🚩 Red Flags — Refer Immediately</div>';
+    out.redFlags.forEach(function(rf){html+='<div style="font-size:12px;color:#7f1d1d;padding:2px 0">• '+rf+'</div>';});
+    html += '</div>';
+  }
+
+  // Expected Outcome
+  if (out.expectedOutcome) {
+    html += '<div style="background:#d1fae5;border:1px solid #6ee7b7;border-radius:9px;padding:11px 14px;margin-bottom:10px">'
+      + '<div style="font-size:11px;font-weight:700;color:#064E3B;text-transform:uppercase;margin-bottom:5px">🎯 Overall Prognosis & Expected Outcome</div>'
+      + '<div style="font-size:12px;color:#022c22;line-height:1.6">'+out.expectedOutcome+'</div></div>';
+  }
+
+  // Note
+  if (out.note) html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;font-size:11.5px;color:#7f1d1d;line-height:1.6;margin-bottom:10px"><strong>⚠️ Clinical Note:</strong> '+out.note+'</div>';
+
+  // Signature
+  if (out.signature) html += '<div style="margin-top:20px;padding-top:14px;border-top:1.5px solid rgba(15,118,110,.25);text-align:right;font-family:\'Cormorant Garamond\',serif;font-size:17px;font-weight:500;color:#0f766e;letter-spacing:.05em;padding-right:4px">'+out.signature+'</div>';
+
+  html += '<button onclick="printChart(\'physio-result\')" class="diet-print-btn">🖨️ Print Physiotherapy Plan</button>';
+  r.innerHTML = html;
+  r.scrollIntoView({behavior:'smooth',block:'start'});
+}
+// ─── END PHYSIO PLANNER JS ───
+
 var aiOpen = false;
 let aiHistory = [];
 let aiLoading = false;
@@ -11398,7 +11727,7 @@ var BOT_NAV_GROUPS = {
   'diagnose': ['lab','imaging','exam','fmlabs','algorithms','emergency','cases','signseponyms','natassess','diffdiag','drugside'],
   'treat':    ['bnys','skills','bnys_protocols','naturotreat','herbal','dosing','metabolic','chromotherapy','magneto','clinnut','colon','lifestyle','detox','physio','counselling'],
   'wellness': ['gut','mindbody','nutbio','onco','chrono','ebm','psychiatry','obstetrics','paediatrics','msk','womens','derm','endo','cardio','resp','neuro','geri','sleepdisorder'],
-  'ai':       ['calculators','vitalsdash','labinterp','dietchart','yogachart','soapbuilder','herbdrug','acupoints','fastingplan','hydroproto','diseaseproto','naturoplan']
+  'ai':       ['calculators','vitalsdash','labinterp','dietchart','yogachart','soapbuilder','herbdrug','acupoints','fastingplan','hydroproto','physioplan','diseaseproto','naturoplan']
 };
 
 var BN_TABS = ['home','diagnose','treat','wellness','ai','classical'];
@@ -12098,7 +12427,8 @@ function ccOpenAITool(secId, diseaseName) {
       'herbdrug':    ['herb-disease', 'herb-input'],
       'acupoints':   ['acu-disease', 'acu-input'],
       'diseaseproto':['dp-disease', 'dp-input', 'proto-disease'],
-      'naturoplan':  ['np-disease', 'naturo-disease', 'np-input']
+      'naturoplan':  ['np-disease', 'naturo-disease', 'np-input'],
+      'physioplan':  ['physio-disease', 'physio-input']
     };
     var ids = inputs[secId] || [];
     ids.forEach(function(id) {
