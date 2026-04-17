@@ -4042,10 +4042,10 @@ async function nrCheckSessionStatus() {
       <!-- ══ SENIOR NATUROPATH AI SEARCH ══ -->
       <div class="ddx-wrap">
         <div class="ddx-label">🩺 Senior Naturopath AI</div>
-        <div class="ddx-desc">Differential Diagnosis · Disease Search · BNYS Management</div>
+        <div class="ddx-desc">Symptoms · Disease · Herb · Supplement · Lab · Treatment · Yoga · Any clinical term</div>
         <div class="ddx-input-row">
           <input id="ddx-input" class="ddx-input" type="text"
-            placeholder="Enter symptoms or disease name…"
+            placeholder="e.g. ashwagandha, chest pain, HbA1c, triphala…"
             oninput="ddxDebounce(this.value)"
             onkeydown="if(event.key==='Enter')ddxSearch(this.value)"/>
           <button class="ddx-go-btn" onclick="ddxSearch(document.getElementById('ddx-input').value)" title="Search">→</button>
@@ -4053,12 +4053,12 @@ async function nrCheckSessionStatus() {
           <button class="ddx-key-btn" onclick="openApiKeyModal()" title="API Key Settings" style="display:none">🔑</button>
         </div>
         <div class="ddx-chips">
-          <span class="ddx-chip" onclick="ddxSearch('fatigue, weight gain, cold intolerance, hair loss')">Hypothyroid?</span>
+          <span class="ddx-chip" onclick="ddxSearch('ashwagandha')">Ashwagandha</span>
           <span class="ddx-chip" onclick="ddxSearch('chest pain, shortness of breath, palpitations')">Chest pain</span>
-          <span class="ddx-chip" onclick="ddxSearch('joint pain, morning stiffness, swelling')">Joint pain</span>
-          <span class="ddx-chip" onclick="ddxSearch('abdominal pain, bloating, altered bowel habits')">GI complaints</span>
-          <span class="ddx-chip" onclick="ddxSearch('headache, photophobia, neck stiffness')">Headache</span>
-          <span class="ddx-chip" onclick="ddxSearch('polyuria, polydipsia, weight loss')">Diabetes?</span>
+          <span class="ddx-chip" onclick="ddxSearch('triphala')">Triphala</span>
+          <span class="ddx-chip" onclick="ddxSearch('HbA1c elevated')">HbA1c</span>
+          <span class="ddx-chip" onclick="ddxSearch('fatigue, weight gain, cold intolerance, hair loss')">Hypothyroid?</span>
+          <span class="ddx-chip" onclick="ddxSearch('kunjal kriya')">Kunjal Kriya</span>
         </div>
       </div>
 
@@ -6225,7 +6225,7 @@ function ddxSearch(query) {
       var card = _ccCardMap[key];
       if (!card || !card.name) return;
       if (card.name.toLowerCase().includes(qLow) || ccrEditDistance(qLow, card.name.toLowerCase()) <= 2) {
-        cloudChips += '<button onclick="loadDiseaseCard(\''+escQ(card.name)+'\',\''+escQ(card.category||'Disease')+'\')" style="background:var(--plum-lt);border:1.5px solid #c4a8c4;border-radius:16px;padding:4px 12px;font-size:11.5px;font-weight:600;cursor:pointer;color:#7d5a7e;font-family:"DM Sans",sans-serif">📋 '+card.name+' (saved)</button>';
+        cloudChips += '<button onclick="loadDiseaseCard(\''+escQ(card.name)+'\',\''+escQ(card.category||'Disease')+'\')" style="background:var(--plum-lt);border:1.5px solid #c4a8c4;border-radius:16px;padding:4px 12px;font-size:11.5px;font-weight:600;cursor:pointer;color:#7d5a7e;font-family:\'DM Sans\',sans-serif">📋 '+card.name+' (saved)</button>';
       }
     });
   }
@@ -6236,47 +6236,324 @@ function ddxSearch(query) {
       + '<div style="font-size:10.5px;font-weight:700;color:var(--sage-deep);margin-bottom:6px">📋 Found in your library — tap to open directly</div>'
       + '<div style="display:flex;flex-wrap:wrap;gap:5px">';
     localHits.slice(0,4).forEach(function(r) {
-      localBanner += '<button onclick="openSec(SECS.find(function(s){return s.id===\''+escQ(r.entry.sec.id)+'\';}))" style="background:var(--em-lt);border:1.5px solid var(--sage-lt);border-radius:16px;padding:4px 12px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--sage-deep);font-family:"DM Sans",sans-serif">'+r.entry.sec.icon+' '+r.entry.item.t+'</button>';
+      localBanner += '<button onclick="openSec(SECS.find(function(s){return s.id===\''+escQ(r.entry.sec.id)+'\';}))" style="background:var(--em-lt);border:1.5px solid var(--sage-lt);border-radius:16px;padding:4px 12px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--sage-deep);font-family:\'DM Sans\',sans-serif">'+r.entry.sec.icon+' '+r.entry.item.t+'</button>';
     });
     localBanner += cloudChips + '</div></div>';
   }
 
-  panel.innerHTML = localBanner + '<div class="ddx-loading"><div class="ddx-spinner"></div><span>Analysing with Senior Naturopath AI…</span></div>';
+  panel.innerHTML = localBanner + '<div class="ddx-loading"><div class="ddx-spinner"></div><span>Looking up <em>'+query+'</em> — Senior Naturopath AI…</span></div>';
 
-  var SYS = 'You are a Senior Naturopathic Physician (BNYS, MD equivalent) with expertise in both conventional and naturopathic medicine. '
-    + 'Given the input (symptoms or disease name), return a COMPREHENSIVE JSON differential diagnosis. '
-    + 'CRITICAL RULES:\n'
-    + '1. Return ONLY valid JSON. No markdown. No explanation outside JSON.\n'
-    + '2. Include ALL possible differentials across EVERY category: cardiac, GI, musculoskeletal, respiratory, neurological, metabolic, autoimmune, psychiatric, functional/lifestyle, naturopathic.\n'
-    + '3. Never miss common conditions — for chest pain always include: GERD, musculoskeletal, costochondritis, anxiety, pleuritis, pericarditis, etc.\n'
-    + '4. Order strictly by probability based on symptom pattern.\n'
-    + '5. Return 8-10 differentials minimum.\n\n'
-    + 'Schema:\n'
-    + '{"symptoms_recognized":["..."],"differentials":[{"rank":1,"name":"Disease Name","probability":"High|Moderate|Low","category":"e.g. GI / Cardiac / MSK / Naturopathic","key_features":["..."],"associated_symptoms":["..."],"golden_signs":["Sign: description"],"labs":["Test: expected finding"],"imaging":["Modality: finding"],"iris_diagnosis":"iridology zone/finding","naturopathy_dx":"naturopathic/Ayurvedic interpretation"}]}';
+  /* ══════════════════════════════════════════════════════
+     SMART UNIVERSAL CLINICAL SEARCH SYSTEM PROMPT
+     Detects query type first, then returns appropriate
+     structured data — not just DDx for everything.
+     ══════════════════════════════════════════════════════ */
+  var SYS = 'You are a Senior Naturopathic Physician (BNYS, MD equivalent) and clinical reference expert. '
+    + 'A doctor has typed a query into a clinical search box. Your job is to:\n'
+    + '1. DETECT the query type from this list:\n'
+    + '   - "symptom_cluster" — one or more symptoms (e.g. fatigue, chest pain, joint swelling)\n'
+    + '   - "disease" — a named disease or condition (e.g. hypothyroidism, PCOS, psoriasis)\n'
+    + '   - "herb" — a medicinal herb or botanical (e.g. ashwagandha, triphala, brahmi, neem)\n'
+    + '   - "supplement" — a nutritional supplement or nutraceutical (e.g. vitamin D, magnesium, CoQ10)\n'
+    + '   - "drug" — a pharmaceutical drug (e.g. metformin, amlodipine, pantoprazole)\n'
+    + '   - "lab_test" — a lab investigation or value (e.g. HbA1c, TSH, CBC, serum ferritin)\n'
+    + '   - "treatment" — a naturopathic or medical treatment/procedure (e.g. mud pack, kunjal kriya, hydrotherapy, panchakarma)\n'
+    + '   - "yoga_asana" — a yoga posture or practice (e.g. sarvangasana, pranayama, surya namaskar)\n'
+    + '   - "diet_term" — a food, diet concept, or nutritional item (e.g. intermittent fasting, alkaline diet, ghee)\n'
+    + '2. Return a SINGLE JSON object with "query_type" plus the appropriate schema below.\n'
+    + '3. Return ONLY valid JSON. No markdown. No text outside JSON.\n\n'
 
-  callAI([{role:'system',content:SYS},{role:'user',content:'Input: '+query}], 2000)
+    + '── SCHEMA BY TYPE ──\n\n'
+
+    + 'If query_type = "symptom_cluster":\n'
+    + '{"query_type":"symptom_cluster","symptoms_recognized":["..."],"differentials":[{"rank":1,"name":"Disease Name","probability":"High|Moderate|Low","category":"GI/Cardiac/MSK/Neuro/Metabolic/Naturopathic/etc","key_features":["..."],"associated_symptoms":["..."],"golden_signs":["Sign: description"],"labs":["Test: finding"],"imaging":["Modality: finding"],"iris_diagnosis":"iridology finding","naturopathy_dx":"naturopathic interpretation","bnys_first_line":"first-line BNYS approach"}]}\n'
+    + 'Return 8-10 differentials. Include cardiac, GI, MSK, respiratory, neurological, metabolic, autoimmune, psychiatric, naturopathic categories.\n\n'
+
+    + 'If query_type = "disease":\n'
+    + '{"query_type":"disease","name":"...","icd":"...","category":"...","overview":"2-3 sentences","key_symptoms":["..."],"diagnostic_criteria":["..."],"labs":["Test: finding"],"imaging":["..."],"naturo_assessment":{"iris":"...","tongue":"...","nadi":"..."},"bnys_management":{"diet":["..."],"hydrotherapy":["..."],"yoga":["..."],"herbs":["..."],"lifestyle":["..."]},"allopathy_management":["..."],"referral_criteria":"...","naturopathy_philosophy":"..."}\n\n'
+
+    + 'If query_type = "herb":\n'
+    + '{"query_type":"herb","name":"...","latin_name":"...","family":"...","rasa_guna":"Ayurvedic taste/quality","category":"Adaptogen/Nervine/Hepatoprotective/etc","parts_used":["..."],"active_constituents":["..."],"therapeutic_uses":["condition: evidence level"],"bnys_indications":["..."],"dosage":{"powder":"...","tablet":"...","decoction":"...","tincture":"..."},"duration":"typical course duration","contraindications":["..."],"drug_interactions":["..."],"safety_pregnancy":"...","modern_research":"key clinical trial findings","naturo_significance":"naturopathic/Ayurvedic significance"}\n\n'
+
+    + 'If query_type = "supplement":\n'
+    + '{"query_type":"supplement","name":"...","category":"Mineral/Vitamin/Amino acid/Antioxidant/etc","biochemical_role":"...","deficiency_signs":["..."],"therapeutic_uses":["condition: dose"],"bnys_indications":["..."],"dosage":{"therapeutic":"...","maintenance":"...","max_safe":"..."},"food_sources":["..."],"contraindications":["..."],"drug_interactions":["..."],"lab_to_monitor":"...","naturo_significance":"..."}\n\n'
+
+    + 'If query_type = "drug":\n'
+    + '{"query_type":"drug","name":"...","class":"...","mechanism":"...","indications":["..."],"bnys_context":"how this drug interacts with naturopathic management","naturo_alternatives":["herb/supplement that may complement or substitute"],"common_side_effects":["..."],"naturo_mitigation":["naturopathic strategies to manage side effects"],"contraindications":["..."],"monitoring":["..."]}\n\n'
+
+    + 'If query_type = "lab_test":\n'
+    + '{"query_type":"lab_test","name":"...","full_name":"...","specimen":"blood/urine/stool/etc","normal_range":"...","functional_range":"naturopathic optimal range","low_causes":["..."],"high_causes":["..."],"naturo_significance":"...","naturo_protocol_low":"naturopathic approach when low","naturo_protocol_high":"naturopathic approach when high","associated_tests":["..."],"critical_values":"when to refer urgently"}\n\n'
+
+    + 'If query_type = "treatment":\n'
+    + '{"query_type":"treatment","name":"...","system":"Hydrotherapy/Mud Therapy/Yoga Therapy/Panchakarma/Acupuncture/etc","mechanism":"...","indications":["disease: rationale"],"technique":"step-by-step procedure","duration":"session and course duration","contraindications":["..."],"precautions":["..."],"expected_outcomes":["..."],"naturo_significance":"..."}\n\n'
+
+    + 'If query_type = "yoga_asana":\n'
+    + '{"query_type":"yoga_asana","name":"...","sanskrit":"...","type":"Standing/Seated/Inverted/Prone/Supine/Pranayama/Kriya","effect_on_systems":["system: benefit"],"therapeutic_indications":["condition: rationale"],"bnys_uses":["..."],"technique":"brief technique","duration":"...","contraindications":["..."],"precautions":["..."],"preparatory_asanas":["..."],"follow_up_asanas":["..."]}\n\n'
+
+    + 'If query_type = "diet_term":\n'
+    + '{"query_type":"diet_term","name":"...","category":"Food/Diet pattern/Nutritional concept","description":"...","therapeutic_uses":["condition: evidence"],"bnys_application":"how BNYS uses this","naturo_significance":"...","cautions":["..."],"food_sources_or_protocol":["..."]}';
+
+  callAI([{role:'system',content:SYS},{role:'user',content:'Doctor\'s query: "'+query+'"'}], 2800)
     .then(function(raw){
       var data = safeParseJSON(raw);
-      if (data && data.differentials) {
-        _ddxLastDifferentials = data.differentials;
-        renderDDxList(data);
-      } else {
-        var RETRY = 'Return ONLY raw JSON starting with { - no markdown, no fences, no explanation. Schema: {"symptoms_recognized":["..."],"differentials":[{"rank":1,"name":"...","probability":"High|Moderate|Low","category":"...","key_features":["..."],"associated_symptoms":["..."],"golden_signs":["..."],"labs":["..."],"imaging":["..."],"iris_diagnosis":"...","naturopathy_dx":"..."}]}';
-        callAI([{role:'system',content:RETRY},{role:'user',content:'Symptoms: '+query+'. Give 4-6 differentials as pure JSON only.'}], 2000)
+      if (!data || !data.query_type) {
+        // Retry with forced type detection
+        var RETRY = 'Return ONLY raw JSON. Detect if this is: symptoms/disease/herb/supplement/drug/lab_test/treatment/yoga_asana/diet_term. '
+          + 'Set "query_type" accordingly and fill the matching schema. Query: "' + query + '"';
+        return callAI([{role:'system',content:RETRY},{role:'user',content:query}], 2800)
           .then(function(raw2){
             var data2 = safeParseJSON(raw2);
-            if (data2 && data2.differentials) {
+            if (data2 && data2.query_type) {
+              renderSmartResult(data2, panel, localBanner);
+            } else if (data2 && data2.differentials) {
               _ddxLastDifferentials = data2.differentials;
-              renderDDxList(data2);
+              data2.query_type = 'symptom_cluster';
+              renderSmartResult(data2, panel, localBanner);
             } else {
-              panel.innerHTML = '<div class="ddx-error">⚠️ AI response could not be parsed. Please try again or rephrase.<br><pre style="font-size:10px;white-space:pre-wrap;margin-top:8px;opacity:.7;max-height:120px;overflow:auto">' + raw2.substring(0,500) + '</pre></div>';
+              panel.innerHTML = localBanner + '<div class="ddx-error">⚠️ Could not parse AI response. Please try again.<br><pre style="font-size:10px;white-space:pre-wrap;margin-top:8px;opacity:.7;max-height:120px;overflow:auto">' + raw2.substring(0,500) + '</pre></div>';
             }
-          }).catch(function(e2){ panel.innerHTML = '<div class="ddx-error">⚠️ '+e2.message+'</div>'; });
+          });
       }
+      renderSmartResult(data, panel, localBanner);
     })
     .catch(function(e){
-      panel.innerHTML = '<div class="ddx-error">⚠️ '+e.message+'</div>';
+      panel.innerHTML = localBanner + '<div class="ddx-error">⚠️ '+e.message+'</div>';
     });
+}
+
+/* ══ SMART RESULT RENDERER — routes to correct card by query_type ══ */
+function renderSmartResult(data, panel, localBanner) {
+  var type = data.query_type || 'symptom_cluster';
+  var html = '';
+
+  if (type === 'symptom_cluster' || data.differentials) {
+    if (data.differentials) _ddxLastDifferentials = data.differentials;
+    renderDDxList(data);
+    return;
+  }
+
+  // ── type badge map ──
+  var badges = {
+    herb:        {icon:'🌿', label:'Medicinal Herb',   bg:'var(--sage-pale)',   bc:'var(--sage-lt)',  tx:'var(--sage-deep)'},
+    supplement:  {icon:'💊', label:'Supplement',        bg:'#e8f5e9',           bc:'#a5d6a7',        tx:'#1a5c2a'},
+    drug:        {icon:'⚕️', label:'Pharmaceutical',    bg:'#fff3e0',           bc:'#ffcc80',        tx:'#7a3800'},
+    lab_test:    {icon:'🔬', label:'Lab Investigation', bg:'var(--sky-lt)',     bc:'#90caf9',        tx:'#1a4a7a'},
+    treatment:   {icon:'🛁', label:'Treatment/Procedure',bg:'var(--terra-pale)',bc:'var(--clay-lt)', tx:'var(--terracotta)'},
+    yoga_asana:  {icon:'🧘', label:'Yoga / Kriya',      bg:'var(--plum-lt)',    bc:'#d8b8d8',        tx:'var(--plum)'},
+    diet_term:   {icon:'🥗', label:'Diet / Nutrition',  bg:'#fdf8ee',          bc:'var(--tip-bdr)', tx:'var(--tip)'},
+    disease:     {icon:'🩺', label:'Disease / Condition',bg:'var(--warm)',      bc:'var(--border)',  tx:'var(--ink)'}
+  };
+  var b = badges[type] || badges.disease;
+
+  // ── Header ──
+  html += '<div class="ddx-list-hdr">'
+    + '<div style="display:flex;align-items:center;gap:8px">'
+    + '<span style="font-size:20px">'+b.icon+'</span>'
+    + '<div>'
+    + '<div style="font-size:13px;font-weight:800;color:var(--ink);font-family:\'Lora\',serif">'+(data.name||_ddxLastQuery)+'</div>'
+    + '<div style="font-size:10.5px;font-weight:700;color:'+b.tx+';text-transform:uppercase;letter-spacing:.06em">'+b.label+'</div>'
+    + '</div></div>'
+    + '<button class="ddx-back-btn" onclick="clearDDx()">✕ Clear</button>'
+    + '</div>';
+
+  // ── HERB card ──
+  if (type === 'herb') {
+    if (data.latin_name || data.family) {
+      html += '<div style="font-size:11.5px;color:var(--mu);margin-bottom:10px;font-style:italic">'+(data.latin_name||'')+(data.family?' · '+data.family:'')+(data.rasa_guna?' · '+data.rasa_guna:'')+'</div>';
+    }
+    if (data.category) html += _nrTag(data.category, b.bg, b.bc, b.tx);
+    if (data.parts_used && data.parts_used.length) {
+      html += _nrSection('Parts Used', data.parts_used.map(function(p){return _nrTag(p,b.bg,b.bc,b.tx);}).join(''));
+    }
+    if (data.active_constituents && data.active_constituents.length) {
+      html += _nrSection('Active Constituents', data.active_constituents.map(function(c){return _nrTag(c,'#f5f5f5','#ccc','#333');}).join(''));
+    }
+    if (data.therapeutic_uses && data.therapeutic_uses.length) {
+      html += _nrListSection('🎯 Therapeutic Uses', data.therapeutic_uses, b.bg, b.bc, b.tx);
+    }
+    if (data.bnys_indications && data.bnys_indications.length) {
+      html += _nrListSection('🌿 BNYS Indications', data.bnys_indications, 'var(--sage-pale)', 'var(--sage-lt)', 'var(--sage-deep)');
+    }
+    if (data.dosage) {
+      html += '<div style="background:'+b.bg+';border:1.5px solid '+b.bc+';border-radius:11px;padding:11px 13px;margin-top:10px">'
+        + '<div style="font-size:10.5px;font-weight:800;color:'+b.tx+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">💊 Dosage</div>';
+      Object.keys(data.dosage).forEach(function(form){
+        html += '<div style="font-size:12.5px;color:var(--ink2);margin-bottom:4px"><b style="color:'+b.tx+'">'+form.charAt(0).toUpperCase()+form.slice(1)+':</b> '+data.dosage[form]+'</div>';
+      });
+      if (data.duration) html += '<div style="font-size:11.5px;color:var(--mu);margin-top:4px;font-style:italic">Course: '+data.duration+'</div>';
+      html += '</div>';
+    }
+    if (data.contraindications && data.contraindications.length) {
+      html += _nrListSection('⚠️ Contraindications', data.contraindications, '#fdf5f5', '#f0c0c0', '#8b1a1a');
+    }
+    if (data.drug_interactions && data.drug_interactions.length) {
+      html += _nrListSection('🔄 Drug Interactions', data.drug_interactions, '#fff8e1', '#ffe082', '#5a3a00');
+    }
+    if (data.safety_pregnancy) html += _nrBox('🤰 Pregnancy Safety', data.safety_pregnancy, '#fdf5f5', '#f0c0c0', '#8b1a1a');
+    if (data.modern_research) html += _nrBox('📄 Modern Research', data.modern_research, 'var(--sky-lt)', '#90caf9', '#1a4a7a');
+    if (data.naturo_significance) html += _nrBox('☯️ Naturo Significance', data.naturo_significance, 'var(--sage-pale)', 'var(--sage-lt)', 'var(--sage-deep)');
+  }
+
+  // ── SUPPLEMENT card ──
+  else if (type === 'supplement') {
+    if (data.category) html += _nrTag(data.category, b.bg, b.bc, b.tx);
+    if (data.biochemical_role) html += '<div style="font-size:13px;color:var(--ink2);line-height:1.6;margin:8px 0 10px">'+data.biochemical_role+'</div>';
+    if (data.deficiency_signs && data.deficiency_signs.length) {
+      html += _nrListSection('⚠️ Deficiency Signs', data.deficiency_signs, '#fdf5f5', '#f0c0c0', '#8b1a1a');
+    }
+    if (data.therapeutic_uses && data.therapeutic_uses.length) {
+      html += _nrListSection('🎯 Therapeutic Uses', data.therapeutic_uses, b.bg, b.bc, b.tx);
+    }
+    if (data.dosage) {
+      html += '<div style="background:'+b.bg+';border:1.5px solid '+b.bc+';border-radius:11px;padding:11px 13px;margin-top:10px">'
+        + '<div style="font-size:10.5px;font-weight:800;color:'+b.tx+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">💊 Dosage</div>';
+      Object.keys(data.dosage).forEach(function(d){
+        html += '<div style="font-size:12.5px;color:var(--ink2);margin-bottom:4px"><b style="color:'+b.tx+'">'+d.charAt(0).toUpperCase()+d.slice(1)+':</b> '+data.dosage[d]+'</div>';
+      });
+      html += '</div>';
+    }
+    if (data.food_sources && data.food_sources.length) {
+      html += _nrSection('🥗 Food Sources', data.food_sources.map(function(f){return _nrTag(f,b.bg,b.bc,b.tx);}).join(''));
+    }
+    if (data.drug_interactions && data.drug_interactions.length) {
+      html += _nrListSection('🔄 Drug Interactions', data.drug_interactions, '#fff8e1', '#ffe082', '#5a3a00');
+    }
+    if (data.lab_to_monitor) html += _nrBox('🔬 Lab to Monitor', data.lab_to_monitor, 'var(--sky-lt)', '#90caf9', '#1a4a7a');
+    if (data.naturo_significance) html += _nrBox('☯️ Naturo Significance', data.naturo_significance, 'var(--sage-pale)', 'var(--sage-lt)', 'var(--sage-deep)');
+  }
+
+  // ── DRUG card ──
+  else if (type === 'drug') {
+    if (data.class) html += _nrTag(data.class, b.bg, b.bc, b.tx);
+    if (data.mechanism) html += '<div style="font-size:13px;color:var(--ink2);line-height:1.6;margin:8px 0 10px">'+data.mechanism+'</div>';
+    if (data.indications && data.indications.length) html += _nrListSection('✅ Indications', data.indications, '#e8f5e9', '#a5d6a7', '#1a5c2a');
+    if (data.bnys_context) html += _nrBox('🌿 BNYS Context', data.bnys_context, 'var(--sage-pale)', 'var(--sage-lt)', 'var(--sage-deep)');
+    if (data.naturo_alternatives && data.naturo_alternatives.length) {
+      html += _nrListSection('🌱 Naturo Alternatives / Complements', data.naturo_alternatives, 'var(--sage-pale)', 'var(--sage-lt)', 'var(--sage-deep)');
+    }
+    if (data.common_side_effects && data.common_side_effects.length) html += _nrListSection('⚠️ Side Effects', data.common_side_effects, '#fdf5f5', '#f0c0c0', '#8b1a1a');
+    if (data.naturo_mitigation && data.naturo_mitigation.length) html += _nrListSection('🛡️ Naturo Mitigation', data.naturo_mitigation, 'var(--sage-pale)', 'var(--sage-lt)', 'var(--sage-deep)');
+    if (data.monitoring && data.monitoring.length) html += _nrListSection('📊 Monitoring', data.monitoring, 'var(--sky-lt)', '#90caf9', '#1a4a7a');
+  }
+
+  // ── LAB TEST card ──
+  else if (type === 'lab_test') {
+    if (data.full_name) html += '<div style="font-size:12px;color:var(--mu);margin-bottom:8px;font-style:italic">'+data.full_name+'</div>';
+    if (data.specimen) html += _nrTag('Specimen: '+data.specimen, b.bg, b.bc, b.tx);
+    var rangeRow = '';
+    if (data.normal_range) rangeRow += '<div style="flex:1;text-align:center;padding:8px;background:#e8f5e9;border-radius:8px"><div style="font-size:9px;font-weight:700;color:#1a5c2a;text-transform:uppercase;letter-spacing:.06em">Normal</div><div style="font-size:13px;font-weight:700;color:#1a5c2a">'+data.normal_range+'</div></div>';
+    if (data.functional_range) rangeRow += '<div style="flex:1;text-align:center;padding:8px;background:var(--sage-pale);border-radius:8px"><div style="font-size:9px;font-weight:700;color:var(--sage-deep);text-transform:uppercase;letter-spacing:.06em">Naturo Optimal</div><div style="font-size:13px;font-weight:700;color:var(--sage-deep)">'+data.functional_range+'</div></div>';
+    if (rangeRow) html += '<div style="display:flex;gap:8px;margin:10px 0">'+rangeRow+'</div>';
+    if (data.low_causes && data.low_causes.length) html += _nrListSection('⬇️ Low — Causes', data.low_causes, '#fdf5f5', '#f0c0c0', '#8b1a1a');
+    if (data.high_causes && data.high_causes.length) html += _nrListSection('⬆️ High — Causes', data.high_causes, '#fff3e0', '#ffcc80', '#7a3800');
+    if (data.naturo_protocol_low) html += _nrBox('🌿 Protocol if Low', data.naturo_protocol_low, 'var(--sage-pale)', 'var(--sage-lt)', 'var(--sage-deep)');
+    if (data.naturo_protocol_high) html += _nrBox('🌿 Protocol if High', data.naturo_protocol_high, 'var(--terra-pale)', 'var(--clay-lt)', 'var(--terracotta)');
+    if (data.naturo_significance) html += _nrBox('☯️ Naturo Significance', data.naturo_significance, 'var(--sky-lt)', '#90caf9', '#1a4a7a');
+    if (data.associated_tests && data.associated_tests.length) {
+      html += _nrSection('🔗 Associated Tests', data.associated_tests.map(function(t){return _nrTag(t,'var(--sky-lt)','#90caf9','#1a4a7a');}).join(''));
+    }
+    if (data.critical_values) html += _nrBox('🚨 Critical / Refer When', data.critical_values, '#fdf5f5', '#f0c0c0', '#8b1a1a');
+  }
+
+  // ── TREATMENT / PROCEDURE card ──
+  else if (type === 'treatment') {
+    if (data.system) html += _nrTag(data.system, b.bg, b.bc, b.tx);
+    if (data.mechanism) html += '<div style="font-size:13px;color:var(--ink2);line-height:1.6;margin:8px 0 10px">'+data.mechanism+'</div>';
+    if (data.indications && data.indications.length) html += _nrListSection('🎯 Indications', data.indications, b.bg, b.bc, b.tx);
+    if (data.technique) html += _nrBox('🛁 Technique', data.technique, b.bg, b.bc, b.tx);
+    if (data.duration) html += _nrBox('⏱ Duration', data.duration, 'var(--sky-lt)', '#90caf9', '#1a4a7a');
+    if (data.expected_outcomes && data.expected_outcomes.length) html += _nrListSection('✅ Expected Outcomes', data.expected_outcomes, '#e8f5e9', '#a5d6a7', '#1a5c2a');
+    if (data.contraindications && data.contraindications.length) html += _nrListSection('⚠️ Contraindications', data.contraindications, '#fdf5f5', '#f0c0c0', '#8b1a1a');
+    if (data.precautions && data.precautions.length) html += _nrListSection('⚙️ Precautions', data.precautions, '#fff3e0', '#ffcc80', '#7a3800');
+    if (data.naturo_significance) html += _nrBox('☯️ Naturo Significance', data.naturo_significance, 'var(--sage-pale)', 'var(--sage-lt)', 'var(--sage-deep)');
+  }
+
+  // ── YOGA ASANA card ──
+  else if (type === 'yoga_asana') {
+    if (data.sanskrit) html += '<div style="font-size:12px;color:var(--mu);margin-bottom:8px;font-style:italic">'+data.sanskrit+'</div>';
+    if (data.type) html += _nrTag(data.type, b.bg, b.bc, b.tx);
+    if (data.effect_on_systems && data.effect_on_systems.length) html += _nrListSection('⚙️ Effects on Systems', data.effect_on_systems, b.bg, b.bc, b.tx);
+    if (data.therapeutic_indications && data.therapeutic_indications.length) html += _nrListSection('🎯 Therapeutic Indications', data.therapeutic_indications, 'var(--sage-pale)', 'var(--sage-lt)', 'var(--sage-deep)');
+    if (data.bnys_uses && data.bnys_uses.length) html += _nrListSection('🌿 BNYS Clinical Uses', data.bnys_uses, '#e8f5e9', '#a5d6a7', '#1a5c2a');
+    if (data.technique) html += _nrBox('🧘 Technique', data.technique, b.bg, b.bc, b.tx);
+    if (data.duration) html += _nrBox('⏱ Duration/Repetitions', data.duration, 'var(--sky-lt)', '#90caf9', '#1a4a7a');
+    if (data.contraindications && data.contraindications.length) html += _nrListSection('⚠️ Contraindications', data.contraindications, '#fdf5f5', '#f0c0c0', '#8b1a1a');
+    if (data.preparatory_asanas && data.preparatory_asanas.length) {
+      html += _nrSection('Preparatory', data.preparatory_asanas.map(function(a){return _nrTag(a,b.bg,b.bc,b.tx);}).join(''));
+    }
+    if (data.follow_up_asanas && data.follow_up_asanas.length) {
+      html += _nrSection('Follow-up', data.follow_up_asanas.map(function(a){return _nrTag(a,b.bg,b.bc,b.tx);}).join(''));
+    }
+  }
+
+  // ── DIET TERM card ──
+  else if (type === 'diet_term') {
+    if (data.category) html += _nrTag(data.category, b.bg, b.bc, b.tx);
+    if (data.description) html += '<div style="font-size:13px;color:var(--ink2);line-height:1.6;margin:8px 0 10px">'+data.description+'</div>';
+    if (data.therapeutic_uses && data.therapeutic_uses.length) html += _nrListSection('🎯 Therapeutic Uses', data.therapeutic_uses, b.bg, b.bc, b.tx);
+    if (data.bnys_application) html += _nrBox('🌿 BNYS Application', data.bnys_application, 'var(--sage-pale)', 'var(--sage-lt)', 'var(--sage-deep)');
+    if (data.food_sources_or_protocol && data.food_sources_or_protocol.length) html += _nrListSection('📋 Sources / Protocol', data.food_sources_or_protocol, '#e8f5e9', '#a5d6a7', '#1a5c2a');
+    if (data.naturo_significance) html += _nrBox('☯️ Naturo Significance', data.naturo_significance, 'var(--sage-pale)', 'var(--sage-lt)', 'var(--sage-deep)');
+    if (data.cautions && data.cautions.length) html += _nrListSection('⚠️ Cautions', data.cautions, '#fdf5f5', '#f0c0c0', '#8b1a1a');
+  }
+
+  // ── DISEASE card (routed through existing loadDiseaseCard flow) ──
+  else if (type === 'disease') {
+    if (data.icd) html += _nrTag('ICD: '+data.icd, b.bg, b.bc, b.tx);
+    if (data.overview) html += '<div style="font-size:13px;color:var(--ink2);line-height:1.65;margin:8px 0 10px">'+data.overview+'</div>';
+    if (data.key_symptoms && data.key_symptoms.length) {
+      html += _nrSection('Key Symptoms', data.key_symptoms.map(function(s){return _nrTag(s,b.bg,b.bc,b.tx);}).join(''));
+    }
+    if (data.diagnostic_criteria && data.diagnostic_criteria.length) html += _nrListSection('🔑 Diagnostic Criteria', data.diagnostic_criteria, 'var(--sky-lt)', '#90caf9', '#1a4a7a');
+    if (data.labs && data.labs.length) html += _nrListSection('🔬 Labs', data.labs, 'var(--sky-lt)', '#90caf9', '#1a4a7a');
+    if (data.imaging && data.imaging.length) html += _nrListSection('🖼 Imaging', data.imaging, 'var(--sky-lt)', '#90caf9', '#1a4a7a');
+    if (data.naturo_assessment) {
+      var na = data.naturo_assessment;
+      var naItems = [];
+      if (na.iris) naItems.push('👁 Iris: '+na.iris);
+      if (na.tongue) naItems.push('👅 Tongue: '+na.tongue);
+      if (na.nadi) naItems.push('🖐 Nadi: '+na.nadi);
+      if (naItems.length) html += _nrListSection('🌿 Naturo Assessment', naItems, 'var(--plum-lt)', '#d8b8d8', 'var(--plum)');
+    }
+    if (data.bnys_management) {
+      var bm = data.bnys_management;
+      html += '<div style="background:var(--sage-pale);border:1.5px solid var(--sage-lt);border-radius:11px;padding:11px 13px;margin-top:10px">'
+        + '<div style="font-size:10.5px;font-weight:800;color:var(--sage-deep);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">🌿 BNYS Management</div>';
+      ['diet','hydrotherapy','yoga','herbs','lifestyle'].forEach(function(cat){
+        if (bm[cat] && bm[cat].length) {
+          html += '<div style="margin-bottom:6px"><div style="font-size:10px;font-weight:700;color:var(--sage-deep);margin-bottom:3px">'+cat.charAt(0).toUpperCase()+cat.slice(1)+'</div>';
+          bm[cat].forEach(function(item){ html += '<div style="font-size:12px;color:var(--ink2);line-height:1.5;padding-left:12px;position:relative">· '+item+'</div>'; });
+          html += '</div>';
+        }
+      });
+      html += '</div>';
+    }
+    if (data.naturopathy_philosophy) html += _nrBox('☯️ Naturo Philosophy', data.naturopathy_philosophy, 'var(--sage-pale)', 'var(--sage-lt)', 'var(--sage-deep)');
+    // Also offer full card load
+    html += '<button onclick="loadDiseaseCard(\''+escQ(data.name||_ddxLastQuery)+'\',\''+escQ(data.category||'Disease')+'\')" style="display:block;width:100%;margin-top:12px;padding:10px;background:var(--sage-deep);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Load Full Disease Profile →</button>';
+  }
+
+  html += '<div style="height:8px"></div>';
+  panel.innerHTML = (localBanner||'') + '<div style="background:var(--warm);border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:8px">' + html + '</div>';
+}
+
+/* ── Shared card builder helpers ── */
+function _nrTag(text, bg, bc, tx) {
+  return '<span style="display:inline-flex;align-items:center;background:'+bg+';border:1px solid '+bc+';color:'+tx+';border-radius:20px;padding:3px 10px;font-size:10.5px;font-weight:600;margin:2px 3px 2px 0">'+text+'</span>';
+}
+function _nrSection(label, innerHtml) {
+  return '<div style="margin:9px 0 6px"><div style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">'+label+'</div><div style="display:flex;flex-wrap:wrap;gap:2px">'+innerHtml+'</div></div>';
+}
+function _nrListSection(label, items, bg, bc, tx) {
+  var html = '<div style="background:'+bg+';border:1.5px solid '+bc+';border-radius:11px;padding:10px 13px;margin-top:9px">'
+    + '<div style="font-size:10px;font-weight:800;color:'+tx+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">'+label+'</div>';
+  items.forEach(function(item){ html += '<div style="font-size:12.5px;color:var(--ink2);line-height:1.55;padding-left:12px;position:relative;margin-bottom:3px"><span style="position:absolute;left:0;color:'+tx+';font-weight:700">›</span>'+item+'</div>'; });
+  return html + '</div>';
+}
+function _nrBox(label, text, bg, bc, tx) {
+  return '<div style="background:'+bg+';border:1.5px solid '+bc+';border-radius:11px;padding:10px 13px;margin-top:9px">'
+    + '<div style="font-size:10px;font-weight:800;color:'+tx+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">'+label+'</div>'
+    + '<div style="font-size:12.5px;color:var(--ink2);line-height:1.65">'+text+'</div></div>';
 }
 
 function renderDDxList(data) {
@@ -12750,10 +13027,14 @@ window.ddxSearch = async function(query) {
   var cached = ccGetDDx(query);
   if (!cached) cached = await idbGet('ddx', ccNormKey(query));  // IDB offline fallback
 
-  if (cached && cached.differentials) {
-    _ddxLastDifferentials = cached.differentials;
-    renderDDxList(cached);
+  if (cached && (cached.differentials || cached.query_type)) {
     var isOffline = !navigator.onLine;
+    if (cached.differentials) {
+      _ddxLastDifferentials = cached.differentials;
+      renderDDxList(cached);
+    } else {
+      renderSmartResult(cached, panel, '');
+    }
     ccAddBadge(panel, isOffline ? '📴' : '☁️', isOffline ? 'Offline Cache' : 'From Cloud Cache',
       'var(--sage-deep)', 'var(--sage-pale)', 'var(--sage-lt)');
     return;
@@ -12766,55 +13047,59 @@ window.ddxSearch = async function(query) {
   }
 
   panel.innerHTML = '<div class="ddx-loading"><div class="ddx-spinner"></div><span>Analysing with Senior Naturopath AI…</span></div>';
-  var SYS = 'You are a Senior Naturopathic Physician (BNYS, MD equivalent) with 20 years clinical experience in both integrative and conventional medicine. '
-    + 'Given symptoms or a disease name, return a COMPREHENSIVE clinical-grade JSON differential diagnosis. '
-    + 'RULES: Return ONLY valid JSON. No markdown. No text outside JSON. Minimum 8 differentials. Order by probability.\n\n'
-    + 'Schema (fill ALL fields meaningfully — no empty arrays, no null unless truly not applicable):\n'
-    + '{"symptoms_recognized":["..."],'
-    + '"clinical_context":"1 sentence: typical patient profile and epidemiological context for this symptom cluster",'
-    + '"differentials":[{'
-    + '"rank":1,'
-    + '"name":"Disease Name",'
-    + '"probability":"High|Moderate|Low",'
-    + '"category":"GI|Cardiac|MSK|Respiratory|Neurological|Metabolic|Autoimmune|Psychiatric|Naturopathic|etc",'
-    + '"onset":"Acute|Subacute|Chronic",'
-    + '"epidemiology":"age group, sex predominance, risk population",'
-    + '"key_features":["3-4 hallmark features"],'
-    + '"distinguishing_features":["what specifically rules THIS diagnosis IN vs others on the list"],'
-    + '"red_flags":["symptoms that indicate urgency or serious underlying pathology"],'
-    + '"associated_symptoms":["2-3 commonly co-occurring symptoms"],'
-    + '"golden_signs":["Classical Sign: clinical description"],'
-    + '"confirmatory_test":"The single best investigation to confirm this diagnosis",'
-    + '"labs":["Test: expected finding — clinical significance"],'
-    + '"imaging":["Modality: expected finding"],'
-    + '"clinical_scores":["Validated scoring tool: when to use it"],'
-    + '"iris_diagnosis":"iridology zone and finding for this condition",'
-    + '"naturopathy_dx":"naturopathic/Ayurvedic interpretation of root cause",'
-    + '"bnys_first_line":"immediate BNYS intervention — specific treatment with rationale"'
-    + '}]}';
 
-  callAI([{role:'system',content:SYS},{role:'user',content:'Input: '+query}], 3500)
+  /* ══ SMART UNIVERSAL SYSTEM PROMPT — detects query type first ══
+     Herbs, supplements, labs, yoga, drugs, treatments get their own
+     card. Symptom clusters and diseases get the enhanced DDx list.   */
+  var SYS = 'You are a Senior Naturopathic Physician (BNYS, MD equivalent) with 20 years clinical experience. '
+    + 'A doctor has typed a query into a clinical search box. Your job is to:\n'
+    + '1. DETECT the query type from: symptom_cluster | disease | herb | supplement | drug | lab_test | treatment | yoga_asana | diet_term\n'
+    + '2. Return a SINGLE JSON object with "query_type" plus the matching schema.\n'
+    + '3. Return ONLY valid JSON. No markdown. No text outside JSON.\n\n'
+    + 'If query_type = "symptom_cluster": {"query_type":"symptom_cluster","symptoms_recognized":["..."],"clinical_context":"1-sentence epidemiological context","differentials":[{"rank":1,"name":"Disease Name","probability":"High|Moderate|Low","category":"GI|Cardiac|MSK|Respiratory|Neurological|Metabolic|Autoimmune|Psychiatric|etc","onset":"Acute|Subacute|Chronic","epidemiology":"age/sex/risk","key_features":["..."],"distinguishing_features":["..."],"red_flags":["..."],"associated_symptoms":["..."],"golden_signs":["Sign: description"],"confirmatory_test":"best single test","labs":["Test: finding"],"imaging":["Modality: finding"],"clinical_scores":["Score: when to use"],"iris_diagnosis":"iridology finding","naturopathy_dx":"naturopathic root cause","bnys_first_line":"immediate BNYS intervention"}]} — Return 8-10 differentials.\n\n'
+    + 'If query_type = "disease": {"query_type":"disease","name":"...","icd":"...","category":"...","overview":"2-3 sentences","key_symptoms":["..."],"diagnostic_criteria":["..."],"labs":["Test: finding"],"imaging":["..."],"naturo_assessment":{"iris":"...","tongue":"...","nadi":"..."},"bnys_management":{"diet":["..."],"hydrotherapy":["..."],"yoga":["..."],"herbs":["..."],"lifestyle":["..."]},"allopathy_management":["..."],"referral_criteria":"...","naturopathy_philosophy":"..."}\n\n'
+    + 'If query_type = "herb": {"query_type":"herb","name":"...","latin_name":"...","family":"...","rasa_guna":"Ayurvedic taste/quality","category":"Adaptogen/Nervine/Hepatoprotective/etc","parts_used":["..."],"active_constituents":["..."],"therapeutic_uses":["condition: evidence level"],"bnys_indications":["..."],"dosage":{"powder":"...","tablet":"...","decoction":"...","tincture":"..."},"duration":"typical course","contraindications":["..."],"drug_interactions":["..."],"safety_pregnancy":"...","modern_research":"key RCT findings","naturo_significance":"..."}\n\n'
+    + 'If query_type = "supplement": {"query_type":"supplement","name":"...","category":"Mineral/Vitamin/Amino acid/etc","biochemical_role":"...","deficiency_signs":["..."],"therapeutic_uses":["condition: dose"],"bnys_indications":["..."],"dosage":{"therapeutic":"...","maintenance":"...","max_safe":"..."},"food_sources":["..."],"contraindications":["..."],"drug_interactions":["..."],"lab_to_monitor":"...","naturo_significance":"..."}\n\n'
+    + 'If query_type = "drug": {"query_type":"drug","name":"...","class":"...","mechanism":"...","indications":["..."],"bnys_context":"naturopathic management context","naturo_alternatives":["..."],"common_side_effects":["..."],"naturo_mitigation":["..."],"contraindications":["..."],"monitoring":["..."]}\n\n'
+    + 'If query_type = "lab_test": {"query_type":"lab_test","name":"...","full_name":"...","specimen":"blood/urine/etc","normal_range":"...","functional_range":"naturopathic optimal range","low_causes":["..."],"high_causes":["..."],"naturo_significance":"...","naturo_protocol_low":"...","naturo_protocol_high":"...","associated_tests":["..."],"critical_values":"when to refer"}\n\n'
+    + 'If query_type = "treatment": {"query_type":"treatment","name":"...","system":"Hydrotherapy/Mud Therapy/Panchakarma/etc","mechanism":"...","indications":["disease: rationale"],"technique":"step-by-step","duration":"session and course","contraindications":["..."],"precautions":["..."],"expected_outcomes":["..."],"naturo_significance":"..."}\n\n'
+    + 'If query_type = "yoga_asana": {"query_type":"yoga_asana","name":"...","sanskrit":"...","type":"Standing/Seated/Inverted/Prone/Supine/Pranayama/Kriya","effect_on_systems":["system: benefit"],"therapeutic_indications":["condition: rationale"],"bnys_uses":["..."],"technique":"brief technique","duration":"...","contraindications":["..."],"precautions":["..."],"preparatory_asanas":["..."],"follow_up_asanas":["..."]}\n\n'
+    + 'If query_type = "diet_term": {"query_type":"diet_term","name":"...","category":"Food/Diet pattern/Nutritional concept","description":"...","therapeutic_uses":["condition: evidence"],"bnys_application":"how BNYS uses this","naturo_significance":"...","cautions":["..."],"food_sources_or_protocol":["..."]}';
+
+  callAI([{role:'system',content:SYS},{role:'user',content:'Doctor\'s query: "'+query+'"'}], 3500)
     .then(async function(raw){
       var data = safeParseJSON(raw);
-      if (data && data.differentials) {
-        _ddxLastDifferentials = data.differentials;
-        renderDDxList(data);
-        await ccSaveDDx(query, data);
-        ccAddBadge(panel, '💾', 'Saved to Cloud', '#7a3800', '#fef3e2', '#f0c070');
-      } else {
-        var RETRY = 'Return ONLY raw JSON. Schema: {"symptoms_recognized":["..."],"differentials":[{"rank":1,"name":"...","probability":"High|Moderate|Low","category":"...","key_features":["..."],"associated_symptoms":["..."],"golden_signs":["..."],"labs":["..."],"imaging":["..."],"iris_diagnosis":"...","naturopathy_dx":"..."}]}';
-        callAI([{role:'system',content:RETRY},{role:'user',content:'Symptoms: '+query+'. Give 8-10 differentials as pure JSON only.'}], 2500)
+      if (!data || !data.query_type) {
+        // Retry with forced classification
+        var RETRY = 'Return ONLY raw JSON. First detect if this query is: symptoms/disease/herb/supplement/drug/lab_test/treatment/yoga_asana/diet_term. '
+          + 'Set "query_type" accordingly and fill the matching schema. Query: "' + query + '"';
+        callAI([{role:'system',content:RETRY},{role:'user',content:query}], 2500)
           .then(async function(raw2){
             var data2 = safeParseJSON(raw2);
-            if (data2 && data2.differentials) {
-              _ddxLastDifferentials = data2.differentials;
-              renderDDxList(data2);
-              await ccSaveDDx(query, data2);
-              ccAddBadge(panel, '💾', 'Saved to Cloud', '#7a3800', '#fef3e2', '#f0c070');
+            if (data2 && data2.query_type) {
+              if (data2.query_type === 'symptom_cluster' || data2.differentials) {
+                if (data2.differentials) _ddxLastDifferentials = data2.differentials;
+                renderDDxList(data2);
+                await ccSaveDDx(query, data2);
+                ccAddBadge(panel, '💾', 'Saved to Cloud', '#7a3800', '#fef3e2', '#f0c070');
+              } else {
+                renderSmartResult(data2, panel, '');
+              }
             } else {
               panel.innerHTML = '<div class="ddx-error">⚠️ AI response could not be parsed. Please try again.</div>';
             }
           }).catch(function(e2){ panel.innerHTML = '<div class="ddx-error">⚠️ '+e2.message+'</div>'; });
+        return;
+      }
+      // Route by query_type
+      if (data.query_type === 'symptom_cluster' || data.differentials) {
+        if (data.differentials) _ddxLastDifferentials = data.differentials;
+        renderDDxList(data);
+        await ccSaveDDx(query, data);
+        ccAddBadge(panel, '💾', 'Saved to Cloud', '#7a3800', '#fef3e2', '#f0c070');
+      } else {
+        // herb / supplement / drug / lab_test / treatment / yoga_asana / diet_term / disease
+        renderSmartResult(data, panel, '');
       }
     })
     .catch(function(e){ panel.innerHTML = '<div class="ddx-error">⚠️ '+e.message+'</div>'; });
