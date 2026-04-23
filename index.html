@@ -594,9 +594,6 @@ body.dark .sb-toggle::after{background:#fff;transform:translateX(14px)}
 body.kb-open .ddx-wrap{position:sticky;top:0;z-index:50;border-radius:0 0 14px 14px;margin-bottom:0;box-shadow:0 4px 16px rgba(0,0,0,.15)}
 /* ── Anatomy AI response box ── */
 .anat-ai-box{background:var(--sky-lt);border:1px solid #b0d4e8;border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink);line-height:1.7;margin-top:2px}
-/* ── Card entrance animation (applied via JS) ── */
-@keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-.card-enter{animation:cardIn .35s ease both}
 /* ── Calculator info card grid ── */
 /* ══════════════════════════════════════════════════
    NaturaRef v13 · LUXURY CALCULATOR SYSTEM
@@ -999,10 +996,15 @@ body.dark .lux-calc-back { background:#221e18; border-color:#3a3028; }
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
 
 /* ══ CARDS ══ */
+@keyframes cardIn {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:none; }
+}
 .card{
   background:var(--warm);border:1.5px solid var(--border);
   border-radius:12px;overflow:hidden;cursor:pointer;
   transition:border-color .15s,box-shadow .15s,transform .12s;position:relative;
+  animation:cardIn .3s ease calc(var(--card-i,0) * 60ms) both;
 }
 .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--card-accent,var(--sage));border-radius:3px 0 0 3px;z-index:1}
 .card:hover{box-shadow:var(--sh);transform:translateY(-1px);border-color:var(--sage-lt)}
@@ -1579,6 +1581,71 @@ body.dark .lux-calc-back { background:#221e18; border-color:#3a3028; }
 .akm-input:focus{border-color:var(--sage)}
 .akm-note{font-size:11px;color:var(--mu);line-height:1.6;margin-bottom:12px}
 
+
+/* ══ PROTO RENDER CLASSES — semantic CSS for renderDiseaseCard / renderAcuPoints / renderNaturoPlanner ══ */
+/* Replace repetitive inline style= attributes so body.dark overrides work cleanly */
+
+/* Info / content cards — epidemiology, evidence, session protocol panels */
+.proto-diet-card {
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+/* Row-level items inside herb, pranayama, acupressure, lifestyle lists */
+.proto-herb-row {
+  font-size: 11.5px;
+  padding: 4px 0;
+  border-bottom: 0.5px solid var(--bdr);
+  line-height: 1.4;
+}
+
+/* Red warning / contraindication banners */
+.proto-warning-banner {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-left: 3px solid #dc2626;
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-size: 11.5px;
+  color: #7f1d1d;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+/* Sub-section label headings (ALL CAPS, small, weighted) */
+.proto-section-head {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+/* Schedule / session-protocol info chips */
+.proto-time-badge {
+  background: #fff;
+  border-radius: 7px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+/* TCM pattern / treatment-principle / auricular evidence tags */
+.proto-evidence-tag {
+  border-radius: 9px;
+  padding: 10px 13px;
+  font-size: 12.5px;
+}
+
+/* ── Dark overrides — no !important needed now inline styles are removed ── */
+body.dark .proto-diet-card  { background: var(--surf); border-color: var(--bdr); color: var(--tx); }
+body.dark .proto-herb-row   { border-color: var(--bdr); color: var(--tx); }
+body.dark .proto-warning-banner { background:#2a0808; border-color:#7a1818; border-left-color:#dc2626; color:#f0b0b0; }
+body.dark .proto-time-badge { background: var(--surf); color: var(--tx); }
+body.dark .proto-evidence-tag { background: var(--surf); border-color: var(--bdr); color: var(--tx); }
+
 /* ══ DARK MODE — minimal overrides (keeps wellness warm tone by default) ══ */
 body.dark{
   --bg:#1a1612;--surf:#221e18;--surf2:#2a2418;--bdr:#3a3028;--bdr2:#4a4030;
@@ -1607,8 +1674,8 @@ body.dark .ai-input-row,.dark .ai-input{background:#1a1612;border-color:#3a3028;
 body.dark .rv-item{background:#221e18;border-color:#3a3028}
 body.dark .pt{color:#b0a090}
 body.dark .tbl tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
-body.dark #ai-msgs,body.dark #ai-input{background:#1a1612!important;border-color:#3a3028!important;color:var(--tx)!important}
-body.dark .ai-msg.assistant{background:#1a1612!important;color:var(--tx)!important}
+body.dark #ai-msgs,body.dark #ai-input{background:#1a1612;border-color:#3a3028;color:var(--tx)}
+body.dark .ai-msg.assistant{background:#1a1612;color:var(--tx)}
 body.dark .a-grn{background:#0d1a0d;border-color:#1a3a1a}
 body.dark .a-blu{background:#0d1520;border-color:#1a2a3a;color:#93c5fd}
 body.dark .a-amb{background:#1a1000;border-color:#3d2000;color:#d97706}
@@ -3023,6 +3090,12 @@ function nrUnlock() {
     /* ── Sidebar footer & all avatars (incl. photo) ── */
     _nrRefreshAllAvatars();
   })();
+
+  /* ── Build CCR search index once, after all SECS data is available ── */
+  if (!window._ccrIndexReady) {
+    ccrBuildIndex();
+    window._ccrIndexReady = true;
+  }
 }
 
 function nrLogoTap() {}  // no-op
@@ -7229,83 +7302,134 @@ function ddxSearch(query) {
     });
 }
 
+/* ── DDx card HTML builder — pure function, no side-effects ── */
+function _buildDdxCard(d, i) {
+  var prob = (d.probability||'').toLowerCase();
+  var probClass = prob==='high'?'ddx-prob-high':prob==='low'?'ddx-prob-low':'ddx-prob-moderate';
+  var staggerDelay = (i * 55) + 'ms';
+  var h = '<div class="ddx-item" onclick="loadDiseaseCard(\''+escQ(d.name)+'\',\''+escQ(d.category)+'\')" style="animation-delay:'+staggerDelay+'">';
+  h += '<div class="ddx-item-top">';
+  h += '<span class="ddx-prob '+probClass+'">'+d.probability+'</span>';
+  h += '<div style="flex:1;min-width:0">';
+  h += '<div class="ddx-item-name">'+d.name+'</div>';
+  h += '<div class="ddx-item-cat">'+d.category;
+  if (d.onset) h += ' · <span style="color:var(--terracotta);font-weight:700">'+d.onset+'</span>';
+  h += '</div>';
+  var probPct = prob==='high'?88:prob==='low'?22:52;
+  /* bar starts visually at 0 via animation; data-w stores target for deferred set */
+  h += '<div class="ddx-prob-bar-wrap"><div class="ddx-prob-bar ddx-prob-bar-'+prob+'" style="width:'+probPct+'%;animation-delay:'+(staggerDelay)+';animation-duration:'+(.55 + i * 0.06)+'s"></div></div>';
+  if (d.epidemiology) h += '<div style="font-size:11.5px;color:var(--mu);margin-top:2px">👥 '+safeStr(d.epidemiology)+'</div>';
+  h += '</div></div>';
+
+  if (d.key_features && d.key_features.length) {
+    h += '<div class="ddx-item-row">';
+    d.key_features.slice(0,3).forEach(function(f){ h += '<span class="ddx-tag">'+f+'</span>'; });
+    h += '</div>';
+  }
+  if (d.distinguishing_features && d.distinguishing_features.length) {
+    h += '<div style="margin:5px 0 3px;font-size:11.5px;font-weight:700;color:var(--sage-deep)">✓ Distinguishing:</div>';
+    h += '<div class="ddx-item-row">';
+    d.distinguishing_features.slice(0,3).forEach(function(f){ h += '<span class="ddx-tag" style="background:#e8f5e9;color:#1a5c2a;border-color:#a5d6a7">'+f+'</span>'; });
+    h += '</div>';
+  }
+  if (d.red_flags && d.red_flags.length) {
+    h += '<div style="margin:5px 0 3px;font-size:11.5px;font-weight:700;color:#c0392b">🚨 Red Flags:</div>';
+    h += '<div class="ddx-item-row">';
+    d.red_flags.slice(0,3).forEach(function(f){ h += '<span class="ddx-tag" style="background:#fdf5f5;color:#8b1a1a;border-color:#f0c0c0">⚠ '+f+'</span>'; });
+    h += '</div>';
+  }
+  if (d.golden_signs && d.golden_signs.length) {
+    h += '<div class="ddx-item-row">';
+    d.golden_signs.slice(0,2).forEach(function(s){ h += '<span class="ddx-tag ddx-tag-gold">⭐ '+s+'</span>'; });
+    h += '</div>';
+  }
+  if (d.confirmatory_test) {
+    h += '<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:7px 10px;margin:5px 0;font-size:12px;color:#5a3a00"><b>🔑 Confirmatory:</b> '+d.confirmatory_test+'</div>';
+  }
+  if (d.clinical_scores && d.clinical_scores.length) {
+    h += '<div style="font-size:12px;color:var(--plum);margin:4px 0;font-weight:600">📊 '+d.clinical_scores.slice(0,2).join(' · ')+'</div>';
+  }
+  if (d.labs && d.labs.length) {
+    h += '<div class="ddx-item-row">';
+    d.labs.slice(0,3).forEach(function(l){ h += '<span class="ddx-tag ddx-tag-lab">🔬 '+l+'</span>'; });
+    h += '</div>';
+  }
+  if (d.bnys_first_line) {
+    h += '<div style="background:var(--sage-pale);border-left:3px solid var(--sage-deep);padding:6px 10px;margin:5px 0;font-size:12px;color:var(--sage-deep);border-radius:0 8px 8px 0;line-height:1.5">🌿 <b>BNYS First Line:</b> '+d.bnys_first_line+'</div>';
+  }
+  if (d.naturopathy_dx) {
+    h += '<div class="ddx-nat-line">🌿 '+d.naturopathy_dx+'</div>';
+  }
+  if (d.iris_diagnosis) {
+    h += '<div class="ddx-item-row"><span class="ddx-tag ddx-tag-iris">👁 '+d.iris_diagnosis.substring(0,80)+'</span></div>';
+  }
+  h += '<div class="ddx-open-hint">Tap for full disease profile →</div>';
+  h += '</div>';
+  return h;
+}
+
 function renderDDxList(data, targetEl) {
   var panel = targetEl || document.getElementById('ddx-results');
-  var syms = data.symptoms_recognized ? data.symptoms_recognized.join(', ') : _ddxLastQuery;
-  var html = '<div class="ddx-list-hdr">'
+  var syms  = data.symptoms_recognized ? data.symptoms_recognized.join(', ') : _ddxLastQuery;
+  var diffs = data.differentials || [];
+
+  /* ── Fixed header (always rendered immediately) ── */
+  var headerHtml = '<div class="ddx-list-hdr">'
     + '<div class="ddx-list-title">DDx — <em style="font-style:normal;color:var(--sage-deep)">'+syms+'</em></div>'
     + '<button class="ddx-back-btn" onclick="clearDDx()">✕ Clear</button>'
     + '</div>';
-
   if (data.clinical_context) {
-    html += '<div style="background:var(--sky-lt);border:1px solid #b0d4e8;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:12.5px;color:#1a4a6a;line-height:1.5">📋 '+data.clinical_context+'</div>';
+    headerHtml += '<div style="background:var(--sky-lt);border:1px solid #b0d4e8;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:12.5px;color:#1a4a6a;line-height:1.5">📋 '+data.clinical_context+'</div>';
   }
 
-  (data.differentials || []).forEach(function(d, i){
-    var prob = (d.probability||'').toLowerCase();
-    var probClass = prob==='high'?'ddx-prob-high':prob==='low'?'ddx-prob-low':'ddx-prob-moderate';
-    var staggerDelay = (i * 55) + 'ms';
-    html += '<div class="ddx-item" onclick="loadDiseaseCard(\''+escQ(d.name)+'\',\''+escQ(d.category)+'\')" style="animation-delay:'+staggerDelay+'">';
-    html += '<div class="ddx-item-top">';
-    html += '<span class="ddx-prob '+probClass+'">'+d.probability+'</span>';
-    html += '<div style="flex:1;min-width:0">';
-    html += '<div class="ddx-item-name">'+d.name+'</div>';
-    html += '<div class="ddx-item-cat">'+d.category;
-    if (d.onset) html += ' · <span style="color:var(--terracotta);font-weight:700">'+d.onset+'</span>';
-    html += '</div>';
-    var probPct = prob==='high'?88:prob==='low'?22:52;
-    /* bar starts visually at 0 via animation; data-w stores target for deferred set */
-    html += '<div class="ddx-prob-bar-wrap"><div class="ddx-prob-bar ddx-prob-bar-'+prob+'" style="width:'+probPct+'%;animation-delay:'+(staggerDelay)+';animation-duration:'+(.55 + i * 0.06)+'s"></div></div>';
-    if (d.epidemiology) html += '<div style="font-size:11.5px;color:var(--mu);margin-top:2px">👥 '+safeStr(d.epidemiology)+'</div>';
-    html += '</div></div>';
+  /* ── Short list (≤ 8): render all at once, identical to original behaviour ── */
+  if (diffs.length <= 8) {
+    var html = headerHtml;
+    diffs.forEach(function(d, i) { html += _buildDdxCard(d, i); });
+    panel.innerHTML = html;
+    return;
+  }
 
-    if (d.key_features && d.key_features.length) {
-      html += '<div class="ddx-item-row">';
-      d.key_features.slice(0,3).forEach(function(f){ html += '<span class="ddx-tag">'+f+'</span>'; });
-      html += '</div>';
-    }
-    if (d.distinguishing_features && d.distinguishing_features.length) {
-      html += '<div style="margin:5px 0 3px;font-size:11.5px;font-weight:700;color:var(--sage-deep)">✓ Distinguishing:</div>';
-      html += '<div class="ddx-item-row">';
-      d.distinguishing_features.slice(0,3).forEach(function(f){ html += '<span class="ddx-tag" style="background:#e8f5e9;color:#1a5c2a;border-color:#a5d6a7">'+f+'</span>'; });
-      html += '</div>';
-    }
-    if (d.red_flags && d.red_flags.length) {
-      html += '<div style="margin:5px 0 3px;font-size:11.5px;font-weight:700;color:#c0392b">🚨 Red Flags:</div>';
-      html += '<div class="ddx-item-row">';
-      d.red_flags.slice(0,3).forEach(function(f){ html += '<span class="ddx-tag" style="background:#fdf5f5;color:#8b1a1a;border-color:#f0c0c0">⚠ '+f+'</span>'; });
-      html += '</div>';
-    }
-    if (d.golden_signs && d.golden_signs.length) {
-      html += '<div class="ddx-item-row">';
-      d.golden_signs.slice(0,2).forEach(function(s){ html += '<span class="ddx-tag ddx-tag-gold">⭐ '+s+'</span>'; });
-      html += '</div>';
-    }
-    if (d.confirmatory_test) {
-      html += '<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:7px 10px;margin:5px 0;font-size:12px;color:#5a3a00"><b>🔑 Confirmatory:</b> '+d.confirmatory_test+'</div>';
-    }
-    if (d.clinical_scores && d.clinical_scores.length) {
-      html += '<div style="font-size:12px;color:var(--plum);margin:4px 0;font-weight:600">📊 '+d.clinical_scores.slice(0,2).join(' · ')+'</div>';
-    }
-    if (d.labs && d.labs.length) {
-      html += '<div class="ddx-item-row">';
-      d.labs.slice(0,3).forEach(function(l){ html += '<span class="ddx-tag ddx-tag-lab">🔬 '+l+'</span>'; });
-      html += '</div>';
-    }
-    if (d.bnys_first_line) {
-      html += '<div style="background:var(--sage-pale);border-left:3px solid var(--sage-deep);padding:6px 10px;margin:5px 0;font-size:12px;color:var(--sage-deep);border-radius:0 8px 8px 0;line-height:1.5">🌿 <b>BNYS First Line:</b> '+d.bnys_first_line+'</div>';
-    }
-    if (d.naturopathy_dx) {
-      html += '<div class="ddx-nat-line">🌿 '+d.naturopathy_dx+'</div>';
-    }
-    if (d.iris_diagnosis) {
-      html += '<div class="ddx-item-row"><span class="ddx-tag ddx-tag-iris">👁 '+d.iris_diagnosis.substring(0,80)+'</span></div>';
-    }
-    html += '<div class="ddx-open-hint">Tap for full disease profile →</div>';
-    html += '</div>';
-  });
+  /* ── Long list (> 8): lazy-render in batches of 6 ── */
+  var BATCH    = 6;
+  var rendered = 0;
 
-  panel.innerHTML = html;
+  panel.innerHTML = headerHtml;
+
+  /* Render first batch immediately */
+  var firstBatch = '';
+  for (var i = 0; i < BATCH && i < diffs.length; i++) {
+    firstBatch += _buildDdxCard(diffs[i], i);
+  }
+  rendered = Math.min(BATCH, diffs.length);
+  panel.insertAdjacentHTML('beforeend', firstBatch);
+
+  /* Insert sentinel below the 6th card */
+  var sentinel = document.createElement('div');
+  sentinel.id = 'ddx-sentinel';
+  panel.appendChild(sentinel);
+
+  /* IntersectionObserver renders the next batch when sentinel enters viewport */
+  var obs = new IntersectionObserver(function(entries) {
+    if (!entries[0].isIntersecting) return;
+
+    var end        = Math.min(rendered + BATCH, diffs.length);
+    var nextBatch  = '';
+    for (var j = rendered; j < end; j++) {
+      nextBatch += _buildDdxCard(diffs[j], j);
+    }
+    rendered = end;
+
+    /* Insert new cards before sentinel so sentinel stays at the bottom */
+    sentinel.insertAdjacentHTML('beforebegin', nextBatch);
+
+    if (rendered >= diffs.length) {
+      obs.disconnect();
+      sentinel.remove();
+    }
+  }, { rootMargin: '200px' });
+
+  obs.observe(sentinel);
 }
 
 function escQ(s) { return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
@@ -7595,7 +7719,7 @@ function renderDiseaseCard(d, targetEl) {
 
   // Epidemiology
   if (d.epidemiology) {
-    html += sec('👥 Epidemiology', '<div style="background:var(--sky-lt);border:1px solid #b0d4e8;border-radius:10px;padding:10px 13px;font-size:13px;color:#1a3a5a;line-height:1.6">'+(typeof d.epidemiology==='object'&&!Array.isArray(d.epidemiology)?Object.entries(d.epidemiology).map(function(e){return e[0]+': '+safeStr(e[1]);}).join(' · '):safeStr(d.epidemiology))+'</div>');
+    html += sec('👥 Epidemiology', '<div class="proto-diet-card" style="background:var(--sky-lt);border:1px solid #b0d4e8;color:#1a3a5a">'+(typeof d.epidemiology==='object'&&!Array.isArray(d.epidemiology)?Object.entries(d.epidemiology).map(function(e){return e[0]+': '+safeStr(e[1]);}).join(' · '):safeStr(d.epidemiology))+'</div>');
   }
 
   // Etiology
@@ -7618,9 +7742,9 @@ function renderDiseaseCard(d, targetEl) {
   if (d.complications) {
     var compHtml = '';
     if (d.complications.acute && d.complications.acute.length)
-      compHtml += '<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#c0392b;margin-bottom:5px">🆘 Acute Complications</div>'+listItems(d.complications.acute)+'</div>';
+      compHtml += '<div style="margin-bottom:10px"><div class="proto-section-head" style="color:#c0392b;font-size:12px;margin-bottom:5px">🆘 Acute Complications</div>'+listItems(d.complications.acute)+'</div>';
     if (d.complications.chronic && d.complications.chronic.length)
-      compHtml += '<div><div style="font-size:12px;font-weight:700;color:#7d5a7e;margin-bottom:5px">⏳ Chronic Complications</div>'+listItems(d.complications.chronic)+'</div>';
+      compHtml += '<div><div class="proto-section-head" style="color:#7d5a7e;font-size:12px;margin-bottom:5px">⏳ Chronic Complications</div>'+listItems(d.complications.chronic)+'</div>';
     if (compHtml) html += sec('⚠️ Complications', compHtml);
   }
 
@@ -7633,19 +7757,19 @@ function renderDiseaseCard(d, targetEl) {
     var dx = d.diagnostics;
     var dxHtml = '';
     if (dx.case_taking && dx.case_taking.length)
-      dxHtml += '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--terracotta);margin-bottom:5px">❓ Key Case-Taking Questions</div>'+listItems(dx.case_taking)+'</div>';
+      dxHtml += '<div style="margin-bottom:12px"><div class="proto-section-head" style="color:var(--terracotta);font-size:12px;margin-bottom:5px">❓ Key Case-Taking Questions</div>'+listItems(dx.case_taking)+'</div>';
     if (dx.history && dx.history.length)
-      dxHtml += '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--ink2);margin-bottom:5px">📋 History</div>'+listItems(dx.history)+'</div>';
+      dxHtml += '<div style="margin-bottom:12px"><div class="proto-section-head" style="color:var(--ink2);font-size:12px;margin-bottom:5px">📋 History</div>'+listItems(dx.history)+'</div>';
     if (dx.examination && dx.examination.length)
-      dxHtml += '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--terracotta);margin-bottom:5px">👐 Clinical Examination</div>'+listItems(dx.examination)+'</div>';
+      dxHtml += '<div style="margin-bottom:12px"><div class="proto-section-head" style="color:var(--terracotta);font-size:12px;margin-bottom:5px">👐 Clinical Examination</div>'+listItems(dx.examination)+'</div>';
     if (dx.labs && dx.labs.length)
-      dxHtml += '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--sky);margin-bottom:5px">🔬 Lab Investigations</div>'+listItems(dx.labs)+'</div>';
+      dxHtml += '<div style="margin-bottom:12px"><div class="proto-section-head" style="color:var(--sky);font-size:12px;margin-bottom:5px">🔬 Lab Investigations</div>'+listItems(dx.labs)+'</div>';
     if (dx.imaging && dx.imaging.length)
-      dxHtml += '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--sky);margin-bottom:5px">📸 Imaging</div>'+listItems(dx.imaging)+'</div>';
+      dxHtml += '<div style="margin-bottom:12px"><div class="proto-section-head" style="color:var(--sky);font-size:12px;margin-bottom:5px">📸 Imaging</div>'+listItems(dx.imaging)+'</div>';
     if (dx.special_tests && dx.special_tests.length)
-      dxHtml += '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--plum);margin-bottom:5px">🧪 Special Tests & Clinical Scores</div>'+listItems(dx.special_tests)+'</div>';
+      dxHtml += '<div style="margin-bottom:12px"><div class="proto-section-head" style="color:var(--plum);font-size:12px;margin-bottom:5px">🧪 Special Tests & Clinical Scores</div>'+listItems(dx.special_tests)+'</div>';
     if (dx.naturopathy && dx.naturopathy.length)
-      dxHtml += '<div><div style="font-size:12px;font-weight:700;color:var(--sage-deep);margin-bottom:5px">🌿 Naturopathic Assessment (Iris · Tongue · Nadi · Nail · Skin)</div>'+listItems(dx.naturopathy)+'</div>';
+      dxHtml += '<div><div class="proto-section-head" style="color:var(--sage-deep);font-size:12px;margin-bottom:5px">🌿 Naturopathic Assessment (Iris · Tongue · Nadi · Nail · Skin)</div>'+listItems(dx.naturopathy)+'</div>';
     if (dxHtml) html += sec('🔍 Diagnostics', dxHtml);
   }
 
@@ -7664,9 +7788,9 @@ function renderDiseaseCard(d, targetEl) {
     html += '<div class="ddx-mgmt-grid">';
     if (mg.diet) {
       var dt = '';
-      if (mg.diet.include && mg.diet.include.length) dt += '<div style="font-size:11px;color:var(--sage-deep);font-weight:700;margin-bottom:3px">✓ Include</div>'+miniList(mg.diet.include.slice(0,5));
-      if (mg.diet.avoid && mg.diet.avoid.length) dt += '<div style="font-size:11px;color:#c0392b;font-weight:700;margin:5px 0 3px">✗ Avoid</div>'+miniList(mg.diet.avoid.slice(0,5));
-      if (mg.diet.fasting && mg.diet.fasting !== 'null') dt += '<div style="font-size:11px;color:var(--gold);font-weight:700;margin-top:5px">⏸ Fasting Protocol</div><div style="font-size:12px;color:var(--ink2);line-height:1.5;margin-top:2px">'+mg.diet.fasting+'</div>';
+      if (mg.diet.include && mg.diet.include.length) dt += '<div class="proto-section-head" style="color:var(--sage-deep);margin-bottom:3px">✓ Include</div>'+miniList(mg.diet.include.slice(0,5));
+      if (mg.diet.avoid && mg.diet.avoid.length) dt += '<div class="proto-section-head" style="color:#c0392b;margin:5px 0 3px">✗ Avoid</div>'+miniList(mg.diet.avoid.slice(0,5));
+      if (mg.diet.fasting && mg.diet.fasting !== 'null') dt += '<div class="proto-section-head" style="color:var(--gold);margin-top:5px">⏸ Fasting Protocol</div><div style="font-size:12px;color:var(--ink2);line-height:1.5;margin-top:2px">'+mg.diet.fasting+'</div>';
       dt += aiToolLink('🥗 Full Diet Chart', 'dietchart', d.name);
       html += mgmtTile('🥗 Diet Therapy', dt);
     }
@@ -7686,9 +7810,9 @@ function renderDiseaseCard(d, targetEl) {
     if (mg.treatment_protocol) {
       var tp = mg.treatment_protocol;
       var tpHtml = '';
-      if (tp.acute) tpHtml += '<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#c0392b;margin-bottom:4px">🔴 Acute Phase (0–2 weeks)</div><div style="font-size:13px;color:var(--ink2);line-height:1.6">'+tp.acute+'</div></div>';
-      if (tp.subacute) tpHtml += '<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#e07020;margin-bottom:4px">🟡 Subacute Phase (2–8 weeks)</div><div style="font-size:13px;color:var(--ink2);line-height:1.6">'+tp.subacute+'</div></div>';
-      if (tp.maintenance) tpHtml += '<div><div style="font-size:12px;font-weight:700;color:var(--sage-deep);margin-bottom:4px">🟢 Maintenance (Long-term)</div><div style="font-size:13px;color:var(--ink2);line-height:1.6">'+tp.maintenance+'</div></div>';
+      if (tp.acute) tpHtml += '<div style="margin-bottom:10px"><div class="proto-section-head" style="color:#c0392b;font-size:12px;margin-bottom:4px">🔴 Acute Phase (0–2 weeks)</div><div style="font-size:13px;color:var(--ink2);line-height:1.6">'+tp.acute+'</div></div>';
+      if (tp.subacute) tpHtml += '<div style="margin-bottom:10px"><div class="proto-section-head" style="color:#e07020;font-size:12px;margin-bottom:4px">🟡 Subacute Phase (2–8 weeks)</div><div style="font-size:13px;color:var(--ink2);line-height:1.6">'+tp.subacute+'</div></div>';
+      if (tp.maintenance) tpHtml += '<div><div class="proto-section-head" style="color:var(--sage-deep);font-size:12px;margin-bottom:4px">🟢 Maintenance (Long-term)</div><div style="font-size:13px;color:var(--ink2);line-height:1.6">'+tp.maintenance+'</div></div>';
       if (tpHtml) html += sec('📅 Treatment Protocol — Phases', tpHtml);
     }
   }
@@ -7699,7 +7823,7 @@ function renderDiseaseCard(d, targetEl) {
 
   // Drug-herb interactions
   if (d.drug_herb_interactions && d.drug_herb_interactions.length) {
-    html += sec('⚠️ Drug–Herb Interactions', '<div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:10px;padding:10px 13px">'+listItems(d.drug_herb_interactions)+'</div>');
+    html += sec('⚠️ Drug–Herb Interactions', '<div class="proto-diet-card" style="background:#fff8e1;border:1.5px solid #ffe082">'+listItems(d.drug_herb_interactions)+'</div>');
   }
 
   // Patient counseling
@@ -7708,7 +7832,7 @@ function renderDiseaseCard(d, targetEl) {
 
   // Evidence
   if (d.evidence_summary)
-    html += sec('📚 Evidence Base', '<div style="background:var(--sky-lt);border:1px solid #b0d4e8;border-radius:10px;padding:10px 13px;font-size:13px;color:#1a3a5a;line-height:1.65">'+d.evidence_summary+'</div>');
+    html += sec('📚 Evidence Base', '<div class="proto-diet-card" style="background:var(--sky-lt);border:1px solid #b0d4e8;color:#1a3a5a">'+d.evidence_summary+'</div>');
 
   // Prognosis
   if (d.prognosis) html += sec('📊 Prognosis', '<p class="ddx-cs-p">'+d.prognosis+'</p>');
@@ -7755,7 +7879,7 @@ function listItems(arr) {
 }
 function miniList(arr) {
   if (!arr || !arr.length) return '';
-  return '<ul style="list-style:none;padding:0;margin:0">'+arr.map(function(i){return '<li class="ddx-mgmt-tile li" style="font-size:10px;color:var(--ink2);padding-left:10px;position:relative;margin-bottom:2px;line-height:1.4"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+safeStr(i)+'</li>';}).join('')+'</ul>';
+  return '<ul style="list-style:none;padding:0;margin:0">'+arr.map(function(i){return '<li class="ddx-mgmt-tile li proto-herb-row" style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+safeStr(i)+'</li>';}).join('')+'</ul>';
 }
 function mgmtTile(title, content) {
   return '<div class="ddx-mgmt-tile"><div class="ddx-mgmt-tile-hdr">'+title+'</div>'+content+'</div>';
@@ -8092,15 +8216,7 @@ function switchTabIdx(secId, tabId, color, btn) {
 
   // Animate cards on load
   ca.querySelectorAll('.card').forEach(function(c, i) {
-    c.style.opacity = '0';
-    c.style.transform = 'translateY(16px)';
-    c.style.transition = 'opacity .3s ease ' + (i * 60) + 'ms, transform .3s ease ' + (i * 60) + 'ms';
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() {
-        c.style.opacity = '1';
-        c.style.transform = 'translateY(0)';
-      });
-    });
+    c.style.setProperty('--card-i', i);
   });
 
   // Breadcrumb
@@ -8391,7 +8507,10 @@ function ccrAddHistory(q) {
 
 // ── 7. CORE SEARCH FUNCTION ────────────────────────────────────
 function ccrRunSearch(q, filterSec) {
-  ccrBuildIndex();
+  if (!window._ccrIndexReady) {
+    ccToast('⏳ Index loading…');
+    return [];
+  }
   var terms = ccrExpandQuery(q);
   var scored = [];
 
@@ -10056,7 +10175,7 @@ function renderLabInterp(out) {
 
   // ── Disclaimer ──
   if (out.note) {
-    html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;font-size:11.5px;color:#7f1d1d;line-height:1.6;margin-bottom:12px"><strong>&#9888; Note:</strong> '+out.note+'</div>';
+    html += '<div class="proto-warning-banner" style="margin-bottom:12px"><strong>&#9888; Note:</strong> '+out.note+'</div>';
   }
 
   html += '<button onclick="printChart(\'labinterp-result\')" class="diet-print-btn">&#128424; Print Full Lab Report</button>';
@@ -10540,14 +10659,14 @@ function renderAcuPoints(out) {
   // TCM Diagnosis banner
   if (out.tcmPattern || out.principleOfTreatment) {
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
-      + (out.tcmPattern?'<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:9px;padding:10px 13px"><div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;margin-bottom:3px">&#9674; TCM / Ayurvedic Pattern</div><div style="font-size:12.5px;color:#78350f;font-weight:600">'+out.tcmPattern+'</div></div>':'')
-      + (out.principleOfTreatment?'<div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:9px;padding:10px 13px"><div style="font-size:10px;font-weight:700;color:#5b21b6;text-transform:uppercase;margin-bottom:3px">&#9670; Treatment Principle</div><div style="font-size:12.5px;color:#4c1d95;font-weight:600">'+out.principleOfTreatment+'</div></div>':'')
+      + (out.tcmPattern?'<div class="proto-evidence-tag" style="background:#fef3c7;border:1px solid #fcd34d"><div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;margin-bottom:3px">&#9674; TCM / Ayurvedic Pattern</div><div style="font-size:12.5px;color:#78350f;font-weight:600">'+out.tcmPattern+'</div></div>':'')
+      + (out.principleOfTreatment?'<div class="proto-evidence-tag" style="background:#ede9fe;border:1px solid #c4b5fd"><div style="font-size:10px;font-weight:700;color:#5b21b6;text-transform:uppercase;margin-bottom:3px">&#9670; Treatment Principle</div><div style="font-size:12.5px;color:#4c1d95;font-weight:600">'+out.principleOfTreatment+'</div></div>':'')
       + '</div>';
   }
 
   // Primary points
   if (out.primaryPoints && out.primaryPoints.length) {
-    html += '<div style="font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px">&#128073; Primary Points ('+out.primaryPoints.length+')</div>';
+    html += '<div class="proto-section-head" style="color:#b45309;margin-bottom:9px">&#128073; Primary Points ('+out.primaryPoints.length+')</div>';
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:16px">';
     out.primaryPoints.forEach(function(p) {
       html += '<div style="background:var(--surf);border:1.5px solid var(--bdr);border-radius:11px;overflow:hidden">'
@@ -10558,10 +10677,10 @@ function renderAcuPoints(out) {
         + (p.meridian?'<div style="font-size:10.5px;opacity:.85">'+p.meridian+' meridian</div>':'')+'</div></div></div>'
         + '<div style="padding:10px 13px;display:flex;flex-direction:column;gap:4px">'
         + (p.location?'<div style="font-size:11.5px;background:#fff7ed;border-radius:5px;padding:4px 8px;color:#92400e"><b>&#128205; Location:</b> '+p.location+'</div>':'')
-        + (p.acupressureMethod?'<div style="font-size:11.5px;padding:3px 0;border-bottom:0.5px solid var(--bdr)"><b>Acupressure:</b> '+p.acupressureMethod+'</div>':'')
+        + (p.acupressureMethod?'<div class="proto-herb-row" style="padding-top:3px;padding-bottom:3px"><b>Acupressure:</b> '+p.acupressureMethod+'</div>':'')
         + (p.needleDepth?'<div style="font-size:11.5px;padding:3px 0;border-bottom:0.5px solid var(--bdr);color:#0369a1"><b>&#128314; Needle depth:</b> '+p.needleDepth+'</div>':'')
-        + (p.stimulation?'<div style="font-size:11.5px;padding:3px 0;border-bottom:0.5px solid var(--bdr)"><b>Stimulation:</b> '+p.stimulation+'</div>':'')
-        + (p.duration?'<div style="font-size:11.5px;padding:3px 0;border-bottom:0.5px solid var(--bdr)"><b>Duration:</b> '+p.duration+'</div>':'')
+        + (p.stimulation?'<div class="proto-herb-row" style="padding-top:3px;padding-bottom:3px"><b>Stimulation:</b> '+p.stimulation+'</div>':'')
+        + (p.duration?'<div class="proto-herb-row" style="padding-top:3px;padding-bottom:3px"><b>Duration:</b> '+p.duration+'</div>':'')
         + (p.benefit?'<div style="font-size:12px;color:#1a6b3c;line-height:1.4;margin-top:2px">&#127807; '+p.benefit+'</div>':'')
         + (p.caution?'<div style="font-size:11px;background:#fef2f2;border-radius:5px;padding:3px 7px;margin-top:4px;color:#c0392b">&#9888; '+p.caution+'</div>':'')
         +'</div></div>';
@@ -10571,7 +10690,7 @@ function renderAcuPoints(out) {
 
   // Marma points
   if (out.marmaPoints && out.marmaPoints.length) {
-    html += '<div style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px">&#9672; Marma Points ('+out.marmaPoints.length+')</div>';
+    html += '<div class="proto-section-head" style="color:#7c3aed;margin-bottom:9px">&#9672; Marma Points ('+out.marmaPoints.length+')</div>';
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:16px">';
     out.marmaPoints.forEach(function(p) {
       html += '<div style="background:var(--surf);border:1.5px solid #ede9fe;border-radius:10px;overflow:hidden">'
@@ -10587,11 +10706,11 @@ function renderAcuPoints(out) {
 
   // Ear acupuncture
   if (out.earAcupuncture && out.earAcupuncture.length) {
-    html += '<div style="background:#e0f2fe;border:1px solid #7dd3fc;border-radius:10px;padding:12px 14px;margin-bottom:14px">'
-      + '<div style="font-size:11px;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:8px">&#128066; Ear Acupuncture / Auriculotherapy Points</div>'
+    html += '<div class="proto-diet-card" style="background:#e0f2fe;border:1px solid #7dd3fc;padding:12px 14px;margin-bottom:14px">'
+      + '<div class="proto-section-head" style="color:#0369a1;margin-bottom:8px">&#128066; Ear Acupuncture / Auriculotherapy Points</div>'
       + '<div style="display:flex;flex-wrap:wrap;gap:7px">';
     out.earAcupuncture.forEach(function(e) {
-      html += '<div style="background:#fff;border:1px solid #7dd3fc;border-radius:8px;padding:6px 10px;min-width:130px">'
+      html += '<div class="proto-evidence-tag" style="background:#fff;border:1px solid #7dd3fc;border-radius:8px;min-width:130px">'
         + '<div style="font-size:12.5px;font-weight:700;color:#0369a1">'+e.point+'</div>'
         + (e.location?'<div style="font-size:11px;color:#0c4a6e">'+e.location+'</div>':'')
         + (e.indication?'<div style="font-size:11px;color:#075985;margin-top:2px">'+e.indication+'</div>':'')
@@ -10603,44 +10722,44 @@ function renderAcuPoints(out) {
   // Session protocol
   if (out.sessionProtocol) {
     var sp = out.sessionProtocol;
-    html += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:13px 15px;margin-bottom:12px">'
-      + '<div style="font-size:11px;font-weight:700;color:#c2410c;text-transform:uppercase;margin-bottom:8px">&#128336; Session Protocol</div>'
+    html += '<div class="proto-diet-card" style="background:#fff7ed;border:1px solid #fed7aa;padding:13px 15px;margin-bottom:12px">'
+      + '<div class="proto-section-head" style="color:#c2410c;margin-bottom:8px">&#128336; Session Protocol</div>'
       + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px">'
-      + (sp.frequency?'<div style="font-size:12px;background:#fff;border-radius:7px;padding:6px 10px"><b>Frequency:</b><br><span style="color:#7c2d12">'+sp.frequency+'</span></div>':'')
-      + (sp.totalSessions?'<div style="font-size:12px;background:#fff;border-radius:7px;padding:6px 10px"><b>Course length:</b><br><span style="color:#7c2d12">'+sp.totalSessions+'</span></div>':'')
-      + (sp.duration?'<div style="font-size:12px;background:#fff;border-radius:7px;padding:6px 10px"><b>Session time:</b><br><span style="color:#7c2d12">'+sp.duration+'</span></div>':'')
-      + (sp.pressure?'<div style="font-size:12px;background:#fff;border-radius:7px;padding:6px 10px"><b>Pressure level:</b><br><span style="color:#7c2d12">'+sp.pressure+'</span></div>':'')
-      + (sp.timing?'<div style="font-size:12px;background:#fff;border-radius:7px;padding:6px 10px"><b>Best time:</b><br><span style="color:#7c2d12">'+sp.timing+'</span></div>':'')
+      + (sp.frequency?'<div class="proto-time-badge"><b>Frequency:</b><br><span style="color:#7c2d12">'+sp.frequency+'</span></div>':'')
+      + (sp.totalSessions?'<div class="proto-time-badge"><b>Course length:</b><br><span style="color:#7c2d12">'+sp.totalSessions+'</span></div>':'')
+      + (sp.duration?'<div class="proto-time-badge"><b>Session time:</b><br><span style="color:#7c2d12">'+sp.duration+'</span></div>':'')
+      + (sp.pressure?'<div class="proto-time-badge"><b>Pressure level:</b><br><span style="color:#7c2d12">'+sp.pressure+'</span></div>':'')
+      + (sp.timing?'<div class="proto-time-badge"><b>Best time:</b><br><span style="color:#7c2d12">'+sp.timing+'</span></div>':'')
       + (sp.sequence?'<div style="font-size:12px;background:#fff;border-radius:7px;padding:6px 10px;grid-column:1/-1"><b>Sequence:</b> <span style="color:#7c2d12">'+sp.sequence+'</span></div>':'')
       + '</div></div>';
   }
 
   // Lifestyle
   if (out.lifestyle && out.lifestyle.length) {
-    html += '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:9px;padding:11px 14px;margin-bottom:11px">'
-      + '<div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase;margin-bottom:6px">&#127803; Supporting Lifestyle & Diet (TCM-based)</div>';
+    html += '<div class="proto-diet-card" style="background:#f0fdf4;border:1px solid #86efac;padding:11px 14px;margin-bottom:11px">'
+      + '<div class="proto-section-head" style="color:#166534;margin-bottom:6px">&#127803; Supporting Lifestyle & Diet (TCM-based)</div>';
     out.lifestyle.forEach(function(s){html+='<div style="font-size:12px;color:#14532d;padding:2px 0">&#8226; '+s+'</div>';});
     html += '</div>';
   }
 
   // Self-care
   if (out.selfCareInstructions && out.selfCareInstructions.length) {
-    html += '<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:9px;padding:11px 14px;margin-bottom:11px">'
-      + '<div style="font-size:11px;font-weight:700;color:#1b5e20;text-transform:uppercase;margin-bottom:6px">&#127775; Self-Care (Patient Instructions)</div>';
+    html += '<div class="proto-diet-card" style="background:#e8f5e9;border:1px solid #a5d6a7;padding:11px 14px;margin-bottom:11px">'
+      + '<div class="proto-section-head" style="color:#1b5e20;margin-bottom:6px">&#127775; Self-Care (Patient Instructions)</div>';
     out.selfCareInstructions.forEach(function(s){html+='<div style="font-size:12px;color:#1b5e20;padding:2px 0">&#8226; '+s+'</div>';});
     html += '</div>';
   }
 
   // Contraindications
   if (out.contraindications && out.contraindications.length) {
-    html += '<div style="background:#fce4ec;border:1px solid #f48fb1;border-radius:9px;padding:11px 14px;margin-bottom:11px">'
-      + '<div style="font-size:11px;font-weight:700;color:#880e4f;text-transform:uppercase;margin-bottom:6px">&#9888; Contraindications</div>';
+    html += '<div class="proto-warning-banner" style="background:#fce4ec;border-color:#f48fb1;border-left-color:#c2185b;margin-bottom:11px">'
+      + '<div class="proto-section-head" style="color:#880e4f;margin-bottom:6px">&#9888; Contraindications</div>';
     out.contraindications.forEach(function(c2){html+='<div style="font-size:12px;color:#880e4f;padding:2px 0">&#8226; '+c2+'</div>';});
     html += '</div>';
   }
 
   // Disclaimer
-  if (out.note){html+='<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;font-size:11.5px;color:#7f1d1d;line-height:1.6;margin-bottom:12px"><strong>&#9888; Note:</strong> '+out.note+'</div>';}
+  if (out.note){html+='<div class="proto-warning-banner" style="margin-bottom:12px"><strong>&#9888; Note:</strong> '+out.note+'</div>';}
 
   html+='<button onclick="printChart(\'acu-result\')" class="diet-print-btn">&#128424; Print Point Prescription</button>';
   r.innerHTML=html;
@@ -10723,7 +10842,7 @@ function renderFastingPlan(out) {
     + (out.fastingType?'<div style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap"><span style="background:rgba(255,255,255,.2);padding:3px 12px;border-radius:8px;font-size:12px">Type: '+out.fastingType+'</span><span style="background:rgba(255,255,255,.2);padding:3px 12px;border-radius:8px;font-size:12px">Duration: '+(out.duration||'')+'</span></div>':'')
     + '</div>';
   if (out.phases && out.phases.length) {
-    html += '<div style="font-size:11px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">&#128337; Fasting Phases</div>';
+    html += '<div class="proto-section-head" style="color:#065f46;margin-bottom:8px">&#128337; Fasting Phases</div>';
     html += '<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">';
     out.phases.forEach(function(ph,i) {
       html += '<div style="background:var(--surf);border:1px solid #6ee7b7;border-left:4px solid #065f46;border-radius:9px;padding:10px 13px">'
@@ -10747,7 +10866,7 @@ function renderFastingPlan(out) {
   if (out.breakFast) {
     var bf = out.breakFast;
     html += '<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:9px;padding:11px 14px;margin-bottom:10px">'
-      + '<div style="font-size:11px;font-weight:700;color:#f57f17;text-transform:uppercase;margin-bottom:7px">&#127859; Breaking the Fast</div>'
+      + '<div class="proto-section-head" style="color:#f57f17;margin-bottom:7px">&#127859; Breaking the Fast</div>'
       + (bf.timing?'<div style="font-size:12px;padding:3px 0;border-bottom:0.5px solid #ffe082;color:#5a4200"><b>When:</b> '+bf.timing+'</div>':'')
       + (bf.firstFood?'<div style="font-size:12px;padding:3px 0;border-bottom:0.5px solid #ffe082;color:#5a4200"><b>First Food:</b> '+bf.firstFood+'</div>':'')
       + (bf.progression?'<div style="font-size:12px;padding:3px 0;color:#5a4200"><b>Progression:</b> '+bf.progression+'</div>':'')
@@ -10758,9 +10877,9 @@ function renderFastingPlan(out) {
   var prohibHtml = '';
   if (out.prohibited&&out.prohibited.length){prohibHtml='<div style="flex:1;min-width:140px"><div style="font-size:11px;font-weight:700;color:#880e4f;margin-bottom:5px">&#10060; Prohibited</div>'+out.prohibited.map(function(a){return '<div style="font-size:11.5px;color:#880e4f;padding:2px 0">&#8226; '+a+'</div>';}).join('')+'</div>';}
   if (allowHtml||prohibHtml){html+='<div style="display:flex;gap:10px;flex-wrap:wrap;background:var(--surf);border:1px solid var(--bdr);border-radius:9px;padding:11px 14px;margin-bottom:10px">'+allowHtml+prohibHtml+'</div>';}
-  if (out.herbalSupport&&out.herbalSupport.length){html+='<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:9px;padding:11px 14px;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;margin-bottom:6px">&#127807; Herbal Support</div>'+out.herbalSupport.map(function(h){return '<div style="font-size:12px;padding:3px 0;border-bottom:0.5px solid #ffe082;color:#5a4200">&#8226; '+h+'</div>';}).join('')+'</div>';}
-  if (out.monitoring&&out.monitoring.length){html+='<div style="background:#fce4ec;border:1px solid #f48fb1;border-radius:9px;padding:11px 14px;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#880e4f;text-transform:uppercase;margin-bottom:6px">&#128065; Monitor During Fast</div>'+out.monitoring.map(function(m){return '<div style="font-size:12px;padding:4px 0;border-bottom:0.5px solid #f48fb1"><b style="color:#880e4f">'+m.symptom+':</b> <span style="color:#7f1d1d">'+m.action+'</span></div>';}).join('')+'</div>';}
-  if (out.contraindications&&out.contraindications.length){html+='<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;margin-bottom:5px">&#128683; Contraindications</div>'+out.contraindications.map(function(c3){return '<div style="font-size:12px;color:#7f1d1d;padding:2px 0">&#8226; '+c3+'</div>';}).join('')+'</div>';}
+  if (out.herbalSupport&&out.herbalSupport.length){html+='<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:9px;padding:11px 14px;margin-bottom:10px"><div class="proto-section-head" style="color:#b45309;margin-bottom:6px">&#127807; Herbal Support</div>'+out.herbalSupport.map(function(h){return '<div style="font-size:12px;padding:3px 0;border-bottom:0.5px solid #ffe082;color:#5a4200">&#8226; '+h+'</div>';}).join('')+'</div>';}
+  if (out.monitoring&&out.monitoring.length){html+='<div style="background:#fce4ec;border:1px solid #f48fb1;border-radius:9px;padding:11px 14px;margin-bottom:10px"><div class="proto-section-head" style="color:#880e4f;margin-bottom:6px">&#128065; Monitor During Fast</div>'+out.monitoring.map(function(m){return '<div style="font-size:12px;padding:4px 0;border-bottom:0.5px solid #f48fb1"><b style="color:#880e4f">'+m.symptom+':</b> <span style="color:#7f1d1d">'+m.action+'</span></div>';}).join('')+'</div>';}
+  if (out.contraindications&&out.contraindications.length){html+='<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;margin-bottom:10px"><div class="proto-section-head" style="color:#991b1b;margin-bottom:5px">&#128683; Contraindications</div>'+out.contraindications.map(function(c3){return '<div style="font-size:12px;color:#7f1d1d;padding:2px 0">&#8226; '+c3+'</div>';}).join('')+'</div>';}
   if (out.note){html+='<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;font-size:11.5px;color:#7f1d1d;line-height:1.6;margin-bottom:10px"><strong>&#9888;:</strong> '+out.note+'</div>';}
   html+='<button onclick="printChart(\'fast-result\')" class="diet-print-btn">&#128424; Print Fasting Protocol</button>';
   r.innerHTML=html; r.scrollIntoView({behavior:'smooth',block:'start'});
@@ -10806,7 +10925,7 @@ function renderHydroProto(out) {
     + '<div style="font-size:15px;font-weight:700">&#128167; '+(out.title||'Hydrotherapy Protocol')+'</div>'
     + '<div style="font-size:12px;opacity:.85;margin-top:3px;line-height:1.5">'+(out.rationale||'')+'</div></div>';
   if (out.treatments && out.treatments.length) {
-    html += '<div style="font-size:11px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">&#128167; Treatment Protocols</div>';
+    html += '<div class="proto-section-head" style="color:#0369a1;margin-bottom:8px">&#128167; Treatment Protocols</div>';
     html += '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">';
     out.treatments.forEach(function(t) {
       var tc = typeColor[t.type]||'#0369a1'; var tb = typeBg[t.type]||'#e0f2fe';
@@ -10828,14 +10947,14 @@ function renderHydroProto(out) {
   if (out.dailyPlan) {
     var dp = out.dailyPlan;
     html += '<div style="background:#e0f2fe;border:1px solid #7dd3fc;border-radius:9px;padding:11px 14px;margin-bottom:10px">'
-      + '<div style="font-size:11px;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:7px">&#128336; Daily Plan</div>'
+      + '<div class="proto-section-head" style="color:#0369a1;margin-bottom:7px">&#128336; Daily Plan</div>'
       + (dp.morning?'<div style="font-size:12px;padding:4px 0;border-bottom:0.5px solid #7dd3fc;color:#0c4a6e"><b>&#127773; Morning:</b> '+dp.morning+'</div>':'')
       + (dp.evening?'<div style="font-size:12px;padding:4px 0;color:#0c4a6e"><b>&#127769; Evening:</b> '+dp.evening+'</div>':'')
       + '</div>';
   }
   if (out.homeRemedies && out.homeRemedies.length) {
     html += '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:9px;padding:11px 14px;margin-bottom:10px">'
-      + '<div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase;margin-bottom:6px">&#127968; Home Remedies</div>';
+      + '<div class="proto-section-head" style="color:#166534;margin-bottom:6px">&#127968; Home Remedies</div>';
     out.homeRemedies.forEach(function(h2){html+='<div style="font-size:12px;color:#14532d;padding:3px 0;border-bottom:0.5px solid #86efac">&#8226; '+h2+'</div>';});
     html += '</div>';
   }
@@ -10846,7 +10965,7 @@ function renderHydroProto(out) {
     html += '</div>';
   }
   if (out.contraindications && out.contraindications.length) {
-    html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;margin-bottom:5px">&#128683; Contraindications</div>'+out.contraindications.map(function(c4){return '<div style="font-size:12px;color:#7f1d1d;padding:2px 0">&#8226; '+c4+'</div>';}).join('')+'</div>';
+    html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;margin-bottom:10px"><div class="proto-section-head" style="color:#991b1b;margin-bottom:5px">&#128683; Contraindications</div>'+out.contraindications.map(function(c4){return '<div style="font-size:12px;color:#7f1d1d;padding:2px 0">&#8226; '+c4+'</div>';}).join('')+'</div>';
   }
   if (out.note){html+='<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;font-size:11.5px;color:#7f1d1d;line-height:1.6;margin-bottom:10px"><strong>&#9888;:</strong> '+out.note+'</div>';}
   html+='<button onclick="printChart(\'hydro-result\')" class="diet-print-btn">&#128424; Print Hydrotherapy Protocol</button>';
@@ -10930,11 +11049,11 @@ function renderMudResult(out) {
   }
   if (out.afterCare) {
     html += '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:9px;padding:11px 14px;margin-bottom:10px">'
-      + '<div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase;margin-bottom:6px">&#129529; After-Care</div>'
+      + '<div class="proto-section-head" style="color:#166534;margin-bottom:6px">&#129529; After-Care</div>'
       + '<div style="font-size:12px;color:#14532d;line-height:1.6">'+out.afterCare+'</div></div>';
   }
   if (out.contraindications && out.contraindications.length) {
-    html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;margin-bottom:5px">&#128683; Contraindications</div>'+out.contraindications.map(function(c){return '<div style="font-size:12px;color:#7f1d1d;padding:2px 0">&#8226; '+c+'</div>';}).join('')+'</div>';
+    html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;margin-bottom:10px"><div class="proto-section-head" style="color:#991b1b;margin-bottom:5px">&#128683; Contraindications</div>'+out.contraindications.map(function(c){return '<div style="font-size:12px;color:#7f1d1d;padding:2px 0">&#8226; '+c+'</div>';}).join('')+'</div>';
   }
   if (out.note){html+='<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;font-size:11.5px;color:#7f1d1d;line-height:1.6;margin-bottom:10px"><strong>&#9888;:</strong> '+out.note+'</div>';}
   html += '<button onclick="printChart(\'mud-result\')" class="diet-print-btn">&#128424; Print Mud Therapy Protocol</button>';
@@ -11035,11 +11154,11 @@ function renderMassageResult(out) {
   }
   if (out.afterCare) {
     html += '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:9px;padding:11px 14px;margin-bottom:10px">'
-      + '<div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase;margin-bottom:6px">&#129529; After-Care</div>'
+      + '<div class="proto-section-head" style="color:#166534;margin-bottom:6px">&#129529; After-Care</div>'
       + '<div style="font-size:12px;color:#14532d;line-height:1.6">'+out.afterCare+'</div></div>';
   }
   if (out.contraindications && out.contraindications.length) {
-    html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;margin-bottom:5px">&#128683; Contraindications</div>'+out.contraindications.map(function(c){return '<div style="font-size:12px;color:#7f1d1d;padding:2px 0">&#8226; '+c+'</div>';}).join('')+'</div>';
+    html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;margin-bottom:10px"><div class="proto-section-head" style="color:#991b1b;margin-bottom:5px">&#128683; Contraindications</div>'+out.contraindications.map(function(c){return '<div style="font-size:12px;color:#7f1d1d;padding:2px 0">&#8226; '+c+'</div>';}).join('')+'</div>';
   }
   if (out.note){html+='<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;font-size:11.5px;color:#7f1d1d;line-height:1.6;margin-bottom:10px"><strong>&#9888;:</strong> '+out.note+'</div>';}
   html += '<button onclick="printChart(\'mass-result\')" class="diet-print-btn">&#128424; Print Massage Protocol</button>';
@@ -11487,7 +11606,7 @@ function renderNaturoPlanner(out) {
   var r = document.getElementById('naturo-planner-result');
   function sec(icon, label, color, bg, content) {
     return '<div style="background:'+bg+';border:1px solid '+color+'44;border-radius:9px;padding:12px 14px;margin-bottom:10px">'
-      +'<div style="font-size:11px;font-weight:700;color:'+color+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">'+icon+' '+label+'</div>'
+      +'<div class="proto-section-head" style="color:'+color+'">'+icon+' '+label+'</div>'
       +content+'</div>';
   }
   var html = '<div style="background:linear-gradient(135deg,#1a6b3c,#2d7a50);border-radius:11px;padding:14px 16px;margin-bottom:14px;color:#d4edd8">'
@@ -11496,7 +11615,7 @@ function renderNaturoPlanner(out) {
 
   if (out.hydrotherapy && out.hydrotherapy.length) {
     var htm = out.hydrotherapy.map(function(h) {
-      return '<div style="background:#fff;border-radius:7px;padding:9px 11px;margin-bottom:7px;border:1px solid #bfdbfe">'
+      return '<div class="proto-diet-card" style="background:#fff;border:1px solid #bfdbfe;padding:9px 11px;margin-bottom:7px">'
         +'<div style="font-size:12.5px;font-weight:700;color:#1e3a5f">💧 '+h.treatment+'</div>'
         +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px;font-size:11px">'
         +(h.temperature?'<span style="color:#0369a1"><b>Temp:</b> '+h.temperature+'</span>':'')
@@ -11512,7 +11631,7 @@ function renderNaturoPlanner(out) {
   }
   if (out.mudTherapy && out.mudTherapy.length) {
     var mtm = out.mudTherapy.map(function(m) {
-      return '<div style="background:#fff;border-radius:7px;padding:9px 11px;margin-bottom:7px;border:1px solid #d6b896">'
+      return '<div class="proto-diet-card" style="background:#fff;border:1px solid #d6b896;padding:9px 11px;margin-bottom:7px">'
         +'<div style="font-size:12.5px;font-weight:700;color:#7c3d1a">🌍 '+m.application+' — '+m.area+'</div>'
         +'<div style="font-size:11px;color:#4b2c14;margin-top:4px">'
         +(m.duration?'<span style="margin-right:10px"><b>Duration:</b> '+m.duration+'</span>':'')
@@ -11525,7 +11644,7 @@ function renderNaturoPlanner(out) {
   }
   if (out.massage && out.massage.length) {
     var mam = out.massage.map(function(m) {
-      return '<div style="background:#fff;border-radius:7px;padding:9px 11px;margin-bottom:7px;border:1px solid #d1d5db">'
+      return '<div class="proto-diet-card" style="background:#fff;border:1px solid #d1d5db;padding:9px 11px;margin-bottom:7px">'
         +'<div style="font-size:12.5px;font-weight:700;color:#374151">🤲 '+m.type+' — '+m.area+'</div>'
         +'<div style="font-size:11px;color:#6b7280;margin-top:4px">'
         +(m.oil?'<span style="margin-right:8px"><b>Oil:</b> '+m.oil+'</span>':'')
@@ -11548,7 +11667,7 @@ function renderNaturoPlanner(out) {
   if (out.yogaAsanas && out.yogaAsanas.length) {
     var yam = '<div style="display:flex;flex-wrap:wrap;gap:6px">'
       + out.yogaAsanas.map(function(a) {
-        return '<div style="background:#fff;border:1px solid #a7f3d0;border-radius:7px;padding:7px 10px;flex:1;min-width:130px">'
+        return '<div class="proto-evidence-tag" style="background:#fff;border:1px solid #a7f3d0;border-radius:7px;flex:1;min-width:130px">'
           +'<div style="font-size:11.5px;font-weight:700;color:#065f46">🧘 '+a.name+'</div>'
           +(a.duration?'<div style="font-size:10px;color:#0e7490">'+a.duration+'</div>':'')
           +(a.benefit?'<div style="font-size:10.5px;color:#374151;margin-top:2px">'+a.benefit+'</div>':'')
@@ -11558,31 +11677,31 @@ function renderNaturoPlanner(out) {
   }
   if (out.pranayama && out.pranayama.length) {
     var pram = out.pranayama.map(function(p) {
-      return '<div style="font-size:11.5px;padding:4px 0;border-bottom:0.5px solid #a7f3d0"><b>'+p.name+'</b>'+(p.duration?' · '+p.duration:'')+(p.benefit?' — '+p.benefit:'')+'</div>';
+      return '<div class="proto-herb-row" style="border-bottom-color:#a7f3d0"><b>'+p.name+'</b>'+(p.duration?' · '+p.duration:'')+(p.benefit?' — '+p.benefit:'')+'</div>';
     }).join('');
     html += sec('🌬️','Pranayama','#0e7490','#ecfeff',pram);
   }
   if (out.acupressure && out.acupressure.length) {
     var acu = out.acupressure.map(function(a) {
-      return '<div style="font-size:11.5px;padding:4px 0;border-bottom:0.5px solid #fed7aa"><b style="color:#c2410c">👆 '+a.point+'</b>'+(a.location?' — '+a.location:'')+(a.benefit?'<br><span style="color:#374151;font-size:11px">'+a.benefit+'</span>':'')+'</div>';
+      return '<div class="proto-herb-row" style="border-bottom-color:#fed7aa"><b style="color:#c2410c">👆 '+a.point+'</b>'+(a.location?' — '+a.location:'')+(a.benefit?'<br><span style="color:#374151;font-size:11px">'+a.benefit+'</span>':'')+'</div>';
     }).join('');
     html += sec('👆','Acupressure','#b45309','#fff7ed',acu);
   }
   if (out.chromotherapy) html += sec('🎨','Chromotherapy','#7c3aed','#f5f3ff','<div style="font-size:11.5px">'+out.chromotherapy+'</div>');
   if (out.magneto) html += sec('🔵','Magneto Therapy','#1d4ed8','#eff6ff','<div style="font-size:11.5px">'+out.magneto+'</div>');
   if (out.lifestyle && out.lifestyle.length) {
-    var lf = out.lifestyle.map(function(l){ return '<div style="font-size:11.5px;padding:3px 0;border-bottom:0.5px solid var(--bdr)">&#10003; '+l+'</div>'; }).join('');
+    var lf = out.lifestyle.map(function(l){ return '<div class="proto-herb-row" style="padding-top:3px;padding-bottom:3px">&#10003; '+l+'</div>'; }).join('');
     html += sec('🏃','Lifestyle Advice','#4f46e5','#eef2ff',lf);
   }
   if (out.duration||out.followUp) {
-    html += '<div style="background:#f0fdf4;border:1px solid #a7f3d0;border-radius:9px;padding:10px 13px;margin-bottom:10px;font-size:12px;color:#065f46">'
+    html += '<div class="proto-diet-card" style="background:#f0fdf4;border:1px solid #a7f3d0;color:#065f46">'
       +(out.duration?'<div><b>Programme duration:</b> '+out.duration+'</div>':'')
       +(out.followUp?'<div><b>Follow-up:</b> '+out.followUp+'</div>':'')+'</div>';
   }
   if (out.contraindications&&out.contraindications.length) {
-    html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:8px;padding:10px 13px;font-size:11.5px;color:#7f1d1d;margin-bottom:10px"><b>&#9888; Contraindications:</b><br>'+out.contraindications.map(function(c){return '&#8226; '+c;}).join('<br>')+'</div>';
+    html += '<div class="proto-warning-banner"><b>&#9888; Contraindications:</b><br>'+out.contraindications.map(function(c){return '&#8226; '+c;}).join('<br>')+'</div>';
   }
-  if (out.note) html += '<div style="background:#fffce8;border:1px solid #d4b84a;border-left:3px solid #f9a825;border-radius:8px;padding:10px 13px;font-size:11.5px;color:#5a4200;margin-bottom:10px"><strong>&#128203; Note:</strong> '+out.note+'</div>';
+  if (out.note) html += '<div class="proto-warning-banner" style="background:#fffce8;border-color:#d4b84a;border-left-color:#f9a825;color:#5a4200"><strong>&#128203; Note:</strong> '+out.note+'</div>';
   if(out.signature){html+='<div style="margin-top:20px;padding-top:14px;border-top:1.5px solid rgba(201,168,76,.25);text-align:right;font-family:Cormorant Garamond,serif;font-size:17px;font-weight:500;color:#064E3B;letter-spacing:.05em;padding-right:4px">'+out.signature+'</div>';}
   html += '<button onclick="printChart(\'naturo-planner-result\')" class="diet-print-btn">&#128424; Print Treatment Plan</button>';
   r.innerHTML = html;
@@ -15290,6 +15409,31 @@ function _isOnline() { return navigator.onLine; }
 // ──────────────────────────────────────────────────────────────
 // MODULE 5: NaturaQueue — IndexedDB Offline AI Task Queue
 // ──────────────────────────────────────────────────────────────
+
+/**
+ * Snapshot the currently configured AI providers into a serialisable
+ * array so the Service Worker can replay the call without access to
+ * the in-memory _keyCaches / closures.
+ * Only providers that have a key (or are "puter") are included.
+ */
+function _buildProviderSnapshot() {
+  try {
+    var order = (typeof _sessionProvider !== 'undefined' && _sessionProvider && _sessionProvider !== 'auto')
+      ? [_sessionProvider]
+      : (typeof PROVIDER_ORDER !== 'undefined' ? PROVIDER_ORDER : []);
+    var snap = [];
+    for (var i = 0; i < order.length; i++) {
+      var pid = order[i];
+      var p   = (typeof AI_PROVIDERS !== 'undefined') ? AI_PROVIDERS[pid] : null;
+      if (!p) continue;
+      var key = (pid === 'puter') ? null : (typeof _keyCaches !== 'undefined' ? (_keyCaches[pid] || null) : null);
+      if (pid !== 'puter' && !key) continue;   // skip keyless non-puter providers
+      snap.push({ pid: pid, key: key, endpoint: p.endpoint || null, model: p.model || null });
+    }
+    return snap;
+  } catch(e) { return []; }
+}
+
 const NaturaQueue = (function() {
   const DB_NAME    = 'naturaref_ai_queue';
   const STORE_NAME = 'tasks';
@@ -15312,12 +15456,15 @@ const NaturaQueue = (function() {
   async function enqueue(task) {
     var db    = await _open();
     var entry = {
-      id:      'task_' + Date.now() + Math.random().toString(36).slice(2),
-      ts:      Date.now(),
-      modeId:  task.modeId,
-      query:   task.query,
-      card:    task.card,
-      status:  'pending'
+      id:       'task_' + Date.now() + Math.random().toString(36).slice(2),
+      ts:       Date.now(),
+      modeId:   task.modeId,
+      query:    task.query,
+      card:     task.card,
+      status:   'pending',
+      // Snapshot active providers so the SW can replay the call
+      // without access to the main-thread key caches.
+      provider: _buildProviderSnapshot()
     };
     return new Promise(function(res, rej) {
       var tx = db.transaction(STORE_NAME, 'readwrite');
@@ -15381,6 +15528,23 @@ window.addEventListener('online', function() {
       showToast('📋 Queued AI result ready: ' + task.modeId + ' for "' + task.query.slice(0,40) + '…"');
   });
 });
+
+// ── Listen for results completed by the Service Worker (Background Sync) ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', function(event) {
+    var msg = event.data;
+    if (!msg || msg.type !== 'NATURAQUEUE_RESULT') return;
+    // Surface the result in the CAI chat history for the relevant mode
+    try {
+      if (typeof _caiModeHistories !== 'undefined' && msg.modeId && msg.result) {
+        if (!_caiModeHistories[msg.modeId]) _caiModeHistories[msg.modeId] = [];
+        _caiModeHistories[msg.modeId].push({ role: 'assistant', content: msg.result, timestamp: Date.now(), fromSW: true });
+      }
+    } catch(e) {}
+    if (typeof showToast === 'function')
+      showToast('📋 Background AI result ready (' + (msg.modeId || 'queued') + ') — open the assistant to view.');
+  });
+}
 
 // ── Session state ─────────────────────────────────────────────
 var _caiOpen            = false;
@@ -16014,7 +16178,16 @@ async function sendCardAI() {
       return;
     }
     // No local answer — enqueue for later
-    try { await NaturaQueue.enqueue({ modeId: modeId, query: text, card: _caiCardText }); } catch(e){}
+    try {
+      await NaturaQueue.enqueue({ modeId: modeId, query: text, card: _caiCardText });
+      // Register Background Sync so the SW can flush the queue even if
+      // the user closes and reopens the app before connectivity returns.
+      if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        navigator.serviceWorker.ready
+          .then(function(sw) { return sw.sync.register('naturaqueue-flush'); })
+          .catch(function(e) { console.warn('[NaturaQueue] sync.register failed:', e); });
+      }
+    } catch(e){}
     _caiAppendMsg('ai',
       '📴 **Queued for when you\'re back online.** Your query has been saved and will run automatically when connectivity returns.',
       null, false, modeId, true);
@@ -18346,7 +18519,173 @@ self.addEventListener('fetch', function(e) {
 
   /* ── Default: pass-through ── */
 });
-`;
+
+/* ════════════════════════════════════════════════════════════
+   BACKGROUND SYNC — NaturaQueue flush
+   Tag: 'naturaqueue-flush'
+   ════════════════════════════════════════════════════════════ */
+self.addEventListener('sync', function(e) {
+  if (e.tag === 'naturaqueue-flush') {
+    e.waitUntil(flushNaturaQueue());
+  }
+});
+
+/* ── IDB helpers (SW-local, no access to main-thread closures) ── */
+function _nqOpenDB() {
+  return new Promise(function(res, rej) {
+    var req = indexedDB.open('naturaref_ai_queue', 1);
+    req.onupgradeneeded = function(e) {
+      var db = e.target.result;
+      if (!db.objectStoreNames.contains('tasks')) {
+        var store = db.createObjectStore('tasks', { keyPath: 'id' });
+        store.createIndex('ts', 'ts');
+      }
+    };
+    req.onsuccess = function(e) { res(e.target.result); };
+    req.onerror   = function(e) { rej(e.target.error); };
+  });
+}
+
+function _nqGetPending(db) {
+  return new Promise(function(res) {
+    var items = [];
+    db.transaction('tasks', 'readonly')
+      .objectStore('tasks')
+      .openCursor()
+      .onsuccess = function(e) {
+        var cur = e.target.result;
+        if (!cur) { res(items); return; }
+        if (cur.value.status === 'pending') items.push(cur.value);
+        cur.continue();
+      };
+  });
+}
+
+function _nqMarkDone(db, id, result) {
+  return new Promise(function(res, rej) {
+    var tx     = db.transaction('tasks', 'readwrite');
+    var getReq = tx.objectStore('tasks').get(id);
+    getReq.onsuccess = function() {
+      var item = Object.assign({}, getReq.result, {
+        status:      'done',
+        result:      result,
+        completedAt: Date.now(),
+        completedBy: 'service-worker'
+      });
+      tx.objectStore('tasks').put(item);
+      tx.oncomplete = function(){ res(); };
+      tx.onerror    = function(e){ rej(e.target.error); };
+    };
+    getReq.onerror = function(e){ rej(e.target.error); };
+  });
+}
+
+/**
+ * Build and fire the AI provider fetch for a single queued task.
+ * task.provider is the array snapshotted by _buildProviderSnapshot()
+ * in the main thread — [{pid, key, endpoint, model}, …]
+ */
+async function _nqCallProvider(task) {
+  var providers = Array.isArray(task.provider) ? task.provider : [];
+  if (!providers.length) throw new Error('No provider snapshot in task');
+
+  var msgs = [
+    { role: 'system', content: 'You are a BNYS clinical AI assistant. Respond clearly and concisely.' },
+    { role: 'user',   content: task.query + (task.card ? '\n\n---\nClinical context:\n' + task.card : '') }
+  ];
+
+  var lastErr;
+  for (var i = 0; i < providers.length; i++) {
+    var p = providers[i];
+    try { return await _nqFetch(p, msgs); }
+    catch(e) {
+      lastErr = e;
+      console.warn('[SW NaturaQueue] Provider', p.pid, 'failed:', e.message, '— trying next');
+    }
+  }
+  throw lastErr || new Error('All providers failed');
+}
+
+async function _nqFetch(p, msgs) {
+  var headers, body;
+
+  if (p.pid === 'claude') {
+    // Anthropic Messages API
+    headers = {
+      'Content-Type':      'application/json',
+      'x-api-key':          p.key,
+      'anthropic-version': '2023-06-01'
+    };
+    var sysPart  = msgs.find(function(m){ return m.role === 'system'; });
+    var userMsgs = msgs.filter(function(m){ return m.role !== 'system'; });
+    body = JSON.stringify({
+      model:      p.model,
+      max_tokens: 1200,
+      system:     sysPart ? sysPart.content : '',
+      messages:   userMsgs
+    });
+  } else {
+    // OpenAI-compatible (Groq / Cerebras / Gemini-OpenAI / OpenRouter)
+    headers = {
+      'Content-Type':  'application/json',
+      'Authorization': 'Bearer ' + p.key
+    };
+    body = JSON.stringify({ model: p.model, max_tokens: 1200, messages: msgs });
+  }
+
+  var res = await fetch(p.endpoint, { method: 'POST', headers: headers, body: body });
+  if (!res.ok) {
+    var errText = await res.text().catch(function(){ return ''; });
+    throw new Error('HTTP ' + res.status + ' — ' + errText.slice(0, 120));
+  }
+  var data = await res.json();
+
+  if (p.pid === 'claude') {
+    return (data.content && data.content[0] && data.content[0].text) || '';
+  }
+  return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+}
+
+/**
+ * Main flush routine — called by the 'sync' event.
+ * Opens IDB, iterates pending tasks, attempts each, marks done on success.
+ * Failures are left pending so the next sync event retries them.
+ */
+async function flushNaturaQueue() {
+  var db;
+  try { db = await _nqOpenDB(); }
+  catch(e) { console.warn('[SW NaturaQueue] IDB open failed:', e); return; }
+
+  var tasks;
+  try { tasks = await _nqGetPending(db); }
+  catch(e) { console.warn('[SW NaturaQueue] IDB read failed:', e); return; }
+
+  console.info('[SW NaturaQueue] Flushing', tasks.length, 'pending task(s)');
+
+  for (var i = 0; i < tasks.length; i++) {
+    var task = tasks[i];
+    try {
+      var result = await _nqCallProvider(task);
+      await _nqMarkDone(db, task.id, result);
+      console.info('[SW NaturaQueue] Task', task.id, 'completed by SW');
+
+      // Notify any open clients so the UI can surface the result
+      self.clients.matchAll({ includeUncontrolled: true, type: 'window' })
+        .then(function(clients) {
+          clients.forEach(function(client) {
+            client.postMessage({
+              type:   'NATURAQUEUE_RESULT',
+              taskId: task.id,
+              modeId: task.modeId,
+              result: result
+            });
+          });
+        }).catch(function(){});
+    } catch(e) {
+      console.warn('[SW NaturaQueue] Task', task.id, 'still failing, kept pending:', e.message);
+    }
+  }
+}`;
 
   try {
     var swBlob = new Blob([swCode], { type: 'application/javascript' });
