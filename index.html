@@ -7085,44 +7085,211 @@ function buildCard(item, color) {
 // ═══════════════════════════════════════════════════
 let curSec = 'home';
 
-// ══ Native back button support (History API) ══
-history.replaceState({page:'home'}, '', '');
-window.addEventListener('popstate', function(e) {
-  var state = e.state;
-  if (!state || state.page === 'home') {
-    goHome(true);
-  } else if (state.page === 'calc') {
-    // Safety fallback — open calculators section and reset calc UI
-    openSec('calculators', document.getElementById('sbh-calculators'), true);
-    var _cg0 = document.getElementById('calc-grid-el');
-    var _ca0 = document.getElementById('calc-area-el');
-    if (_ca0) { _ca0.innerHTML = ''; _ca0.style.display = 'none'; }
-    if (_cg0) _cg0.style.display = '';
-    document.querySelectorAll('.calc-info-card').forEach(function(el){ el.style.borderColor = ''; });
-  } else if (state.page === 'tab') {
-    // Card view → back to category grid — skipHistory=true to avoid double-push
-    showTabIndex(state.secId, true);
-  } else if (state.page === 'sec') {
-    // Restore section — skipHistory=true
-    var btn = document.getElementById('sbh-' + state.secId);
-    openSec(state.secId, btn, true, state.groupKey);
-    if (state.secId === 'calculators') {
-      // Calculators is single-tab with static HTML — reset inner calc UI, do NOT call showTabIndex (it wipes content)
-      var _cg = document.getElementById('calc-grid-el');
-      var _ca = document.getElementById('calc-area-el');
-      if (_ca) { _ca.innerHTML = ''; _ca.style.display = 'none'; }
-      if (_cg) _cg.style.display = '';
-      document.querySelectorAll('.calc-info-card').forEach(function(el){ el.style.borderColor = ''; });
-    } else {
-      // Multi-tab or other sections — show category index grid as normal
-      var _secDef = typeof SECS !== 'undefined' ? SECS.find(function(s){ return s.id === state.secId; }) : null;
-      if (!_secDef || _secDef.tabs.length > 1) showTabIndex(state.secId, true);
+// ══════════════════════════════════════════════════════════════════
+// NR_BackManager — Robust Back-Button & History Management  v1.0
+// Handles: overlays → DDx peek/detail → Yoga sub-levels →
+//          section/group/tab views → Home (double-tap to exit)
+// ══════════════════════════════════════════════════════════════════
+(function () {
+
+  /* ── Seed the history stack so the very first back-press doesn't
+        exit the PWA before we can intercept it. ── */
+  history.replaceState({ page: 'home' }, '', '');
+
+  /* ── Double-tap-to-exit state ── */
+  var _exitWarning = false;
+  var _exitTimer   = null;
+
+  /* ── Show a transient toast warning ── */
+  function _showExitToast() {
+    var toast = document.getElementById('nr-back-exit-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'nr-back-exit-toast';
+      Object.assign(toast.style, {
+        position:       'fixed',
+        bottom:         '80px',
+        left:           '50%',
+        transform:      'translateX(-50%)',
+        background:     'rgba(30,50,30,0.92)',
+        color:          '#fff',
+        padding:        '10px 22px',
+        borderRadius:   '24px',
+        fontSize:       '14px',
+        fontFamily:     'inherit',
+        zIndex:         '99999',
+        pointerEvents:  'none',
+        transition:     'opacity .25s',
+        opacity:        '0',
+        whiteSpace:     'nowrap',
+        boxShadow:      '0 4px 18px rgba(0,0,0,.35)'
+      });
+      document.body.appendChild(toast);
     }
-  } else if (state.page === 'group') {
-    // Group view → skipHistory=true to avoid re-pushing
-    openGroupView(state.groupKey, true);
+    toast.textContent = 'Press back again to exit';
+    toast.style.opacity = '1';
+    clearTimeout(_exitTimer);
+    _exitTimer = setTimeout(function () {
+      toast.style.opacity = '0';
+      _exitWarning = false;
+    }, 2000);
   }
-});
+
+  /* ── Helper: is a given element currently "visible" (overlay open)? ── */
+  function _visible(id) {
+    var el = document.getElementById(id);
+    if (!el) return false;
+    return el.classList.contains('open') ||
+           el.classList.contains('nr-inbox-open') ||
+           (el.style.display !== '' && el.style.display !== 'none');
+  }
+
+  /* ── Central popstate handler ── */
+  window.addEventListener('popstate', function (e) {
+    var state = e.state || {};
+
+    /* ── PRIORITY 1: Module-specific sub-states (DDx detail / peek) ── */
+    // DDx detail view (full card inside DDx SV)
+    if (typeof window._sv !== 'undefined' && window._sv.detail) {
+      if (typeof window.closeDdxDetail === 'function') window.closeDdxDetail();
+      history.pushState(null, ''); // keep a state so next back stays in app
+      return;
+    }
+
+    /* ── PRIORITY 2: DDx peek sheet ── */
+    var _ddxPeekOv = document.getElementById('ddx-peek-overlay');
+    if (_ddxPeekOv && (_ddxPeekOv.classList.contains('open') || _ddxPeekOv.classList.contains('animating'))) {
+      if (typeof window.closeDdxPeek === 'function') window.closeDdxPeek();
+      history.pushState(null, ''); // keep a state
+      return;
+    }
+
+    /* ── PRIORITY 3: DDx search view (results panel) ── */
+    if (typeof window._sv !== 'undefined' && window._sv.active) {
+      if (typeof window.closeDdxSV === 'function') window.closeDdxSV();
+      history.pushState(null, '');
+      return;
+    }
+
+    /* ── PRIORITY 4: Mobile search overlay ── */
+    if (_visible('mob-srch-overlay')) {
+      if (typeof window.closeMobSearch === 'function') window.closeMobSearch();
+      else document.getElementById('mob-srch-overlay').classList.remove('open');
+      history.pushState(null, '');
+      return;
+    }
+
+    /* ── PRIORITY 5: Command palette overlay ── */
+    if (_visible('cmd-overlay')) {
+      if (typeof window.closeCmd === 'function') window.closeCmd();
+      history.pushState(null, '');
+      return;
+    }
+
+    /* ── PRIORITY 6: Card AI overlay ── */
+    if (_visible('card-ai-overlay')) {
+      if (typeof window.closeCardAI === 'function') window.closeCardAI();
+      history.pushState(null, '');
+      return;
+    }
+
+    /* ── PRIORITY 7: Share / Profile / Inbox modals ── */
+    if (_visible('share-overlay')) {
+      if (typeof window.closeShare === 'function') window.closeShare();
+      history.pushState(null, '');
+      return;
+    }
+    if (_visible('nr-profile-overlay')) {
+      var _pov = document.getElementById('nr-profile-overlay');
+      if (_pov) _pov.style.display = 'none';
+      history.pushState(null, '');
+      return;
+    }
+    if (_visible('nr-inbox-overlay')) {
+      var _iov = document.getElementById('nr-inbox-overlay');
+      if (_iov) _iov.classList.remove('nr-inbox-open');
+      history.pushState(null, '');
+      return;
+    }
+
+    /* ── PRIORITY 8: Yoga sub-level back (yoga library overlay is open) ── */
+    var _yogaEl = document.getElementById('sv-yogalib');
+    var _yogaOpen = _yogaEl && _yogaEl.style.display !== 'none';
+    if (_yogaOpen || state.yl) {
+      var _detailEl = document.getElementById('yoga-detail-view');
+      if (_detailEl && _detailEl.style.display === 'block') {
+        if (typeof window.yogoBack === 'function') window.yogoBack();
+        return;
+      }
+      if (_yogaOpen) {
+        if (typeof window.yogoBack === 'function') window.yogoBack();
+        return;
+      }
+    }
+
+    /* ── PRIORITY 9: Section / Tab / Calc / Group states (restore views) ── */
+    if (state.page === 'calc') {
+      openSec('calculators', document.getElementById('sbh-calculators'), true);
+      var _cg0 = document.getElementById('calc-grid-el');
+      var _ca0 = document.getElementById('calc-area-el');
+      if (_ca0) { _ca0.innerHTML = ''; _ca0.style.display = 'none'; }
+      if (_cg0) _cg0.style.display = '';
+      document.querySelectorAll('.calc-info-card').forEach(function (el) { el.style.borderColor = ''; });
+      return;
+    }
+    if (state.page === 'tab') {
+      showTabIndex(state.secId, true);
+      return;
+    }
+    if (state.page === 'sec') {
+      var btn = document.getElementById('sbh-' + state.secId);
+      openSec(state.secId, btn, true, state.groupKey);
+      if (state.secId === 'calculators') {
+        var _cg = document.getElementById('calc-grid-el');
+        var _ca = document.getElementById('calc-area-el');
+        if (_ca) { _ca.innerHTML = ''; _ca.style.display = 'none'; }
+        if (_cg) _cg.style.display = '';
+        document.querySelectorAll('.calc-info-card').forEach(function (el) { el.style.borderColor = ''; });
+      } else {
+        var _secDef = typeof SECS !== 'undefined' ? SECS.find(function (s) { return s.id === state.secId; }) : null;
+        if (!_secDef || _secDef.tabs.length > 1) showTabIndex(state.secId, true);
+      }
+      return;
+    }
+    if (state.page === 'group') {
+      openGroupView(state.groupKey, true);
+      return;
+    }
+
+    /* ── PRIORITY 10: Any in-section or in-group body class → go Home ── */
+    var _inSection = document.body.classList.contains('in-section');
+    var _inGroup   = document.body.classList.contains('in-group');
+    var _gv        = document.getElementById('group-view');
+    var _inGV      = _gv && _gv.style.display !== 'none';
+
+    if (_inSection || _inGroup || _inGV || _yogaOpen) {
+      goHome(true);
+      // Re-seed so next back-press hits the double-tap guard
+      history.pushState({ page: 'home' }, '', '');
+      return;
+    }
+
+    /* ── PRIORITY 11: Already on Home → double-tap-to-exit ── */
+    if (_exitWarning) {
+      // Second press within 2 s — allow the browser to exit
+      clearTimeout(_exitTimer);
+      _exitWarning = false;
+      // Let the browser handle naturally (history is empty / exhausted)
+      return;
+    }
+    // First press on Home
+    _exitWarning = true;
+    _showExitToast();
+    // Re-push so the browser has a state to pop on the second back-press
+    history.pushState({ page: 'home' }, '', '');
+  });
+
+})(); // end NR_BackManager
 
 // ═══════════════════════════════════════════════════
 // RECENTLY VIEWED — in-memory tracker
@@ -18969,17 +19136,9 @@ function _yogaShowLevel(n) {
 }
 
 /* ── Native back via popstate ── */
-function _yogaRegPop() {
-  if (_yogaPopReg) return;
-  _yogaPopReg = true;
-  window.addEventListener('popstate', function() {
-    var dv = document.getElementById('yoga-detail-view');
-    if (dv && dv.style.display === 'block') { yogoBack(); return; }
-    var sv = document.getElementById('sv-yogalib');
-    if (!sv || sv.style.display !== 'flex') return;
-    yogoBack();
-  });
-}
+/* NOTE: Yoga back-navigation is now handled centrally by NR_BackManager.
+   _yogaRegPop() is kept as a no-op so existing call-sites don't throw. */
+function _yogaRegPop() { /* delegated to NR_BackManager */ }
 
 /* ── Open yoga section ── */
 function openYogaLibrary() {
@@ -20709,11 +20868,9 @@ document.addEventListener('DOMContentLoaded', function() {
   /* ── Hide on load ── */
   _g('ddx-sv').style.display = 'none';
 
-  /* ── Handle hardware back button on Android ── */
-  window.addEventListener('popstate', function () {
-    if (_sv.detail) { closeDdxDetail(); history.pushState(null, ''); return; }
-    if (_sv.active) { closeDdxSV(); return; }
-  });
+  /* ── Handle hardware back button — delegated to NR_BackManager ── */
+  /* NR_BackManager checks _sv.detail and _sv.active directly, so no
+     separate listener needed here. Removing to avoid double-handling. */
 
 })();
 </script>
