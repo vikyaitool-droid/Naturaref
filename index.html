@@ -132,7 +132,7 @@
   --warm:#f5f8f2;--sage:#2c6e4f;--sage-lt:#a8d4b8;--sage-pale:#e8f5ec;
   --sage-deep:#1e4a3b;--terracotta:#d4af37;--terra-lt:#f3e5c0;--terra-pale:#fef8f0;
   --plum:#7d5a7e;--plum-lt:#f0e8f0;--sky:#5c8fa8;--sky-lt:#e8f3f8;
-  --ink:#1f2a2a;--ink2:#2a3a3a;--ink3:#5a7060;--white:#fffdf9;
+  --ink:#1f2a2a;--ink2:#2a3a3a;--ink3:#3d5545;--white:#fffdf9;
   --border:#c4d8c8;
 
   /* ── Semantic tokens — mapped to DeepSeek emerald-gold palette ── */
@@ -207,14 +207,14 @@ html[data-fs="spacious"] { --app-fs:16.5px; }
 .sb-hdr .dot{display:none}
 .sb-items{display:none;background:rgba(0,0,0,.12);border-left:2px solid #1a3a30;margin-left:14px}
 .sb-group.open .sb-items{display:block}
-.sb-item{display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;font-size:10.5px;color:#6a9080;transition:all .12s;border:none;background:none;width:100%;text-align:left}
+.sb-item{display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;font-size:10.5px;color:#7aa090;transition:all .12s;border:none;background:none;width:100%;text-align:left;min-height:44px;min-width:44px;box-sizing:border-box;}
 .sb-item:hover{color:#e8f0e4;background:rgba(212,175,55,.15)}
 .sb-item.active{color:#d8ede4;font-weight:600}
-.sb-foot{padding:8px 12px;border-top:1px solid #4a3828;font-size:9px;color:#6a9080}
+.sb-foot{padding:8px 12px;border-top:1px solid #4a3828;font-size:9px;color:#7aa090}
 .sb-search-wrap{display:flex;align-items:center;gap:6px;margin:8px 10px 4px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px 8px}
 .sb-search-ico{color:#b7d4c0;font-size:12px;flex-shrink:0}
 .sb-search-input{flex:1;background:transparent;border:none;color:#e8f0e4;font-size:11px;outline:none;font-family:Inter,inherit}
-.sb-search-input::placeholder{color:#4a7060}
+.sb-search-input::placeholder{color:#7aa090}
 .sb-tabs{display:flex;gap:3px;padding:0 8px 6px;flex-wrap:wrap}
 .sb-tab{flex:1;min-width:0;padding:4px 5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid rgba(212,175,55,.12);border-radius:8px;background:none;color:#b7d4c0;transition:all .12s;text-align:center;white-space:nowrap}
 .sb-tab:hover{background:rgba(255,255,255,.08);color:#e8f0e4}
@@ -223,14 +223,14 @@ html[data-fs="spacious"] { --app-fs:16.5px; }
 .sb-panel.active{display:flex}
 .sb-panel::-webkit-scrollbar{width:3px}
 .sb-panel::-webkit-scrollbar-thumb{background:var(--sb-bdr);border-radius:2px}
-.sb-panel-empty{padding:20px 14px;text-align:center;font-size:10.5px;color:#4a7060;font-style:italic;line-height:1.6}
+.sb-panel-empty{padding:20px 14px;text-align:center;font-size:10.5px;color:#7aa090;font-style:italic;line-height:1.6}
 .sb-recent-item{display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;transition:background .12s;border-left:2px solid transparent}
 .sb-recent-item:hover{background:rgba(212,175,55,.12);border-left-color:var(--terracotta)}
 .sb-recent-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
 .sb-recent-title{font-size:10.5px;font-weight:600;color:#d8ede4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sb-recent-sec{font-size:9px;color:#5a8070;margin-top:1px}
 .sb-notes{flex:1;background:transparent;border:none;color:#d8ede4;font-family:Inter,inherit;font-size:11px;line-height:1.7;resize:none;outline:none;padding:8px 12px;min-height:150px}
-.sb-notes::placeholder{color:#4a7060}
+.sb-notes::placeholder{color:#7aa090}
 .sb-notes-clear{margin:4px 10px 6px;background:none;border:1px solid rgba(212,175,55,.12);border-radius:6px;color:#5a8070;font-size:10px;cursor:pointer;padding:4px 8px;transition:all .12s;font-family:inherit}
 .sb-notes-clear:hover{border-color:#c0392b;color:#c0392b}
 .sb-setting-row{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;transition:background .12s;border-bottom:1px solid rgba(255,255,255,.04)}
@@ -239,7 +239,7 @@ html[data-fs="spacious"] { --app-fs:16.5px; }
 .sb-setting-lbl{flex:1;font-size:11.5px;color:#d8ede4;font-weight:500}
 .sb-setting-arrow{color:#5a8070;font-size:14px}
 .sb-setting-divider{height:1px;background:rgba(255,255,255,.05);margin:6px 0}
-.sb-setting-version{padding:6px 12px;font-size:9px;color:#4a7060;letter-spacing:.04em}
+.sb-setting-version{padding:6px 12px;font-size:9px;color:#7aa090;letter-spacing:.04em}
 .sb-toggle{width:32px;height:18px;border-radius:9px;background:#0f2c24;border:1px solid #1a3a30;position:relative;transition:background .2s;flex-shrink:0}
 .sb-toggle::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#c4a882;transition:transform .2s,background .2s}
 body.dark .sb-toggle{background:#059669;border-color:#059669}
@@ -982,10 +982,12 @@ body.dark .lux-calc-back { background:#221e18; border-color:#3a3028; }
 .stabs{background:var(--warm);border-bottom:1.5px solid var(--border);flex-shrink:0;overflow:visible}
 .stabs-in{display:flex;flex-wrap:wrap;gap:4px;padding:8px 14px}
 .stb{
-  padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;
+  padding:10px 14px;font-size:11px;font-weight:600;cursor:pointer;
   border:1.5px solid var(--border);border-radius:20px;
   background:var(--sand);color:var(--mu);transition:all .15s;white-space:nowrap;
   font-family:Inter,sans-serif;
+  min-height:44px;min-width:44px;box-sizing:border-box;
+  display:inline-flex;align-items:center;justify-content:center;
 }
 .stb:hover{border-color:var(--sage);color:var(--sage-deep);background:var(--sage-pale)}
 .stb.active{background:var(--sage-deep);color:#fff;border-color:var(--sage-deep);font-weight:700}
@@ -2126,7 +2128,7 @@ body.dark .tab-index{background:#1a1612}
 .nr-btn-outline:hover{border-color:rgba(196,160,48,.42);color:rgba(212,175,55,.95);}
 .nr-note{margin-top:14px;padding:9px 13px;background:#f0f8f0;border:1px solid #d4b84a;border-radius:8px;font-size:11px;color:#5a4200;line-height:1.6;text-align:center;}
 .nr-id-box{background:#edf5ee;border:1.5px solid #c2d9c4;border-radius:10px;padding:11px 16px;text-align:center;margin-bottom:16px;}
-.nr-id-box .lbl{font-size:10px;color:#6a9080;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;}
+.nr-id-box .lbl{font-size:10px;color:#3d5545;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;}
 .nr-id-box .val{font-size:14px;color:#3a5c3d;font-weight:700;word-break:break-all;}
 .nr-icon{font-size:42px;text-align:center;margin-bottom:10px;}
 /* Signup form */
@@ -2157,7 +2159,7 @@ body.dark .tab-index{background:#1a1612}
 .nr-pin-sep{display:flex;align-items:center;gap:10px;margin:10px 0;color:#c0a888;font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
 .nr-pin-sep::before,.nr-pin-sep::after{content:'';flex:1;height:1px;background:#e0d4c0;}
 .nr-lock-name{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;color:#1f2a2a;text-align:center;margin-bottom:2px;}
-.nr-lock-qual{font-size:11px;color:#6a9080;text-align:center;margin-bottom:4px;}
+.nr-lock-qual{font-size:11px;color:#3d5545;text-align:center;margin-bottom:4px;}
 
 /* ══ NATURAREF INBOX ═══════════════════════════════════════════════ */
 /* ── Inbox topbar button ── */
@@ -3226,7 +3228,7 @@ function nrSetFontSize(size) {
     btn.style.background       = active ? '#3a5c3d' : '#fff';
     btn.style.borderColor      = active ? '#3a5c3d' : '#c2d9c4';
     btn.querySelector('div').style.color     = active ? '#fff' : '#1f2a2a';
-    btn.querySelectorAll('div')[1].style.color = active ? 'rgba(255,255,255,.7)' : '#5a7060';
+    btn.querySelectorAll('div')[1].style.color = active ? 'rgba(255,255,255,.7)' : '#3d5545';
   });
 }
 // Restore on load
@@ -4784,7 +4786,7 @@ function _errorCard(sectionName, retryFn) {
   return '<div style="margin:24px;padding:20px 24px;background:#fdf5f5;border:1.5px solid #f5c6c6;border-radius:14px;text-align:center;">' +
     '<div style="font-size:32px;margin-bottom:8px;">⚠️</div>' +
     '<div style="font-weight:700;color:#c0392b;font-size:15px;margin-bottom:6px;">Failed to load data</div>' +
-    '<div style="font-size:13px;color:#6a9080;margin-bottom:16px;">Section: <code style="background:#f0e8dc;padding:2px 6px;border-radius:4px;">' + sectionName + '</code></div>' +
+    '<div style="font-size:13px;color:#3d5545;margin-bottom:16px;">Section: <code style="background:#f0e8dc;padding:2px 6px;border-radius:4px;">' + sectionName + '</code></div>' +
     '<button id="' + id + '" style="background:#c0392b;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;">↺ Retry</button>' +
     '</div>';
 }
@@ -7227,8 +7229,8 @@ function ddxSearch(query) {
     });
 }
 
-function renderDDxList(data) {
-  var panel = document.getElementById('ddx-results');
+function renderDDxList(data, targetEl) {
+  var panel = targetEl || document.getElementById('ddx-results');
   var syms = data.symptoms_recognized ? data.symptoms_recognized.join(', ') : _ddxLastQuery;
   var html = '<div class="ddx-list-hdr">'
     + '<div class="ddx-list-title">DDx — <em style="font-style:normal;color:var(--sage-deep)">'+syms+'</em></div>'
@@ -7308,8 +7310,8 @@ function renderDDxList(data) {
 
 function escQ(s) { return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
-function loadDiseaseCard(name, category) {
-  var panel = document.getElementById('ddx-results');
+function loadDiseaseCard(name, category, targetEl) {
+  var panel = targetEl || document.getElementById('ddx-results');
   panel.innerHTML = '<div class="ddx-loading"><div class="ddx-spinner"></div><span>Building complete disease profile for <strong>'+name+'</strong>…</span></div>';
   panel.scrollIntoView({behavior:'smooth', block:'start'});
 
@@ -7332,7 +7334,7 @@ function loadDiseaseCard(name, category) {
       var data = safeParseJSON(raw);
       // Require name + at least introduction OR etiology to be valid
       if (data && data.name && (data.introduction || (data.etiology && data.etiology.length))) {
-        renderDiseaseCard(data); return;
+        renderDiseaseCard(data, targetEl); return;
       }
       // Retry with stricter prompt
       panel.innerHTML = '<div class="ddx-loading"><div class="ddx-spinner"></div><span>Retrying profile for <strong>'+name+'</strong>...</span></div>';
@@ -7348,7 +7350,7 @@ function loadDiseaseCard(name, category) {
       callAI([{role:'system',content:SYS2},{role:'user',content:'Return JSON for: '+name}], 4000)
         .then(function(raw2){
           var data2 = safeParseJSON(raw2);
-          if (data2 && data2.name && (data2.introduction || (data2.etiology && data2.etiology.length))) renderDiseaseCard(data2);
+          if (data2 && data2.name && (data2.introduction || (data2.etiology && data2.etiology.length))) renderDiseaseCard(data2, targetEl);
           else panel.innerHTML = '<div class="ddx-error">⚠️ Could not load profile for <strong>'+name+'</strong>. Please tap again to retry.</div>';
         })
         .catch(function(e2){ panel.innerHTML = '<div class="ddx-error">⚠️ '+e2.message+'</div>'; });
@@ -7567,8 +7569,8 @@ function cardChecklistHtml(d, escapedName, escapedCat) {
   return html;
 }
 
-function renderDiseaseCard(d) {
-  var panel = document.getElementById('ddx-results');
+function renderDiseaseCard(d, targetEl) {
+  var panel = targetEl || document.getElementById('ddx-results');
   var escapedName = (d.name||'').replace(/'/g,"\\'");
   var escapedCat  = (d.category||'Disease').replace(/'/g,"\\'");
   var html = '<div class="ddx-list-hdr">'
@@ -7758,9 +7760,9 @@ function miniList(arr) {
 function mgmtTile(title, content) {
   return '<div class="ddx-mgmt-tile"><div class="ddx-mgmt-tile-hdr">'+title+'</div>'+content+'</div>';
 }
-function renderDDxListFromCache() {
+function renderDDxListFromCache(targetEl) {
   if (_ddxLastDifferentials.length) {
-    renderDDxList({symptoms_recognized:[_ddxLastQuery], differentials:_ddxLastDifferentials});
+    renderDDxList({symptoms_recognized:[_ddxLastQuery], differentials:_ddxLastDifferentials}, targetEl);
   } else {
     clearDDx();
   }
@@ -13367,15 +13369,15 @@ window.ddxSearch = async function(query) {
 };
 
 // ══ PATCHED loadDiseaseCard — checks cloud cache first ══
-window.loadDiseaseCard = async function(name, category) {
-  var panel = document.getElementById('ddx-results');
+window.loadDiseaseCard = async function(name, category, targetEl) {
+  var panel = targetEl || document.getElementById('ddx-results');
   panel.innerHTML = '<div class="ddx-loading"><div class="ddx-spinner"></div><span>Checking cloud cache for <strong>'+name+'</strong>…</span></div>';
   panel.scrollIntoView({behavior:'smooth', block:'start'});
 
   await ccLoad();
   var cached = ccGetCard(name);
   if (cached && cached.name) {
-    renderDiseaseCard(cached);
+    renderDiseaseCard(cached, targetEl);
     ccAddBadge(panel, '☁️', 'From Cloud Cache', 'var(--sage-deep)', 'var(--sage-pale)', 'var(--sage-lt)');
     return;
   }
@@ -13399,7 +13401,7 @@ window.loadDiseaseCard = async function(name, category) {
     .then(async function(raw){
       var data = safeParseJSON(raw);
       if (data && data.name) {
-        renderDiseaseCard(data);
+        renderDiseaseCard(data, targetEl);
         await ccSaveCard(name, category, data);
         ccAddBadge(panel, '💾', 'Saved to Cloud', '#7a3800', '#fef3e2', '#f0c070');
         return;
@@ -13416,7 +13418,7 @@ window.loadDiseaseCard = async function(name, category) {
         .then(async function(raw2){
           var data2 = safeParseJSON(raw2);
           if (data2 && data2.name) {
-            renderDiseaseCard(data2);
+            renderDiseaseCard(data2, targetEl);
             await ccSaveCard(name, category, data2);
             ccAddBadge(panel, '💾', 'Saved to Cloud', '#7a3800', '#fef3e2', '#f0c070');
           } else {
@@ -13947,8 +13949,8 @@ window.ddxSearch = async function(query) {
     .catch(function(e){ panel.innerHTML = '<div class="ddx-error">⚠️ '+e.message+'</div>'; });
 };
 
-window.loadDiseaseCard = async function(name, category) {
-  var panel = document.getElementById('ddx-results');
+window.loadDiseaseCard = async function(name, category, targetEl) {
+  var panel = targetEl || document.getElementById('ddx-results');
   var homeView = document.getElementById('home-view');
   panel.style.display = 'block';
   if (homeView) homeView.classList.add('ddx-active');
@@ -13960,7 +13962,7 @@ window.loadDiseaseCard = async function(name, category) {
   if (!cached) cached = await idbGet('cards', ccNormKey(name));
 
   if (cached && cached.name) {
-    renderDiseaseCard(cached);
+    renderDiseaseCard(cached, targetEl);
     var isOffline = !navigator.onLine;
     ccAddBadge(panel, isOffline ? '📴' : '☁️', isOffline ? 'Offline Cache' : 'From Cloud Cache',
       'var(--sage-deep)', 'var(--sage-pale)', 'var(--sage-lt)');
@@ -14026,7 +14028,7 @@ window.loadDiseaseCard = async function(name, category) {
     .then(async function(raw){
       var data = safeParseJSON(raw);
       if (data && data.name) {
-        renderDiseaseCard(data);
+        renderDiseaseCard(data, targetEl);
         await ccSaveCard(name, category, data);
         ccAddBadge(panel, '💾', 'Saved to Cloud', '#7a3800', '#fef3e2', '#f0c070');
         return;
@@ -14036,7 +14038,7 @@ window.loadDiseaseCard = async function(name, category) {
         .then(async function(raw2){
           var data2 = safeParseJSON(raw2);
           if (data2 && data2.name) {
-            renderDiseaseCard(data2);
+            renderDiseaseCard(data2, targetEl);
             await ccSaveCard(name, category, data2);
             ccAddBadge(panel, '💾', 'Saved to Cloud', '#7a3800', '#fef3e2', '#f0c070');
           } else {
@@ -14756,7 +14758,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   /* ── 1. renderDDxList: create/update split layout ─────────── */
   var _origRDL = window.renderDDxList;
-  window.renderDDxList = function(data) {
+  window.renderDDxList = function(data, targetEl) {
+    /* When an explicit target is passed (SV mode) skip split-pane entirely */
+    if (targetEl) { _origRDL(data, targetEl); return; }
     if (!isDesk()) { _origRDL(data); return; }
 
     var outer = document.getElementById('ddx-results-outer');
@@ -14794,8 +14798,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   /* ── 2. loadDiseaseCard: add selected-item highlight ─────── */
   var _origLDC = window.loadDiseaseCard;
-  window.loadDiseaseCard = function(name, category) {
-    if (isDesk()) {
+  window.loadDiseaseCard = function(name, category, targetEl) {
+    if (isDesk() && !targetEl) {
       /* Highlight the clicked item in the list pane */
       document.querySelectorAll('#ddx-sp-list .ddx-item').forEach(function(el){
         var oc = el.getAttribute('onclick') || '';
@@ -14805,8 +14809,8 @@ document.addEventListener('DOMContentLoaded', function() {
         );
       });
     }
-    _origLDC(name, category);
-    if (isDesk()) {
+    _origLDC(name, category, targetEl);
+    if (isDesk() && !targetEl) {
       /* Scroll card pane to top when new card loads */
       setTimeout(function(){
         var cp = document.getElementById('ddx-results');
@@ -17602,7 +17606,7 @@ body.dark #ca-classical_panchakarma .card { background:#221e18; border-color:#3a
   flex-shrink:0;font-family:Inter,inherit;transition:all .12s;
 }
 .ho-recent-reopen:hover{background:rgba(212,175,55,.2)}
-.ho-empty-state{padding:20px 14px;text-align:center;font-size:10.5px;color:#4a7060;font-style:italic;line-height:1.6}
+.ho-empty-state{padding:20px 14px;text-align:center;font-size:10.5px;color:#3d5545;font-style:italic;line-height:1.6}
 </style>
 
 <!-- Handout Modal -->
@@ -19606,7 +19610,7 @@ document.addEventListener('DOMContentLoaded', function() {
   border-radius: 50%; font-size: 13px;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  color: var(--ink3, #5a7060);
+  color: var(--ink3, #3d5545);
 }
 .ddx-peek-body {
   flex: 1; overflow-y: auto;
@@ -19642,7 +19646,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* Peek body elements */
 .ddx-peek-cat {
-  font-size: 10.5px; color: var(--ink3, #5a7060);
+  font-size: 10.5px; color: var(--ink3, #3d5545);
   font-weight: 600; margin-bottom: 14px;
   display: flex; align-items: center; gap: 6px;
 }
@@ -19795,24 +19799,6 @@ document.addEventListener('DOMContentLoaded', function() {
   /* ── State ── */
   var _sv = { active: false, detail: false };
   var _peekDisease = null; /* { d, name, cat } */
-
-  /* ────────────────────────────────────────────────────────────
-     getElementById PROXY
-     When the SV is active, redirect all #ddx-results reads/writes
-     to the appropriate inner div so all existing AI functions
-     (renderDDxList, loadDiseaseCard, renderDiseaseCard) work
-     without modification.
-  ──────────────────────────────────────────────────────────── */
-  var _origGEBI = document.getElementById.bind(document);
-  document.getElementById = function (id) {
-    if (id === 'ddx-results') {
-      if (_sv.detail)  return _g('ddx-sv-detail-inner')  || _origGEBI(id);
-      if (_sv.active)  return _g('ddx-sv-results-inner') || _origGEBI(id);
-    }
-    return _origGEBI(id);
-  };
-  /* Expose for any code that needs the real element */
-  window._ddxGEBI = _origGEBI;
 
   /* ────────────────────────────────────────────────────────────
      OPEN / CLOSE SEARCH VIEW
@@ -20005,9 +19991,9 @@ document.addEventListener('DOMContentLoaded', function() {
       _sv.active = false;
       _sv.detail = false;
       /* Clean up the original inline panel */
-      var orig = _origGEBI('ddx-results');
+      var orig = _g('ddx-results');
       if (orig) { orig.style.display = 'none'; orig.innerHTML = ''; }
-      var hv = _origGEBI('home-view');
+      var hv = _g('home-view');
       if (hv) hv.classList.remove('ddx-active');
     }, 420);
   };
@@ -20033,7 +20019,10 @@ document.addEventListener('DOMContentLoaded', function() {
   ──────────────────────────────────────────────────────────── */
   var _prevRenderDDxList = window.renderDDxList;
   window.renderDDxList = function (data) {
-    _prevRenderDDxList(data);
+    var targetEl = _sv.detail  ? _g('ddx-sv-detail-inner')
+                : _sv.active   ? _g('ddx-sv-results-inner')
+                :                _g('ddx-results');
+    _prevRenderDDxList(data, targetEl);
     if (!_sv.active) return;
     var n = (data.differentials || []).length;
     _g('ddx-sv-count').textContent = n + ' differential' + (n === 1 ? '' : 's') + ' found';
@@ -20092,9 +20081,9 @@ document.addEventListener('DOMContentLoaded', function() {
      When in detail, close detail instead of re-rendering
   ──────────────────────────────────────────────────────────── */
   var _prevRenderCache = window.renderDDxListFromCache;
-  window.renderDDxListFromCache = function () {
+  window.renderDDxListFromCache = function (targetEl) {
     if (_sv.detail) { closeDdxDetail(); return; }
-    if (typeof _prevRenderCache === 'function') _prevRenderCache();
+    if (typeof _prevRenderCache === 'function') _prevRenderCache(targetEl);
   };
 
   /* ────────────────────────────────────────────────────────────
@@ -20277,9 +20266,9 @@ document.addEventListener('DOMContentLoaded', function() {
     /* Slide to screen 2 */
     _g('ddx-sv-screens').style.transform = 'translateX(-50%)';
 
-    /* Load full card — loadDiseaseCard → renderDiseaseCard both write via proxy */
+    /* Load full card — renderDiseaseCard writes to ddx-sv-detail-inner via explicit targetEl */
     if (typeof loadDiseaseCard === 'function') {
-      loadDiseaseCard(name, cat);
+      loadDiseaseCard(name, cat, _g('ddx-sv-detail-inner'));
     }
   };
 
