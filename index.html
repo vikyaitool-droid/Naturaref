@@ -1640,6 +1640,75 @@ body.dark .lux-calc-back { background:#221e18; border-color:#3a3028; }
   font-size: 12.5px;
 }
 
+/* ══ EVIDENCE LEVEL BADGES ══
+   Used by renderDiseaseCard / renderNaturoPlanner / renderAcuPoints / renderYogaChart
+   RCT=green  SR=blue  OBS=yellow  TU=grey  EXP=orange
+   ════════════════════════════════════════════════════ */
+.ev-badge {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  border-radius: 5px;
+  padding: 1.5px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+  cursor: help;
+  white-space: nowrap;
+  position: relative;
+  top: -1px;
+  text-transform: uppercase;
+  font-family: 'Inter', sans-serif;
+}
+/* RCT — Randomised Controlled Trial */
+.ev-badge.ev-RCT {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+/* SR — Systematic Review / Meta-analysis */
+.ev-badge.ev-SR {
+  background: #dbeafe;
+  color: #1e3a5f;
+  border: 1px solid #93c5fd;
+}
+/* OBS — Observational Study */
+.ev-badge.ev-OBS {
+  background: #fef9c3;
+  color: #713f12;
+  border: 1px solid #fde047;
+}
+/* TU — Traditional Use */
+.ev-badge.ev-TU {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+/* EXP — Expert Opinion */
+.ev-badge.ev-EXP {
+  background: #ffedd5;
+  color: #7c2d12;
+  border: 1px solid #fdba74;
+}
+/* UNKNOWN — cached item, evidence not yet assessed */
+.ev-badge.ev-UNKNOWN {
+  background: #f9fafb;
+  color: #6b7280;
+  border: 1.5px dashed #9ca3af;
+  animation: ev-unverified-pulse 2.2s ease-in-out infinite;
+}
+@keyframes ev-unverified-pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: .45; }
+}
+/* Dark-mode ev-badge overrides */
+body.dark .ev-badge.ev-RCT { background:#0a2a1a; color:#6ee7b7; border-color:#1a4a2a; }
+body.dark .ev-badge.ev-SR  { background:#0a1a30; color:#93c5fd; border-color:#1a3050; }
+body.dark .ev-badge.ev-OBS { background:#2a1a00; color:#fde047; border-color:#4a3000; }
+body.dark .ev-badge.ev-TU  { background:#2a2820; color:#d1d5db; border-color:#3a3828; }
+body.dark .ev-badge.ev-EXP { background:#2a1000; color:#fdba74; border-color:#4a2a00; }
+body.dark .ev-badge.ev-UNKNOWN { background:#1e1e1e; color:#6b7280; border-color:#4b5563; }
+
 /* ── Dark overrides — no !important needed now inline styles are removed ── */
 body.dark .proto-diet-card  { background: var(--surf); border-color: var(--bdr); color: var(--tx); }
 body.dark .proto-herb-row   { border-color: var(--bdr); color: var(--tx); }
@@ -6895,6 +6964,707 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
     return;
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  // REFLEXOLOGY — Custom interactive SVG module
+  // ══════════════════════════════════════════════════════════════════════
+  if (sec.id === 'reflexology') {
+    view.innerHTML = `
+      <div class="sec-hdr">
+        <div class="sec-hdr-row">
+          <div class="sec-hicon" style="background:#ccfbf1;color:#0f766e">🦶</div>
+          <div>
+            <div class="sec-title" style="color:#0f766e">Reflexology</div>
+            <div class="sec-sub">Interactive Zone Maps · AI Prescription Generator · Clinical Protocols</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ca" id="ca-reflexology" style="overflow-y:auto">
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 80px">
+
+          <!-- Hero banner -->
+          <div style="background:linear-gradient(135deg,#0f766e,#065f46);border-radius:14px;padding:14px 18px;margin-bottom:14px;color:#fff;display:flex;align-items:center;gap:14px">
+            <div style="font-size:36px;flex-shrink:0">🦶</div>
+            <div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;margin-bottom:3px">Reflexology Zone Mapper</div>
+              <div style="font-size:10.5px;opacity:.85;line-height:1.5">Tap any zone on the foot or hand diagram · Bottom sheet shows technique, conditions &amp; duration · Use AI Rx Generator below</div>
+            </div>
+          </div>
+
+          <!-- Map selector tabs -->
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <button id="rfx-tab-foot" onclick="rfxSwitchMap('foot')" style="flex:1;padding:9px 6px;border-radius:10px;border:2px solid #0f766e;background:#0f766e;color:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s">🦶 Foot Sole</button>
+            <button id="rfx-tab-hand" onclick="rfxSwitchMap('hand')" style="flex:1;padding:9px 6px;border-radius:10px;border:2px solid #c4d8c8;background:var(--surf);color:#0f766e;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s">✋ Hand Palm</button>
+          </div>
+
+          <!-- SVG Map Container -->
+          <div style="background:var(--surf);border:1.5px solid #b0d4c8;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--sh-md);text-align:center">
+            <div id="rfx-map-label" style="font-size:11px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Right Foot — Plantar View</div>
+
+            <!-- FOOT SVG -->
+            <div id="rfx-foot-wrap" style="display:inline-block;position:relative;width:100%;max-width:340px">
+              <svg id="rfx-foot-svg" viewBox="0 0 340 520" xmlns="http://www.w3.org/2000/svg"
+                style="width:100%;height:auto;cursor:pointer;-webkit-tap-highlight-color:transparent">
+                <!-- Foot outline -->
+                <ellipse cx="170" cy="460" rx="78" ry="50" fill="#f5ebe0" stroke="#c4a882" stroke-width="2"/>
+                <rect x="95" y="220" width="150" height="250" rx="30" fill="#f5ebe0" stroke="#c4a882" stroke-width="2"/>
+                <ellipse cx="170" cy="220" rx="75" ry="40" fill="#f5ebe0" stroke="#c4a882" stroke-width="2"/>
+                <!-- Ball of foot -->
+                <ellipse cx="170" cy="260" rx="65" ry="30" fill="#ede0cf" stroke="#c4a882" stroke-width="1.5"/>
+                <!-- Toes -->
+                <ellipse cx="135" cy="180" rx="16" ry="22" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
+                <ellipse cx="157" cy="172" rx="14" ry="20" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
+                <ellipse cx="178" cy="170" rx="13" ry="20" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
+                <ellipse cx="198" cy="175" rx="12" ry="18" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
+                <ellipse cx="216" cy="183" rx="10" ry="16" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
+
+                <!-- ZONE PATHS — clickable reflex zones -->
+                <!-- Brain / Head (Big toe) -->
+                <ellipse data-organ="Brain &amp; Head" cx="135" cy="180" rx="14" ry="18"
+                  fill="rgba(15,118,110,0.15)" stroke="#0f766e" stroke-width="1.5"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="135" y="184" text-anchor="middle" font-size="7" fill="#0f766e" pointer-events="none" font-weight="600">Brain</text>
+
+                <!-- Pituitary (centre big toe) -->
+                <circle data-organ="Pituitary Gland" cx="135" cy="174" r="6"
+                  fill="rgba(212,175,55,0.2)" stroke="#d4af37" stroke-width="1.5"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+
+                <!-- Sinuses (other toes) -->
+                <ellipse data-organ="Sinuses &amp; Eyes" cx="167" cy="172" rx="12" ry="18"
+                  fill="rgba(92,143,168,0.15)" stroke="#5c8fa8" stroke-width="1.5"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="167" y="176" text-anchor="middle" font-size="6.5" fill="#5c8fa8" pointer-events="none" font-weight="600">Sinus</text>
+
+                <ellipse data-organ="Eyes &amp; Ears" cx="188" cy="175" rx="11" ry="17"
+                  fill="rgba(125,90,126,0.15)" stroke="#7d5a7e" stroke-width="1.5"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="188" y="179" text-anchor="middle" font-size="6" fill="#7d5a7e" pointer-events="none" font-weight="600">Eyes</text>
+
+                <ellipse data-organ="Ears" cx="207" cy="180" rx="10" ry="15"
+                  fill="rgba(92,143,168,0.18)" stroke="#5c8fa8" stroke-width="1.5"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="207" y="184" text-anchor="middle" font-size="6" fill="#5c8fa8" pointer-events="none" font-weight="600">Ears</text>
+
+                <!-- Neck / Thyroid (toe base) -->
+                <rect data-organ="Neck &amp; Thyroid" x="118" y="194" width="35" height="18" rx="8"
+                  fill="rgba(180,83,9,0.15)" stroke="#b45309" stroke-width="1.5"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="135" y="206" text-anchor="middle" font-size="6.5" fill="#b45309" pointer-events="none" font-weight="600">Thyroid</text>
+
+                <!-- Lung / Chest (ball of foot) -->
+                <ellipse data-organ="Lungs &amp; Chest" cx="170" cy="255" rx="58" ry="26"
+                  fill="rgba(44,110,79,0.12)" stroke="#2c6e4f" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="170" y="259" text-anchor="middle" font-size="8.5" fill="#2c6e4f" pointer-events="none" font-weight="700">Lungs</text>
+
+                <!-- Heart (left side ball) -->
+                <ellipse data-organ="Heart" cx="125" cy="255" rx="22" ry="16"
+                  fill="rgba(185,64,64,0.18)" stroke="#b94040" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="125" y="259" text-anchor="middle" font-size="7" fill="#b94040" pointer-events="none" font-weight="700">Heart</text>
+
+                <!-- Solar Plexus (arch junction) -->
+                <circle data-organ="Solar Plexus &amp; Diaphragm" cx="150" cy="285" r="14"
+                  fill="rgba(212,175,55,0.25)" stroke="#d4af37" stroke-width="2"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="150" y="289" text-anchor="middle" font-size="6.5" fill="#7a5800" pointer-events="none" font-weight="700">Solar Plexus</text>
+
+                <!-- Stomach / Pancreas (upper arch) -->
+                <rect data-organ="Stomach &amp; Pancreas" x="108" y="295" width="60" height="28" rx="10"
+                  fill="rgba(180,83,9,0.14)" stroke="#b45309" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="138" y="313" text-anchor="middle" font-size="7.5" fill="#b45309" pointer-events="none" font-weight="700">Stomach</text>
+
+                <!-- Liver / Gallbladder (right arch) -->
+                <rect data-organ="Liver &amp; Gallbladder" x="170" y="295" width="55" height="28" rx="10"
+                  fill="rgba(15,118,110,0.13)" stroke="#0f766e" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="197" y="313" text-anchor="middle" font-size="7.5" fill="#0f766e" pointer-events="none" font-weight="700">Liver</text>
+
+                <!-- Small Intestine (mid arch) -->
+                <rect data-organ="Small Intestine" x="105" y="330" width="130" height="32" rx="10"
+                  fill="rgba(44,110,79,0.12)" stroke="#2c6e4f" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="170" y="350" text-anchor="middle" font-size="8" fill="#2c6e4f" pointer-events="none" font-weight="700">Small Intestine</text>
+
+                <!-- Kidneys (inner arch) -->
+                <ellipse data-organ="Kidneys &amp; Adrenals" cx="145" cy="310" rx="16" ry="12"
+                  fill="rgba(192,57,43,0.2)" stroke="#c0392b" stroke-width="2"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="145" y="314" text-anchor="middle" font-size="6" fill="#c0392b" pointer-events="none" font-weight="700">Kidney</text>
+
+                <!-- Large Intestine (lower arch) -->
+                <rect data-organ="Large Intestine &amp; Colon" x="100" y="368" width="140" height="28" rx="10"
+                  fill="rgba(125,90,126,0.14)" stroke="#7d5a7e" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="170" y="386" text-anchor="middle" font-size="8" fill="#7d5a7e" pointer-events="none" font-weight="700">Large Intestine</text>
+
+                <!-- Bladder (heel) -->
+                <ellipse data-organ="Bladder &amp; Uterus/Prostate" cx="145" cy="435" rx="28" ry="18"
+                  fill="rgba(44,110,79,0.14)" stroke="#2c6e4f" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="145" y="439" text-anchor="middle" font-size="7" fill="#2c6e4f" pointer-events="none" font-weight="700">Bladder</text>
+
+                <!-- Spine (medial edge) -->
+                <rect data-organ="Spine &amp; Vertebrae" x="92" y="215" width="16" height="180" rx="8"
+                  fill="rgba(42,90,138,0.18)" stroke="#2a5a8a" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="100" y="310" text-anchor="middle" font-size="6.5" fill="#2a5a8a" pointer-events="none" font-weight="700" transform="rotate(-90,100,310)">SPINE</text>
+
+                <!-- Sciatic / Lower back (heel base) -->
+                <rect data-organ="Sciatic Nerve &amp; Lower Back" x="112" y="452" width="96" height="22" rx="10"
+                  fill="rgba(185,64,64,0.15)" stroke="#b94040" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="160" y="466" text-anchor="middle" font-size="7" fill="#b94040" pointer-events="none" font-weight="700">Sciatic / L.Back</text>
+
+                <!-- Reproductive / Uterus ovary -->
+                <ellipse data-organ="Reproductive Organs &amp; Ovaries" cx="210" cy="430" rx="22" ry="15"
+                  fill="rgba(190,24,93,0.15)" stroke="#be185d" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="210" y="434" text-anchor="middle" font-size="6.5" fill="#be185d" pointer-events="none" font-weight="700">Repro</text>
+              </svg>
+              <div style="font-size:9px;color:var(--mu);margin-top:6px;font-style:italic">Tap any shaded zone to view details</div>
+            </div>
+
+            <!-- HAND SVG -->
+            <div id="rfx-hand-wrap" style="display:none;position:relative;width:100%;max-width:300px">
+              <svg id="rfx-hand-svg" viewBox="0 0 300 480" xmlns="http://www.w3.org/2000/svg"
+                style="width:100%;height:auto;cursor:pointer;-webkit-tap-highlight-color:transparent">
+                <!-- Palm outline -->
+                <rect x="60" y="220" width="180" height="200" rx="30" fill="#f5ebe0" stroke="#c4a882" stroke-width="2"/>
+                <ellipse cx="150" cy="220" rx="90" ry="35" fill="#f5ebe0" stroke="#c4a882" stroke-width="2"/>
+                <!-- Fingers -->
+                <ellipse cx="88" cy="180" rx="16" ry="50" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
+                <ellipse cx="115" cy="158" rx="14" ry="65" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
+                <ellipse cx="150" cy="150" rx="14" ry="72" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
+                <ellipse cx="183" cy="158" rx="13" ry="65" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
+                <ellipse cx="213" cy="178" rx="12" ry="50" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
+
+                <!-- Thumb zone = Brain/Head -->
+                <ellipse data-organ="Brain &amp; Head" cx="88" cy="178" rx="13" ry="42"
+                  fill="rgba(15,118,110,0.15)" stroke="#0f766e" stroke-width="1.5"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="88" y="182" text-anchor="middle" font-size="6.5" fill="#0f766e" pointer-events="none" font-weight="600">Brain</text>
+
+                <!-- Index = Sinuses -->
+                <ellipse data-organ="Sinuses &amp; Eyes" cx="115" cy="158" rx="12" ry="55"
+                  fill="rgba(92,143,168,0.15)" stroke="#5c8fa8" stroke-width="1.5"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="115" y="162" text-anchor="middle" font-size="6" fill="#5c8fa8" pointer-events="none" font-weight="600">Sinus</text>
+
+                <!-- Middle = Spine / Throat -->
+                <ellipse data-organ="Neck &amp; Thyroid" cx="150" cy="150" rx="12" ry="60"
+                  fill="rgba(180,83,9,0.14)" stroke="#b45309" stroke-width="1.5"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="150" y="154" text-anchor="middle" font-size="6" fill="#b45309" pointer-events="none" font-weight="600">Thyroid</text>
+
+                <!-- Ring = Lungs/Heart -->
+                <ellipse data-organ="Lungs &amp; Chest" cx="183" cy="158" rx="11" ry="55"
+                  fill="rgba(44,110,79,0.14)" stroke="#2c6e4f" stroke-width="1.5"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="183" y="162" text-anchor="middle" font-size="6" fill="#2c6e4f" pointer-events="none" font-weight="600">Lungs</text>
+
+                <!-- Pinky = Ears -->
+                <ellipse data-organ="Ears" cx="213" cy="178" rx="10" ry="42"
+                  fill="rgba(92,143,168,0.18)" stroke="#5c8fa8" stroke-width="1.5"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="213" y="182" text-anchor="middle" font-size="6" fill="#5c8fa8" pointer-events="none" font-weight="600">Ears</text>
+
+                <!-- Upper palm = Chest/Heart/Lung -->
+                <rect data-organ="Heart" x="68" y="228" width="70" height="45" rx="12"
+                  fill="rgba(185,64,64,0.16)" stroke="#b94040" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="103" y="254" text-anchor="middle" font-size="8" fill="#b94040" pointer-events="none" font-weight="700">Heart</text>
+
+                <rect data-organ="Lungs &amp; Chest" x="142" y="228" width="85" height="45" rx="12"
+                  fill="rgba(44,110,79,0.13)" stroke="#2c6e4f" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="184" y="254" text-anchor="middle" font-size="8" fill="#2c6e4f" pointer-events="none" font-weight="700">Lungs</text>
+
+                <!-- Solar plexus (centre palm) -->
+                <circle data-organ="Solar Plexus &amp; Diaphragm" cx="150" cy="295" r="18"
+                  fill="rgba(212,175,55,0.25)" stroke="#d4af37" stroke-width="2"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="150" y="299" text-anchor="middle" font-size="6.5" fill="#7a5800" pointer-events="none" font-weight="700">Solar Plexus</text>
+
+                <!-- Stomach / upper-mid palm -->
+                <rect data-organ="Stomach &amp; Pancreas" x="68" y="280" width="65" height="30" rx="10"
+                  fill="rgba(180,83,9,0.14)" stroke="#b45309" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="100" y="299" text-anchor="middle" font-size="7" fill="#b45309" pointer-events="none" font-weight="700">Stomach</text>
+
+                <!-- Kidneys / mid palm -->
+                <rect data-organ="Kidneys &amp; Adrenals" x="170" y="280" width="65" height="30" rx="10"
+                  fill="rgba(192,57,43,0.18)" stroke="#c0392b" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="202" y="299" text-anchor="middle" font-size="7" fill="#c0392b" pointer-events="none" font-weight="700">Kidney</text>
+
+                <!-- Intestines -->
+                <rect data-organ="Small Intestine" x="68" y="318" width="160" height="30" rx="10"
+                  fill="rgba(44,110,79,0.12)" stroke="#2c6e4f" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="148" y="337" text-anchor="middle" font-size="7.5" fill="#2c6e4f" pointer-events="none" font-weight="700">Small Intestine</text>
+
+                <!-- Bladder / lower palm -->
+                <rect data-organ="Bladder &amp; Uterus/Prostate" x="85" y="354" width="130" height="30" rx="10"
+                  fill="rgba(44,110,79,0.14)" stroke="#2c6e4f" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="150" y="373" text-anchor="middle" font-size="7.5" fill="#2c6e4f" pointer-events="none" font-weight="700">Bladder</text>
+
+                <!-- Spine (thumb edge) -->
+                <rect data-organ="Spine &amp; Vertebrae" x="55" y="220" width="14" height="170" rx="7"
+                  fill="rgba(42,90,138,0.18)" stroke="#2a5a8a" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="62" y="312" text-anchor="middle" font-size="6" fill="#2a5a8a" pointer-events="none" font-weight="700" transform="rotate(-90,62,312)">SPINE</text>
+
+                <!-- Reproductive (wrist crease) -->
+                <ellipse data-organ="Reproductive Organs &amp; Ovaries" cx="150" cy="410" rx="50" ry="14"
+                  fill="rgba(190,24,93,0.15)" stroke="#be185d" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+                <text x="150" y="414" text-anchor="middle" font-size="7" fill="#be185d" pointer-events="none" font-weight="700">Reproductive</text>
+
+                <!-- Pituitary -->
+                <circle data-organ="Pituitary Gland" cx="88" cy="145" r="7"
+                  fill="rgba(212,175,55,0.25)" stroke="#d4af37" stroke-width="1.8"
+                  class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
+              </svg>
+              <div style="font-size:9px;color:var(--mu);margin-top:6px;font-style:italic">Tap any shaded zone to view details</div>
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:10px 14px;margin-bottom:14px">
+            <div style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Zone Legend</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <span style="font-size:10px;background:#e0f5f0;border:1px solid #0f766e;border-radius:12px;padding:2px 8px;color:#0f766e">🟢 Head / Brain</span>
+              <span style="font-size:10px;background:#fef3c7;border:1px solid #d4af37;border-radius:12px;padding:2px 8px;color:#7a5800">🟡 Endocrine</span>
+              <span style="font-size:10px;background:#fde8e8;border:1px solid #b94040;border-radius:12px;padding:2px 8px;color:#b94040">🔴 Cardiovascular</span>
+              <span style="font-size:10px;background:#e8f3f8;border:1px solid #5c8fa8;border-radius:12px;padding:2px 8px;color:#5c8fa8">🔵 Sensory</span>
+              <span style="font-size:10px;background:#e0f5f0;border:1px solid #2c6e4f;border-radius:12px;padding:2px 8px;color:#2c6e4f">🟩 Digestive / Respiratory</span>
+              <span style="font-size:10px;background:#edf4fb;border:1px solid #2a5a8a;border-radius:12px;padding:2px 8px;color:#2a5a8a">🔷 Musculoskeletal</span>
+              <span style="font-size:10px;background:#fce7f3;border:1px solid #be185d;border-radius:12px;padding:2px 8px;color:#be185d">🩷 Reproductive</span>
+            </div>
+          </div>
+
+          <!-- AI Prescription Generator -->
+          <div style="background:linear-gradient(135deg,rgba(15,118,110,.08),rgba(6,95,70,.05));border:2px solid #0f766e;border-radius:14px;padding:16px;margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#0f766e,#065f46);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">✨</div>
+              <div>
+                <div style="font-weight:700;font-size:13px;color:#0f766e">AI Reflexology Prescription Generator</div>
+                <div style="font-size:10.5px;color:var(--mu)">Describe symptoms or condition → AI returns prioritised zones, technique & session plan</div>
+              </div>
+            </div>
+            <textarea id="rfx-ai-input" rows="3"
+              style="width:100%;border:1.5px solid #b0d4c8;border-radius:10px;padding:10px 12px;font-size:13px;font-family:'Inter',sans-serif;background:var(--surf);color:var(--tx);resize:vertical;outline:none;line-height:1.5;margin-bottom:10px"
+              placeholder="e.g. Chronic low back pain with constipation and stress headaches, 45F, no contraindications"></textarea>
+            <button id="rfx-ai-btn" onclick="rfxGeneratePrescription()"
+              style="width:100%;padding:13px;background:linear-gradient(135deg,#0f766e,#065f46);color:#fff;border:none;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:.02em;box-shadow:0 4px 18px rgba(15,118,110,.3);transition:all .25s">
+              🦶 Generate Reflexology Prescription
+            </button>
+          </div>
+
+          <!-- AI Result area -->
+          <div id="rfx-ai-result"></div>
+
+        </div><!-- /max-width wrapper -->
+      </div><!-- /ca -->
+
+      <!-- ══ REFLEXOLOGY ZONE BOTTOM SHEET ══ -->
+      <div id="rfx-zone-overlay" onclick="rfxCloseSheet()"
+        style="display:none;position:fixed;inset:0;z-index:9700;background:rgba(0,20,10,0);transition:background .3s,backdrop-filter .3s;backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px)">
+      </div>
+      <div id="rfx-zone-sheet"
+        style="position:fixed;left:0;right:0;bottom:0;z-index:9701;background:var(--warm);border-radius:20px 20px 0 0;box-shadow:0 -12px 40px rgba(0,40,20,.25);transform:translateY(100%);transition:transform 400ms cubic-bezier(.175,.885,.32,1.275);display:flex;flex-direction:column;max-height:82vh;overflow:hidden;padding-bottom:env(safe-area-inset-bottom,0px)">
+
+        <!-- Drag handle -->
+        <div style="flex-shrink:0;padding:10px 0 4px;text-align:center" onclick="rfxCloseSheet()">
+          <div style="width:36px;height:4px;border-radius:2px;background:#c4d8c8;margin:0 auto"></div>
+        </div>
+
+        <!-- Sheet header -->
+        <div id="rfx-sheet-hdr"
+          style="flex-shrink:0;display:flex;align-items:center;gap:12px;padding:8px 16px 12px;border-bottom:1.5px solid var(--border)">
+          <div id="rfx-sheet-icon" style="width:44px;height:44px;border-radius:50%;background:#e0f5f0;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🦶</div>
+          <div style="flex:1;min-width:0">
+            <div id="rfx-sheet-organ" style="font-size:15px;font-weight:700;color:#0f766e;font-family:'Cormorant Garamond',serif"></div>
+            <div id="rfx-sheet-tech-badge" style="display:inline-block;margin-top:3px;padding:2px 9px;border-radius:12px;font-size:10px;font-weight:700;background:#e0f5f0;color:#0f766e;border:1px solid #0f766e"></div>
+          </div>
+          <button onclick="rfxCloseSheet()" style="width:30px;height:30px;border-radius:50%;border:none;background:rgba(0,0,0,.07);font-size:16px;cursor:pointer;flex-shrink:0;color:var(--ink)">✕</button>
+        </div>
+
+        <!-- Sheet body -->
+        <div id="rfx-sheet-body" style="flex:1;overflow-y:auto;padding:14px 16px 30px">
+        </div>
+      </div>
+    `;
+    secViews.appendChild(view);
+
+    // ── Reflexology JS initialisation (deferred until section is appended) ──
+    setTimeout(function() {
+
+      // ── Zone data lookup table ──
+      var RFX_ZONES = {
+        'Brain & Head': {
+          icon:'🧠', color:'#0f766e',
+          conditions:['Headache','Migraine','Insomnia','Anxiety','Brain fog','Sinusitis','Hypertension'],
+          technique:'Thumb-walk',
+          pressure:'Moderate — circular thumb rotation on plantar surface of big toe',
+          duration:'3–5 min per session', frequency:'Daily or alternate days',
+          contraindications:['Active scalp infection','Recent head trauma','Thrombosis'],
+          tip:'Combine with solar plexus point for stress headaches. Work in small caterpillar steps along the full toe pad.'
+        },
+        'Pituitary Gland': {
+          icon:'⚗️', color:'#d4af37',
+          conditions:['Hormonal imbalance','Thyroid disorders','PCOS','Adrenal fatigue','Infertility','Menstrual irregularity'],
+          technique:'Hook-and-backup',
+          pressure:'Firm point pressure — thumb hook into centre of big toe pad, pull back',
+          duration:'1–2 min, 2–3 reps', frequency:'3× per week',
+          contraindications:['Pituitary tumour (uncontrolled)','Pregnancy (1st trimester — use light only)'],
+          tip:'The "master gland" point — most powerful endocrine regulator in reflexology. Always include in hormonal protocols.'
+        },
+        'Sinuses & Eyes': {
+          icon:'👁️', color:'#5c8fa8',
+          conditions:['Sinusitis','Allergic rhinitis','Hay fever','Conjunctivitis','Eye strain','Headache'],
+          technique:'Thumb-walk',
+          pressure:'Light-to-moderate thumb-walk up each small toe, medial to lateral',
+          duration:'2–3 min per toe', frequency:'Daily during acute episodes',
+          contraindications:['Active eye surgery','Acute iritis'],
+          tip:'Work toes 2–5 methodically. The second toe correlates most strongly to sinuses; fourth toe to inner ear.'
+        },
+        'Eyes & Ears': {
+          icon:'👁️', color:'#7d5a7e',
+          conditions:['Tinnitus','Hearing loss','Vertigo','Eye fatigue','Glaucoma (adjunct)','Otitis media'],
+          technique:'Rotation',
+          pressure:'Gentle rotation on toe base joints — medial toe pads',
+          duration:'2 min each side', frequency:'Alternate days',
+          contraindications:['Acute ear perforation','Acute otitis externa'],
+          tip:'Combine with cervical spine reflex on medial foot for tinnitus — the vagus nerve pathway.'
+        },
+        'Ears': {
+          icon:'👂', color:'#5c8fa8',
+          conditions:['Tinnitus','Vertigo (Meniere\'s)','Otitis media','Hearing loss','Balance disorders'],
+          technique:'Thumb-walk',
+          pressure:'Lateral toe pads — gentle, rhythmic thumb-walk steps',
+          duration:'2–3 min', frequency:'Daily for acute, 3×/week maintenance',
+          contraindications:['Acute ear infection with perforation'],
+          tip:'Cross-reflex: ear point on 4th–5th toe pads. Also stimulate the ankle (lymph drainage) for recurrent otitis.'
+        },
+        'Neck & Thyroid': {
+          icon:'🦋', color:'#b45309',
+          conditions:['Hypothyroidism','Hyperthyroidism','Neck stiffness','Goitre (adjunct)','Cervical spondylosis','Fatigue'],
+          technique:'Thumb-walk',
+          pressure:'Walk across base of all toes — toe necks — bidirectionally',
+          duration:'3–4 min', frequency:'Daily for thyroid conditions',
+          contraindications:['Thyroid malignancy (active)','Post-thyroidectomy acute'],
+          tip:'The thyroid zone wraps around the entire toe base. In hypothyroidism, stimulate firmly; in hyperthyroidism, use sedation technique (slower, lighter pressure).'
+        },
+        'Lungs & Chest': {
+          icon:'🫁', color:'#2c6e4f',
+          conditions:['Asthma','COPD','Chronic cough','Bronchitis','Anxiety','Chest tightness','Post-COVID recovery'],
+          technique:'Thumb-walk',
+          pressure:'Diagonal thumb-walk across ball of foot — cover entire zone',
+          duration:'4–5 min', frequency:'Daily for respiratory conditions',
+          contraindications:['Active pneumonia (acute phase)','Haemoptysis','Pneumothorax'],
+          tip:'Walk in multiple directions — horizontal and diagonal. Combine diaphragm point for dyspnoea. The most clinically versatile zone.'
+        },
+        'Heart': {
+          icon:'❤️', color:'#b94040',
+          conditions:['Hypertension','Palpitations','Anxiety','Chest tightness','Arrhythmia (adjunct)','Stress'],
+          technique:'Rotation',
+          pressure:'Light circular rotation only — NEVER firm pressure on heart zone',
+          duration:'2–3 min max', frequency:'Alternate days, not daily',
+          contraindications:['Acute MI','Unstable angina','Active cardiac failure','Pacemaker (caution)','Deep vein thrombosis'],
+          tip:'⚠️ Always use light, calming technique on the heart zone. Stimulation technique contraindicated. Use for regulation, not stimulation.'
+        },
+        'Solar Plexus & Diaphragm': {
+          icon:'☀️', color:'#d4af37',
+          conditions:['Stress','Anxiety','Panic attacks','Hiccups','Respiratory issues','IBS','Insomnia'],
+          technique:'Hook-and-backup',
+          pressure:'Thumb hook at the point while patient exhales — hold 30s',
+          duration:'2–3 min + breathing synchronisation', frequency:'Daily — safest zone to self-treat',
+          contraindications:['None significant — universally safe'],
+          tip:'The most important relaxation point in reflexology. Always begin and end sessions here. Ask patient to breathe deeply while you hold. Bilateral simultaneously for maximal effect.'
+        },
+        'Stomach & Pancreas': {
+          icon:'🫃', color:'#b45309',
+          conditions:['Indigestion','GERD','Gastritis','Type 2 Diabetes','Nausea','Bloating','Peptic ulcer'],
+          technique:'Thumb-walk',
+          pressure:'Medial arch — walk across upper arch zone toward medial edge',
+          duration:'3–4 min', frequency:'Before meals for digestive support',
+          contraindications:['Acute gastric bleeding','Active pancreatitis'],
+          tip:'In T2DM, combine with adrenal + pituitary points. Work both feet as pancreas spans midline.'
+        },
+        'Liver & Gallbladder': {
+          icon:'🫀', color:'#0f766e',
+          conditions:['Hepatitis (adjunct)','NAFLD','Gallstones (adjunct)','Jaundice recovery','Headache','Toxin clearance','Migraines'],
+          technique:'Thumb-walk',
+          pressure:'Upper lateral arch — work from lateral border inward',
+          duration:'3–4 min', frequency:'3× per week (avoid overworking)',
+          contraindications:['Active hepatitis with fever','Cirrhosis (gentle only)','Gallbladder perforation'],
+          tip:'Found only on the right foot. Combine with solar plexus for post-hepatic headaches. Use extra-gentle pressure in liver conditions — avoid heavy stimulation.'
+        },
+        'Small Intestine': {
+          icon:'🌀', color:'#2c6e4f',
+          conditions:['IBS','Malabsorption','Coeliac (adjunct)','SIBO','Bloating','Crohn\'s (adjunct)','Nutrient deficiency'],
+          technique:'Thumb-walk',
+          pressure:'Thumb-walk across mid-arch — multiple horizontal rows',
+          duration:'4–5 min', frequency:'Daily for IBS; 3×/week maintenance',
+          contraindications:['Active bowel obstruction','Recent abdominal surgery (< 6 weeks)'],
+          tip:'The widest zone on the foot. Use multiple passes — horizontal, then diagonal. Pair with large intestine zone for complete GI protocol.'
+        },
+        'Kidneys & Adrenals': {
+          icon:'🫘', color:'#c0392b',
+          conditions:['Chronic fatigue','Adrenal burnout','Oedema','UTI recovery','Hypertension','Stress response','CKD (adjunct gentle)'],
+          technique:'Hook-and-backup',
+          pressure:'Firm thumb hook at kidney point — hold with rotation',
+          duration:'2–3 min each', frequency:'3× per week; daily for adrenal fatigue',
+          contraindications:['Acute kidney injury','Renal calculi acute colic','Polycystic kidney (gentle only)'],
+          tip:'Two points in one zone: kidney (inferior) and adrenal (superior). In adrenal fatigue, work adrenal point first. In CKD, use very light pressure only.'
+        },
+        'Large Intestine & Colon': {
+          icon:'🌊', color:'#7d5a7e',
+          conditions:['Constipation','Diarrhoea','IBS-C','Diverticulosis','Haemorrhoids (adjunct)','Detox support'],
+          technique:'Thumb-walk',
+          pressure:'Follow the anatomical colon path — ascending → transverse → descending',
+          duration:'4–5 min', frequency:'Daily for constipation',
+          contraindications:['Active colitis flare','Colorectal malignancy (acute)','Post-colonoscopy (48h)'],
+          tip:'Mirror the colon anatomy on the foot: ascend right foot, transverse crosses both, descend left foot. Always clockwise direction.'
+        },
+        'Bladder & Uterus/Prostate': {
+          icon:'💧', color:'#2c6e4f',
+          conditions:['UTI','Urinary frequency','Incontinence','BPH (adjunct)','Dysmenorrhoea','Endometriosis (adjunct)','Interstitial cystitis'],
+          technique:'Rotation',
+          pressure:'Gentle circular rotation on medial heel — progressive depth',
+          duration:'3–4 min', frequency:'Daily for acute; 3×/week maintenance',
+          contraindications:['Active bladder cancer','Acute UTI with fever (medical first)','Uterine prolapse severe'],
+          tip:'In dysmenorrhoea: work this zone + uterus/ovary + solar plexus as a triad. Warm foot soak before session enhances effect.'
+        },
+        'Spine & Vertebrae': {
+          icon:'🦴', color:'#2a5a8a',
+          conditions:['Back pain','Sciatica','Cervical spondylosis','Disc disease','Postural problems','Scoliosis (adjunct)'],
+          technique:'Thumb-walk',
+          pressure:'Walk along entire medial edge from heel to big toe — cervical at toe, lumbar at heel',
+          duration:'5–7 min for full spine', frequency:'Daily for acute back pain',
+          contraindications:['Acute disc herniation with neurological compromise','Post-spinal surgery acute','Spinal infection'],
+          tip:'The most used zone in musculoskeletal practice. Map regions: big toe = C1–C7, mid-arch = thoracic, lower arch = lumbar, heel = sacral/coccyx. Work slowly.'
+        },
+        'Sciatic Nerve & Lower Back': {
+          icon:'⚡', color:'#b94040',
+          conditions:['Sciatica','Lower back pain','Piriformis syndrome','Herniated disc (L4/L5/S1)','Hip pain'],
+          technique:'Thumb-walk',
+          pressure:'Deep thumb pressure across heel — heel edge and up Achilles band',
+          duration:'4–5 min', frequency:'Daily for acute; 3×/week chronic',
+          contraindications:['Deep vein thrombosis','Foot fracture'],
+          tip:'Combine with lumbar spine zone + kidney + adrenal for full sciatica protocol. Always warm the heel first with broad palm pressure.'
+        },
+        'Reproductive Organs & Ovaries': {
+          icon:'🌸', color:'#be185d',
+          conditions:['PCOS','Dysmenorrhoea','Infertility','Menopause symptoms','PMS','Endometriosis','Male infertility'],
+          technique:'Rotation',
+          pressure:'Lateral heel — circular rotation both ankles; ovary = lateral malleolus, uterus = medial',
+          duration:'3–5 min', frequency:'3× per week; daily during menstrual issues',
+          contraindications:['Pregnancy (especially 1st trimester)','IUD (caution)','Active pelvic inflammatory disease'],
+          tip:'Work BOTH the medial (uterus/prostate) AND lateral (ovary/testis) ankle points in reproductive protocols. In PCOS, combine with pituitary + adrenal.'
+        }
+      };
+
+      // ── Map switcher ──
+      window.rfxSwitchMap = function(map) {
+        var fw = document.getElementById('rfx-foot-wrap');
+        var hw = document.getElementById('rfx-hand-wrap');
+        var lb = document.getElementById('rfx-map-label');
+        var tf = document.getElementById('rfx-tab-foot');
+        var th = document.getElementById('rfx-tab-hand');
+        if (!fw || !hw) return;
+        if (map === 'foot') {
+          fw.style.display = 'inline-block'; hw.style.display = 'none';
+          lb.textContent = 'Right Foot — Plantar View';
+          tf.style.background = '#0f766e'; tf.style.color = '#fff'; tf.style.borderColor = '#0f766e';
+          th.style.background = 'var(--surf)'; th.style.color = '#0f766e'; th.style.borderColor = '#c4d8c8';
+        } else {
+          fw.style.display = 'none'; hw.style.display = 'inline-block';
+          lb.textContent = 'Right Hand — Palmar View';
+          th.style.background = '#0f766e'; th.style.color = '#fff'; th.style.borderColor = '#0f766e';
+          tf.style.background = 'var(--surf)'; tf.style.color = '#0f766e'; tf.style.borderColor = '#c4d8c8';
+        }
+        // Clear any gold highlights when switching maps
+        rfxClearHighlights();
+      };
+
+      // ── Zone tap → show bottom sheet ──
+      window.rfxShowZone = function(el) {
+        var organ = el.getAttribute('data-organ');
+        var info = RFX_ZONES[organ];
+        if (!info) { info = { icon:'🦶', color:'#0f766e', conditions:[], technique:'Thumb-walk', pressure:'Moderate thumb pressure', duration:'2–3 min', frequency:'3× per week', contraindications:[], tip:'' }; }
+
+        // Highlight this zone on SVG
+        rfxClearHighlights();
+        el.setAttribute('data-active','1');
+        el.style.fill = 'rgba(212,175,55,0.45)';
+        el.style.stroke = '#d4af37';
+        el.style.strokeWidth = '2.5';
+
+        // Populate sheet header
+        document.getElementById('rfx-sheet-organ').textContent = organ;
+        document.getElementById('rfx-sheet-icon').textContent = info.icon;
+        document.getElementById('rfx-sheet-icon').style.background = info.color + '22';
+        document.getElementById('rfx-sheet-tech-badge').textContent = '✋ ' + info.technique;
+        document.getElementById('rfx-sheet-tech-badge').style.background = info.color + '18';
+        document.getElementById('rfx-sheet-tech-badge').style.color = info.color;
+        document.getElementById('rfx-sheet-tech-badge').style.borderColor = info.color + '55';
+
+        // Populate sheet body
+        var b = '';
+        if (info.conditions && info.conditions.length) {
+          b += '<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:6px">Associated Conditions</div>';
+          b += '<div style="display:flex;flex-wrap:wrap;gap:5px">' + info.conditions.map(function(c){ return '<span style="padding:3px 9px;background:' + info.color + '12;border:1px solid ' + info.color + '44;border-radius:12px;font-size:10.5px;color:' + info.color + ';font-weight:600">' + c + '</span>'; }).join('') + '</div></div>';
+        }
+        b += '<div style="background:var(--bg);border-radius:10px;padding:11px 13px;margin-bottom:10px">';
+        b += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:5px">Technique</div>';
+        b += '<div style="font-size:12.5px;font-weight:700;color:' + info.color + ';margin-bottom:4px">' + info.technique + '</div>';
+        b += '<div style="font-size:12px;color:var(--ink2);line-height:1.55">' + info.pressure + '</div></div>';
+        b += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">';
+        b += '<div style="background:var(--bg);border-radius:10px;padding:10px 12px"><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:3px">Duration</div><div style="font-size:12px;color:var(--tx);font-weight:600">' + info.duration + '</div></div>';
+        b += '<div style="background:var(--bg);border-radius:10px;padding:10px 12px"><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:3px">Frequency</div><div style="font-size:12px;color:var(--tx);font-weight:600">' + info.frequency + '</div></div>';
+        b += '</div>';
+        if (info.contraindications && info.contraindications.length) {
+          b += '<div style="background:#fdf5f5;border:1.5px solid #f0b0b0;border-radius:10px;padding:10px 12px;margin-bottom:10px">';
+          b += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#b94040;margin-bottom:5px">⚠️ Contraindications</div>';
+          b += info.contraindications.map(function(c){ return '<div style="font-size:11.5px;color:#7a2020;padding:2px 0">• ' + c + '</div>'; }).join('');
+          b += '</div>';
+        }
+        if (info.tip) {
+          b += '<div style="background:#fef8f0;border:1.5px solid #d4af37;border-radius:10px;padding:10px 12px">';
+          b += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#7a5800;margin-bottom:4px">💡 Clinical Tip</div>';
+          b += '<div style="font-size:12px;color:#3a2800;line-height:1.55;font-style:italic">' + info.tip + '</div></div>';
+        }
+        document.getElementById('rfx-sheet-body').innerHTML = b;
+
+        // Open sheet
+        var ov = document.getElementById('rfx-zone-overlay');
+        var sh = document.getElementById('rfx-zone-sheet');
+        ov.style.display = 'block';
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){
+          ov.style.background = 'rgba(0,20,10,.4)';
+          ov.style.backdropFilter = 'blur(4px)';
+          ov.style.webkitBackdropFilter = 'blur(4px)';
+          sh.style.transform = 'translateY(0)';
+        }); });
+      };
+
+      window.rfxCloseSheet = function() {
+        var ov = document.getElementById('rfx-zone-overlay');
+        var sh = document.getElementById('rfx-zone-sheet');
+        ov.style.background = 'rgba(0,20,10,0)';
+        ov.style.backdropFilter = 'blur(0px)';
+        ov.style.webkitBackdropFilter = 'blur(0px)';
+        sh.style.transform = 'translateY(100%)';
+        setTimeout(function(){ ov.style.display = 'none'; rfxClearHighlights(); }, 420);
+      };
+
+      function rfxClearHighlights() {
+        document.querySelectorAll('.rfx-zone[data-active]').forEach(function(z){
+          z.removeAttribute('data-active');
+          z.style.fill = '';
+          z.style.stroke = '';
+          z.style.strokeWidth = '';
+        });
+      }
+      window.rfxClearHighlights = rfxClearHighlights;
+
+      // ── AI Prescription Generator ──
+      window.rfxGeneratePrescription = function() {
+        var input = (document.getElementById('rfx-ai-input')||{}).value || '';
+        if (!input.trim()) { alert('Please describe the patient\'s symptoms or condition.'); return; }
+        var btn = document.getElementById('rfx-ai-btn');
+        var res = document.getElementById('rfx-ai-result');
+        btn.disabled = true;
+        btn.textContent = '⏳ Generating…';
+        res.innerHTML = '<div style="text-align:center;padding:30px;color:#0f766e"><div style="font-size:28px;margin-bottom:8px">🦶</div><div style="font-size:13px;font-weight:600">AI is mapping reflex zones…</div></div>';
+
+        var sys = 'You are an expert reflexologist and BNYS naturopathic clinician. Given a patient presentation, return ONLY valid JSON (no markdown, no backticks) with this exact structure: {"prioritized_zones":["zone1","zone2","zone3","zone4","zone5"],"technique":"overall technique name","session_duration":"e.g. 45 minutes","frequency":"e.g. 3x per week for 4 weeks","pressure_sequence":["Step 1: ...","Step 2: ...","Step 3: ...","Step 4: ..."],"precautions":"key precaution text","rationale":"brief clinical rationale"}. Zone names MUST match exactly: Brain & Head, Pituitary Gland, Sinuses & Eyes, Eyes & Ears, Ears, Neck & Thyroid, Lungs & Chest, Heart, Solar Plexus & Diaphragm, Stomach & Pancreas, Liver & Gallbladder, Small Intestine, Kidneys & Adrenals, Large Intestine & Colon, Bladder & Uterus/Prostate, Spine & Vertebrae, Sciatic Nerve & Lower Back, Reproductive Organs & Ovaries. Prioritize 4-6 most relevant zones.';
+
+        callAI([{role:'system',content:sys},{role:'user',content:'Patient: '+input}], 1800)
+        .then(function(raw){
+          var data = null;
+          try { data = typeof raw === 'string' ? JSON.parse(raw.replace(/```json|```/g,'').trim()) : raw; } catch(e) {}
+          if (!data || !data.prioritized_zones) {
+            res.innerHTML = '<div style="background:#fdf5f5;border:1.5px solid #f0b0b0;border-radius:12px;padding:14px;color:#7a2020;font-size:13px">⚠️ Could not parse AI response. Please try again or check your AI provider key.</div>';
+            btn.disabled = false; btn.textContent = '🦶 Generate Reflexology Prescription';
+            return;
+          }
+
+          // Highlight recommended zones on SVG
+          rfxClearHighlights();
+          var highlighted = 0;
+          document.querySelectorAll('.rfx-zone').forEach(function(z){
+            var organ = z.getAttribute('data-organ');
+            if (data.prioritized_zones.indexOf(organ) !== -1) {
+              z.style.fill = 'rgba(212,175,55,0.5)';
+              z.style.stroke = '#d4af37';
+              z.style.strokeWidth = '2.5';
+              z.setAttribute('data-active','ai');
+              highlighted++;
+            }
+          });
+
+          // Render prescription card
+          var zoneHtml = data.prioritized_zones.map(function(z, i){
+            var info = RFX_ZONES[z] || {};
+            return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:' + (i===0?'#0f766e':'var(--bg)') + ';border-radius:10px;margin-bottom:6px;border:1px solid ' + (i===0?'#0f766e':'var(--bdr)') + '">'
+              + '<div style="width:26px;height:26px;border-radius:50%;background:' + (i===0?'rgba(255,255,255,.2)':'#e0f5f0') + ';display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">' + (info.icon||'🦶') + '</div>'
+              + '<div style="flex:1;min-width:0">'
+              + '<div style="font-size:12px;font-weight:700;color:' + (i===0?'#fff':'var(--tx)') + '">' + (i===0?'⭐ Primary: ':'') + z + '</div>'
+              + (info.technique ? '<div style="font-size:10px;color:' + (i===0?'rgba(255,255,255,.75)':'var(--mu)') + '">' + info.technique + ' · ' + (info.duration||'2–3 min') + '</div>' : '')
+              + '</div>'
+              + '<div style="font-size:10px;padding:2px 7px;border-radius:8px;background:' + (i===0?'rgba(255,255,255,.2)':'#e0f5f0') + ';color:' + (i===0?'#fff':'#0f766e') + ';font-weight:700">#' + (i+1) + '</div>'
+              + '</div>';
+          }).join('');
+
+          var stepsHtml = (data.pressure_sequence||[]).map(function(s,i){
+            return '<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr)">'
+              + '<div style="width:20px;height:20px;border-radius:50%;background:#0f766e;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + (i+1) + '</div>'
+              + '<div style="font-size:12px;color:var(--ink2);line-height:1.5;flex:1">' + s + '</div></div>';
+          }).join('');
+
+          res.innerHTML = '<div style="background:var(--surf);border:2px solid #d4af37;border-radius:14px;padding:16px;margin-top:4px">'
+            + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
+            + '<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#d4af37,#b8960a);display:flex;align-items:center;justify-content:center;font-size:20px">🦶</div>'
+            + '<div><div style="font-family:\'Cormorant Garamond\',serif;font-size:16px;font-weight:700;color:#0f766e">AI Reflexology Prescription</div>'
+            + '<div style="font-size:10px;color:var(--mu)">Zones highlighted in gold on the map above</div></div></div>'
+
+            + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
+            + '<div style="background:var(--bg);border-radius:10px;padding:10px 12px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:2px">Session Duration</div><div style="font-size:13px;font-weight:700;color:#0f766e">' + (data.session_duration||'45 min') + '</div></div>'
+            + '<div style="background:var(--bg);border-radius:10px;padding:10px 12px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:2px">Frequency</div><div style="font-size:13px;font-weight:700;color:#0f766e">' + (data.frequency||'3× per week') + '</div></div>'
+            + '</div>'
+
+            + '<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Prioritised Zones</div>'
+            + zoneHtml + '</div>'
+
+            + (stepsHtml ? '<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Pressure Sequence</div>' + stepsHtml + '</div>' : '')
+
+            + (data.rationale ? '<div style="background:#e0f5f0;border-radius:10px;padding:11px 13px;margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Clinical Rationale</div><div style="font-size:12px;color:#0f4a38;line-height:1.55;font-style:italic">' + data.rationale + '</div></div>' : '')
+
+            + (data.precautions ? '<div style="background:#fef8f0;border:1.5px solid #d4af37;border-radius:10px;padding:11px 13px"><div style="font-size:10px;font-weight:700;color:#7a5800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">⚠️ Precautions</div><div style="font-size:12px;color:#3a2800;line-height:1.55">' + data.precautions + '</div></div>' : '')
+
+            + '</div>';
+
+          btn.disabled = false; btn.textContent = '🦶 Generate Reflexology Prescription';
+        })
+        .catch(function(err){
+          res.innerHTML = '<div style="background:#fdf5f5;border:1.5px solid #f0b0b0;border-radius:12px;padding:14px;color:#7a2020;font-size:13px">⚠️ AI error: ' + (err.message||'Unknown error') + '</div>';
+          btn.disabled = false; btn.textContent = '🦶 Generate Reflexology Prescription';
+        });
+      };
+
+    }, 200); // end setTimeout
+
+    secViews.appendChild(view);
+    return;
+  } // end reflexology block
+
   // Single-tab: render full shell (ti- needed by openSec) then auto-load content
   if (sec.tabs.length === 1) {
     const t = sec.tabs[0];
@@ -7085,211 +7855,44 @@ function buildCard(item, color) {
 // ═══════════════════════════════════════════════════
 let curSec = 'home';
 
-// ══════════════════════════════════════════════════════════════════
-// NR_BackManager — Robust Back-Button & History Management  v1.0
-// Handles: overlays → DDx peek/detail → Yoga sub-levels →
-//          section/group/tab views → Home (double-tap to exit)
-// ══════════════════════════════════════════════════════════════════
-(function () {
-
-  /* ── Seed the history stack so the very first back-press doesn't
-        exit the PWA before we can intercept it. ── */
-  history.replaceState({ page: 'home' }, '', '');
-
-  /* ── Double-tap-to-exit state ── */
-  var _exitWarning = false;
-  var _exitTimer   = null;
-
-  /* ── Show a transient toast warning ── */
-  function _showExitToast() {
-    var toast = document.getElementById('nr-back-exit-toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'nr-back-exit-toast';
-      Object.assign(toast.style, {
-        position:       'fixed',
-        bottom:         '80px',
-        left:           '50%',
-        transform:      'translateX(-50%)',
-        background:     'rgba(30,50,30,0.92)',
-        color:          '#fff',
-        padding:        '10px 22px',
-        borderRadius:   '24px',
-        fontSize:       '14px',
-        fontFamily:     'inherit',
-        zIndex:         '99999',
-        pointerEvents:  'none',
-        transition:     'opacity .25s',
-        opacity:        '0',
-        whiteSpace:     'nowrap',
-        boxShadow:      '0 4px 18px rgba(0,0,0,.35)'
-      });
-      document.body.appendChild(toast);
+// ══ Native back button support (History API) ══
+history.replaceState({page:'home'}, '', '');
+window.addEventListener('popstate', function(e) {
+  var state = e.state;
+  if (!state || state.page === 'home') {
+    goHome(true);
+  } else if (state.page === 'calc') {
+    // Safety fallback — open calculators section and reset calc UI
+    openSec('calculators', document.getElementById('sbh-calculators'), true);
+    var _cg0 = document.getElementById('calc-grid-el');
+    var _ca0 = document.getElementById('calc-area-el');
+    if (_ca0) { _ca0.innerHTML = ''; _ca0.style.display = 'none'; }
+    if (_cg0) _cg0.style.display = '';
+    document.querySelectorAll('.calc-info-card').forEach(function(el){ el.style.borderColor = ''; });
+  } else if (state.page === 'tab') {
+    // Card view → back to category grid — skipHistory=true to avoid double-push
+    showTabIndex(state.secId, true);
+  } else if (state.page === 'sec') {
+    // Restore section — skipHistory=true
+    var btn = document.getElementById('sbh-' + state.secId);
+    openSec(state.secId, btn, true, state.groupKey);
+    if (state.secId === 'calculators') {
+      // Calculators is single-tab with static HTML — reset inner calc UI, do NOT call showTabIndex (it wipes content)
+      var _cg = document.getElementById('calc-grid-el');
+      var _ca = document.getElementById('calc-area-el');
+      if (_ca) { _ca.innerHTML = ''; _ca.style.display = 'none'; }
+      if (_cg) _cg.style.display = '';
+      document.querySelectorAll('.calc-info-card').forEach(function(el){ el.style.borderColor = ''; });
+    } else {
+      // Multi-tab or other sections — show category index grid as normal
+      var _secDef = typeof SECS !== 'undefined' ? SECS.find(function(s){ return s.id === state.secId; }) : null;
+      if (!_secDef || _secDef.tabs.length > 1) showTabIndex(state.secId, true);
     }
-    toast.textContent = 'Press back again to exit';
-    toast.style.opacity = '1';
-    clearTimeout(_exitTimer);
-    _exitTimer = setTimeout(function () {
-      toast.style.opacity = '0';
-      _exitWarning = false;
-    }, 2000);
+  } else if (state.page === 'group') {
+    // Group view → skipHistory=true to avoid re-pushing
+    openGroupView(state.groupKey, true);
   }
-
-  /* ── Helper: is a given element currently "visible" (overlay open)? ── */
-  function _visible(id) {
-    var el = document.getElementById(id);
-    if (!el) return false;
-    return el.classList.contains('open') ||
-           el.classList.contains('nr-inbox-open') ||
-           (el.style.display !== '' && el.style.display !== 'none');
-  }
-
-  /* ── Central popstate handler ── */
-  window.addEventListener('popstate', function (e) {
-    var state = e.state || {};
-
-    /* ── PRIORITY 1: Module-specific sub-states (DDx detail / peek) ── */
-    // DDx detail view (full card inside DDx SV)
-    if (typeof window._sv !== 'undefined' && window._sv.detail) {
-      if (typeof window.closeDdxDetail === 'function') window.closeDdxDetail();
-      history.pushState(null, ''); // keep a state so next back stays in app
-      return;
-    }
-
-    /* ── PRIORITY 2: DDx peek sheet ── */
-    var _ddxPeekOv = document.getElementById('ddx-peek-overlay');
-    if (_ddxPeekOv && (_ddxPeekOv.classList.contains('open') || _ddxPeekOv.classList.contains('animating'))) {
-      if (typeof window.closeDdxPeek === 'function') window.closeDdxPeek();
-      history.pushState(null, ''); // keep a state
-      return;
-    }
-
-    /* ── PRIORITY 3: DDx search view (results panel) ── */
-    if (typeof window._sv !== 'undefined' && window._sv.active) {
-      if (typeof window.closeDdxSV === 'function') window.closeDdxSV();
-      history.pushState(null, '');
-      return;
-    }
-
-    /* ── PRIORITY 4: Mobile search overlay ── */
-    if (_visible('mob-srch-overlay')) {
-      if (typeof window.closeMobSearch === 'function') window.closeMobSearch();
-      else document.getElementById('mob-srch-overlay').classList.remove('open');
-      history.pushState(null, '');
-      return;
-    }
-
-    /* ── PRIORITY 5: Command palette overlay ── */
-    if (_visible('cmd-overlay')) {
-      if (typeof window.closeCmd === 'function') window.closeCmd();
-      history.pushState(null, '');
-      return;
-    }
-
-    /* ── PRIORITY 6: Card AI overlay ── */
-    if (_visible('card-ai-overlay')) {
-      if (typeof window.closeCardAI === 'function') window.closeCardAI();
-      history.pushState(null, '');
-      return;
-    }
-
-    /* ── PRIORITY 7: Share / Profile / Inbox modals ── */
-    if (_visible('share-overlay')) {
-      if (typeof window.closeShare === 'function') window.closeShare();
-      history.pushState(null, '');
-      return;
-    }
-    if (_visible('nr-profile-overlay')) {
-      var _pov = document.getElementById('nr-profile-overlay');
-      if (_pov) _pov.style.display = 'none';
-      history.pushState(null, '');
-      return;
-    }
-    if (_visible('nr-inbox-overlay')) {
-      var _iov = document.getElementById('nr-inbox-overlay');
-      if (_iov) _iov.classList.remove('nr-inbox-open');
-      history.pushState(null, '');
-      return;
-    }
-
-    /* ── PRIORITY 8: Yoga sub-level back (yoga library overlay is open) ── */
-    var _yogaEl = document.getElementById('sv-yogalib');
-    var _yogaOpen = _yogaEl && _yogaEl.style.display !== 'none';
-    if (_yogaOpen || state.yl) {
-      var _detailEl = document.getElementById('yoga-detail-view');
-      if (_detailEl && _detailEl.style.display === 'block') {
-        if (typeof window.yogoBack === 'function') window.yogoBack();
-        return;
-      }
-      if (_yogaOpen) {
-        if (typeof window.yogoBack === 'function') window.yogoBack();
-        return;
-      }
-    }
-
-    /* ── PRIORITY 9: Section / Tab / Calc / Group states (restore views) ── */
-    if (state.page === 'calc') {
-      openSec('calculators', document.getElementById('sbh-calculators'), true);
-      var _cg0 = document.getElementById('calc-grid-el');
-      var _ca0 = document.getElementById('calc-area-el');
-      if (_ca0) { _ca0.innerHTML = ''; _ca0.style.display = 'none'; }
-      if (_cg0) _cg0.style.display = '';
-      document.querySelectorAll('.calc-info-card').forEach(function (el) { el.style.borderColor = ''; });
-      return;
-    }
-    if (state.page === 'tab') {
-      showTabIndex(state.secId, true);
-      return;
-    }
-    if (state.page === 'sec') {
-      var btn = document.getElementById('sbh-' + state.secId);
-      openSec(state.secId, btn, true, state.groupKey);
-      if (state.secId === 'calculators') {
-        var _cg = document.getElementById('calc-grid-el');
-        var _ca = document.getElementById('calc-area-el');
-        if (_ca) { _ca.innerHTML = ''; _ca.style.display = 'none'; }
-        if (_cg) _cg.style.display = '';
-        document.querySelectorAll('.calc-info-card').forEach(function (el) { el.style.borderColor = ''; });
-      } else {
-        var _secDef = typeof SECS !== 'undefined' ? SECS.find(function (s) { return s.id === state.secId; }) : null;
-        if (!_secDef || _secDef.tabs.length > 1) showTabIndex(state.secId, true);
-      }
-      return;
-    }
-    if (state.page === 'group') {
-      openGroupView(state.groupKey, true);
-      return;
-    }
-
-    /* ── PRIORITY 10: Any in-section or in-group body class → go Home ── */
-    var _inSection = document.body.classList.contains('in-section');
-    var _inGroup   = document.body.classList.contains('in-group');
-    var _gv        = document.getElementById('group-view');
-    var _inGV      = _gv && _gv.style.display !== 'none';
-
-    if (_inSection || _inGroup || _inGV || _yogaOpen) {
-      goHome(true);
-      // Re-seed so next back-press hits the double-tap guard
-      history.pushState({ page: 'home' }, '', '');
-      return;
-    }
-
-    /* ── PRIORITY 11: Already on Home → double-tap-to-exit ── */
-    if (_exitWarning) {
-      // Second press within 2 s — allow the browser to exit
-      clearTimeout(_exitTimer);
-      _exitWarning = false;
-      // Let the browser handle naturally (history is empty / exhausted)
-      return;
-    }
-    // First press on Home
-    _exitWarning = true;
-    _showExitToast();
-    // Re-push so the browser has a state to pop on the second back-press
-    history.pushState({ page: 'home' }, '', '');
-  });
-
-})(); // end NR_BackManager
+});
 
 // ═══════════════════════════════════════════════════
 // RECENTLY VIEWED — in-memory tracker
@@ -7637,15 +8240,16 @@ function loadDiseaseCard(name, category, targetEl) {
 
   var SYS = 'You are a Senior Naturopathic Physician (BNYS). Generate a comprehensive disease profile. '
     + 'STRICT: Return ONLY valid JSON. No markdown. No preamble.\n\n'
+    + 'For every herb, yoga asana, hydrotherapy treatment, and diet include item assign evidence_level as exactly ONE of: RCT, SR, OBS, TU, or EXP. Never copy the placeholder text.\n\n'
     + 'Schema:\n'
     + '{"name":"...","icd":"...","introduction":"2-3 sentence summary","etiology":["..."],"incubation":"period or null",'
     + '"pathophysiology":"clear mechanism paragraph","prognosis":"...","classical_signs":["..."],'
     + '"golden_signs":["Sign: description"],'
     + '"diagnostics":{"history":["..."],"examination":["..."],"labs":["Test: expected finding"],"imaging":["Modality: finding"],"naturopathy":["Iris: ...","Tongue: ...","Pulse: ..."],"special_tests":["..."]},'
     + '"iris_diagnosis":"detailed iridology description",'
-    + '"management":{"diet":{"include":["..."],"avoid":["..."],"fasting":"protocol or null"},'
-    + '"yoga":["Asana/Pranayama: benefit"],"hydrotherapy":["treatment: method"],"mud_therapy":["application: indication"],'
-    + '"acupuncture":["Point: indication"],"herbal":["Herb: dose/preparation"],"massage":["technique: benefit"],'
+    + '"management":{"diet":{"include":[{"item":"food: reason","evidence_level":"OBS"}],"avoid":["..."],"fasting":"protocol or null"},'
+    + '"yoga":[{"item":"Asana/Pranayama: benefit","evidence_level":"OBS"}],"hydrotherapy":[{"item":"treatment: method","evidence_level":"TU"}],"mud_therapy":["application: indication"],'
+    + '"acupuncture":["Point: indication"],"herbal":[{"item":"Herb: dose/preparation","evidence_level":"TU"}],"massage":["technique: benefit"],'
     + '"lifestyle":["..."],"modern_drugs":["drug class: when to use"],"surgery":"when indicated or null"},'
     + '"when_to_refer":"clear criteria","naturopathy_philosophy":"naturopathic framework for this disease"}';
 
@@ -7659,12 +8263,13 @@ function loadDiseaseCard(name, category, targetEl) {
       // Retry with stricter prompt
       panel.innerHTML = '<div class="ddx-loading"><div class="ddx-spinner"></div><span>Retrying profile for <strong>'+name+'</strong>...</span></div>';
       var SYS2 = 'Output ONLY a JSON object. Start with { and end with }. No markdown, no text outside JSON. '
+        + 'For every herb, yoga, and hydrotherapy item assign evidence_level as exactly one of: RCT, SR, OBS, TU, EXP. '
         + 'For disease: '+name+', return: {"name":"'+name+'","icd":"ICD code","introduction":"summary","etiology":["cause1","cause2"],'
         + '"classical_signs":["sign1"],"golden_signs":["sign: desc"],'
         + '"diagnostics":{"labs":["test: finding"],"imaging":["mod: finding"],"naturopathy":["Iris: finding"]},'
         + '"iris_diagnosis":"iridology description",'
-        + '"management":{"diet":{"include":["food"],"avoid":["food"],"fasting":"protocol"},'
-        + '"yoga":["asana: benefit"],"hydrotherapy":["tx: method"],"herbal":["herb: dose"],'
+        + '"management":{"diet":{"include":[{"item":"food","evidence_level":"OBS"}],"avoid":["food"],"fasting":"protocol"},'
+        + '"yoga":[{"item":"asana: benefit","evidence_level":"OBS"}],"hydrotherapy":[{"item":"tx: method","evidence_level":"TU"}],"herbal":[{"item":"herb: dose","evidence_level":"TU"}],'
         + '"lifestyle":["tip"],"modern_drugs":["drug: use"]},'
         + '"when_to_refer":"criteria","naturopathy_philosophy":"philosophy"}';
       callAI([{role:'system',content:SYS2},{role:'user',content:'Return JSON for: '+name}], 4000)
@@ -7808,7 +8413,7 @@ async function retryMissingSections(name, category) {
       await ccSaveCard(name, category, merged);
       clearInterval(_interval);
       if (bar) { bar.style.width='100%'; bar.style.background='#3a7d44'; }
-      setTimeout(function() { renderDiseaseCard(merged); }, 400);
+      setTimeout(function() { renderDiseaseCard(merged, window._activeCardPanel); }, 400);
     } else {
       throw new Error('AI response could not be parsed');
     }
@@ -7891,13 +8496,21 @@ function cardChecklistHtml(d, escapedName, escapedCat) {
 
 function renderDiseaseCard(d, targetEl) {
   var panel = targetEl || document.getElementById('ddx-results');
+  window._activeCardPanel = panel;
   var escapedName = (d.name||'').replace(/'/g,"\\'");
   var escapedCat  = (d.category||'Disease').replace(/'/g,"\\'");
   var html = '<div class="ddx-list-hdr">'
-    + '<button class="ddx-back-btn" onclick="renderDDxListFromCache()">← Back to DDx</button>'
+    + '<button class="ddx-back-btn" onclick="renderDDxListFromCache()" title="Back to Disease List" '
+    + 'style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border-radius:50%;border:none;background:rgba(0,0,0,0.07);color:var(--ink1);font-size:18px;line-height:1">'
+    + '<svg width="11" height="18" viewBox="0 0 11 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 1.5L2 9L9.5 16.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    + '</button>'
     + '<button class="ddx-back-btn" onclick="loadDiseaseCard(\''+escapedName+'\',\''+escapedCat+'\')" title="Regenerate card with fresh AI response" style="background:#fff7ed;border-color:#d4a44a;color:#7a4f00">🔄 Refresh</button>'
+    + '<button id="ev-pull-btn" class="ddx-back-btn" onclick="pullEvidenceLevels(\''+escapedName+'\')" '
+    + 'title="Pull AI-assessed evidence levels for all unverified items on this cached card" '
+    + 'style="background:#f0fdf4;border-color:#6ee7b7;color:#065f46;font-weight:700">🔬 Assess Evidence</button>'
     + '<button class="ddx-back-btn" onclick="clearDDx()">✕</button>'
-    + '</div>';
+    + '</div>'
+    + '<div id="ev-pull-status" style="font-size:11px;color:#b45309;text-align:center;padding:3px 12px;min-height:16px;display:block"></div>';
 
   html += '<div class="ddx-card">';
 
@@ -7984,17 +8597,58 @@ function renderDiseaseCard(d, targetEl) {
     html += '<div class="ddx-mgmt-grid">';
     if (mg.diet) {
       var dt = '';
-      if (mg.diet.include && mg.diet.include.length) dt += '<div class="proto-section-head" style="color:var(--sage-deep);margin-bottom:3px">✓ Include</div>'+miniList(mg.diet.include.slice(0,5));
+      var dietInclude = mg.diet.include || [];
+      if (dietInclude.length) {
+        dt += '<div class="proto-section-head" style="color:var(--sage-deep);margin-bottom:3px">✓ Include</div>'
+          + '<ul style="list-style:none;padding:0;margin:0">'
+          + dietInclude.slice(0,5).map(function(i){
+              var isObj = i && typeof i === 'object';
+              var txt = isObj ? (i.item || safeStr(i)) : safeStr(i);
+              var badge = isObj ? (evBadge(i.evidence_level)||evBadge('UNKNOWN')) : (evBadgeFromText(txt)||evBadge('UNKNOWN'));
+              var evAttr = ' data-ev-item="'+txt.replace(/"/g,'&quot;')+'"';
+              return '<li class="ddx-mgmt-tile li proto-herb-row"'+evAttr+' style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+txt+badge+'</li>';
+            }).join('') + '</ul>';
+      }
       if (mg.diet.avoid && mg.diet.avoid.length) dt += '<div class="proto-section-head" style="color:#c0392b;margin:5px 0 3px">✗ Avoid</div>'+miniList(mg.diet.avoid.slice(0,5));
       if (mg.diet.fasting && mg.diet.fasting !== 'null') dt += '<div class="proto-section-head" style="color:var(--gold);margin-top:5px">⏸ Fasting Protocol</div><div style="font-size:12px;color:var(--ink2);line-height:1.5;margin-top:2px">'+mg.diet.fasting+'</div>';
       dt += aiToolLink('🥗 Full Diet Chart', 'dietchart', d.name);
       html += mgmtTile('🥗 Diet Therapy', dt);
     }
-    if (mg.yoga && mg.yoga.length) html += mgmtTile('🧘 Yoga & Pranayama', miniList(mg.yoga.slice(0,6)) + aiToolLink('🧘 Full Yoga Plan', 'yogachart', d.name));
-    if (mg.hydrotherapy && mg.hydrotherapy.length) html += mgmtTile('💧 Hydrotherapy', miniList(mg.hydrotherapy.slice(0,6)) + aiToolLink('💧 Hydro Protocol', 'hydroproto', d.name));
+    if (mg.yoga && mg.yoga.length) {
+      var yogaList = '<ul style="list-style:none;padding:0;margin:0">'
+        + mg.yoga.slice(0,6).map(function(i){
+            var isObj = i && typeof i === 'object';
+            var txt = isObj ? (i.item || safeStr(i)) : safeStr(i);
+            var badge = isObj ? (evBadge(i.evidence_level)||evBadge('UNKNOWN')) : (evBadgeFromText(txt)||evBadge('UNKNOWN'));
+            var evAttr = ' data-ev-item="'+txt.replace(/"/g,'&quot;')+'"';
+            return '<li class="ddx-mgmt-tile li proto-herb-row"'+evAttr+' style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+txt+badge+'</li>';
+          }).join('') + '</ul>';
+      html += mgmtTile('🧘 Yoga & Pranayama', yogaList + aiToolLink('🧘 Full Yoga Plan', 'yogachart', d.name));
+    }
+    if (mg.hydrotherapy && mg.hydrotherapy.length) {
+      var hydroList = '<ul style="list-style:none;padding:0;margin:0">'
+        + mg.hydrotherapy.slice(0,6).map(function(i){
+            var isObj = i && typeof i === 'object';
+            var txt = isObj ? (i.item || safeStr(i)) : safeStr(i);
+            var badge = isObj ? (evBadge(i.evidence_level)||evBadge('UNKNOWN')) : (evBadgeFromText(txt)||evBadge('UNKNOWN'));
+            var evAttr = ' data-ev-item="'+txt.replace(/"/g,'&quot;')+'"';
+            return '<li class="ddx-mgmt-tile li proto-herb-row"'+evAttr+' style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+txt+badge+'</li>';
+          }).join('') + '</ul>';
+      html += mgmtTile('💧 Hydrotherapy', hydroList + aiToolLink('💧 Hydro Protocol', 'hydroproto', d.name));
+    }
     if (mg.mud_therapy && mg.mud_therapy.length) html += mgmtTile('🌍 Mud Therapy', miniList(mg.mud_therapy.slice(0,5)));
     if (mg.acupuncture && mg.acupuncture.length) html += mgmtTile('📍 Acupuncture / Acupressure', miniList(mg.acupuncture.slice(0,6)) + aiToolLink('📍 Acu Points', 'acupoints', d.name));
-    if (mg.herbal && mg.herbal.length) html += mgmtTile('🌱 Herbal Medicine', miniList(mg.herbal.slice(0,6)) + aiToolLink('🌿 Herb Interactions', 'herbdrug', d.name));
+    if (mg.herbal && mg.herbal.length) {
+      var herbalList = '<ul style="list-style:none;padding:0;margin:0">'
+        + mg.herbal.slice(0,6).map(function(i){
+            var isObj = i && typeof i === 'object';
+            var txt = isObj ? (i.item || safeStr(i)) : safeStr(i);
+            var badge = isObj ? (evBadge(i.evidence_level)||evBadge('UNKNOWN')) : (evBadgeFromText(txt)||evBadge('UNKNOWN'));
+            var evAttr = ' data-ev-item="'+txt.replace(/"/g,'&quot;')+'"';
+            return '<li class="ddx-mgmt-tile li proto-herb-row"'+evAttr+' style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+txt+badge+'</li>';
+          }).join('') + '</ul>';
+      html += mgmtTile('🌱 Herbal Medicine', herbalList + aiToolLink('🌿 Herb Interactions', 'herbdrug', d.name));
+    }
     if (mg.massage && mg.massage.length) html += mgmtTile('💆 Massage Therapy', miniList(mg.massage.slice(0,5)));
     if (mg.lifestyle && mg.lifestyle.length) html += mgmtTile('🌅 Lifestyle Measures', miniList(mg.lifestyle.slice(0,6)));
     if (mg.physiotherapy && mg.physiotherapy.length) html += mgmtTile('🦴 Physiotherapy', miniList(mg.physiotherapy.slice(0,5)));
@@ -8079,6 +8733,123 @@ function miniList(arr) {
 }
 function mgmtTile(title, content) {
   return '<div class="ddx-mgmt-tile"><div class="ddx-mgmt-tile-hdr">'+title+'</div>'+content+'</div>';
+}
+
+/* ── Evidence Level Badge helper ──────────────────────────────────
+   evBadge(level) → <span class='ev-badge ev-RCT'>RCT</span>
+   Accepts: 'RCT' | 'SR' | 'OBS' | 'TU' | 'EXP'  (case-insensitive)
+   Falls back silently to empty string for unknown values.
+   Tooltip explains the level abbreviation on hover.
+   ────────────────────────────────────────────────────────────── */
+var _evMeta = {
+  RCT:     { label:'RCT', tip:'Randomised Controlled Trial — highest individual study evidence' },
+  SR:      { label:'SR',  tip:'Systematic Review / Meta-analysis — pooled high-quality evidence' },
+  OBS:     { label:'OBS', tip:'Observational Study — cohort, case-control or cross-sectional data' },
+  TU:      { label:'TU',  tip:'Traditional Use — classical/Ayurvedic textual evidence, historical practice' },
+  EXP:     { label:'EXP', tip:'Expert Opinion / Case Report — clinical experience, low formal evidence' },
+  UNKNOWN: { label:'?',   tip:'Evidence level unverified — tap "🔬 Assess Evidence" above to pull assessed levels for this cached card' }
+};
+function evBadge(level) {
+  if (!level) return '';
+  /* Handle pipe-separated placeholder e.g. "RCT|SR|OBS|TU|EXP" → take first token */
+  var key = String(level).toUpperCase().trim().split(/[|,/\s]/)[0];
+  var m = _evMeta[key];
+  if (!m) return '';
+  return "<span class='ev-badge ev-"+key+"' title='"+m.tip+"'>"+m.label+"</span>";
+}
+/* Auto-classify plain string items by keyword when no explicit evidence_level field exists.
+   Used for cached disease card data that pre-dates the evidence_level schema. */
+function evBadgeFromText(str) {
+  if (!str) return '';
+  var s = String(str).toLowerCase();
+  if (/\brct\b/.test(s))                                       return evBadge('RCT');
+  if (/\b(systematic review|meta-analysis|meta analysis)\b/.test(s)) return evBadge('SR');
+  if (/\b(withania|ashwagandha|triphala|guggulu|shatavari|brahmi|neem|tulsi|turmeric|curcumin|ginger|garlic|fenugreek|methi|amalaki|haritaki|bibhitaki|guduchi|punarnava|shankhpushpi|bacopa|arjuna|kutki|kalmegh|andrographis|moringa|amla|karela|bitter gourd|gymnema|boswellia|shallaki|commiphora)\b/.test(s)) return evBadge('TU');
+  if (/\b(asana|pranayama|yoga nidra|surya namaskar|kapalbhati|anulom|bhramari|shavasana|nadi shodhana|ujjayi|bhastrika|pawanmuktasana|trikonasana|tadasana|vajrasana|shalabhasana|dhanurasana|bhujangasana|ardha matsyendrasana)\b/.test(s)) return evBadge('OBS');
+  if (/\b(wet sheet|hip bath|sitz|foot bath|steam|immersion|cold pack|hot pack|contrast bath|spinal bath|circular jet|neutral bath|enema|compress)\b/.test(s)) return evBadge('TU');
+  if (/\b(LI\d|ST\d|SP\d|HT\d|BL\d|KI\d|PC\d|SJ\d|GB\d|LR\d|CV\d|GV\d|LU\d|marma|sthapani|talahridaya|kshipra|hridaya|nabhi|ajna|anahata)\b/i.test(s)) return evBadge('TU');
+  return '';
+}
+
+/* ── pullEvidenceLevels ───────────────────────────────────────────
+   Triggered by the "🔬 Assess Evidence" button on cached disease cards.
+   Collects every intervention item marked with an UNKNOWN (?) badge,
+   sends them to the AI in a single targeted call, then patches each
+   badge in-place — no card regeneration needed.
+   ────────────────────────────────────────────────────────────── */
+async function pullEvidenceLevels(diseaseName) {
+  var btn = document.getElementById('ev-pull-btn');
+  var statusEl = document.getElementById('ev-pull-status');
+
+  // Collect all UNKNOWN-badged items from the current card
+  var items = [];
+  document.querySelectorAll('[data-ev-item]').forEach(function(li) {
+    var badge = li.querySelector('.ev-UNKNOWN');
+    if (badge) items.push({ li: li, badge: badge, text: li.getAttribute('data-ev-item') });
+  });
+
+  if (!items.length) {
+    if (statusEl) { statusEl.textContent = '✅ All items already have evidence levels.'; statusEl.style.color='#065f46'; }
+    return;
+  }
+
+  // Button → loading state
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Assessing '+items.length+' items…'; btn.style.background='#fef9c3'; btn.style.color='#713f12'; }
+  if (statusEl) { statusEl.textContent = 'Sending '+items.length+' interventions to AI…'; statusEl.style.color='#b45309'; }
+
+  // Build numbered list for AI
+  var numbered = items.map(function(it, i){ return (i+1)+'. '+it.text; }).join('\n');
+  var prompt = 'Disease context: '+diseaseName+'\n\n'
+    + 'For each numbered naturopathic intervention below, assign the most accurate evidence level.\n'
+    + 'Use ONLY one of: RCT, SR, OBS, TU, EXP\n\n'
+    + 'RCT = Randomised Controlled Trial exists\n'
+    + 'SR  = Systematic Review / Meta-analysis exists\n'
+    + 'OBS = Observational/cohort study exists\n'
+    + 'TU  = Traditional Use only (Ayurvedic/classical texts)\n'
+    + 'EXP = Expert opinion / case report only\n\n'
+    + 'Interventions:\n' + numbered + '\n\n'
+    + 'Respond ONLY with JSON: {"1":"TU","2":"OBS",...} — one entry per item number. No markdown.';
+
+  try {
+    var raw = await callAI([
+      { role:'system', content:'You are a BNYS evidence researcher. Respond ONLY with a valid JSON object mapping item numbers (as string keys) to evidence levels. No markdown, no explanation.' },
+      { role:'user', content: prompt }
+    ], 1500);
+
+    var result = extractJSON(raw);
+    if (!result) throw new Error('Could not parse AI response');
+
+    var updated = 0;
+    items.forEach(function(it, idx) {
+      var level = (result[String(idx+1)] || '').toUpperCase().trim().split(/[|,\s]/)[0];
+      var meta = _evMeta[level];
+      if (!meta || level === 'UNKNOWN') return;
+      // Patch badge in-place
+      it.badge.className = 'ev-badge ev-'+level;
+      it.badge.textContent = meta.label;
+      it.badge.title = meta.tip;
+      it.badge.style.animation = 'none';
+      updated++;
+    });
+
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '✅ '+updated+'/'+items.length+' Assessed';
+      btn.style.background = '#d1fae5';
+      btn.style.color = '#065f46';
+      btn.style.borderColor = '#6ee7b7';
+    }
+    if (statusEl) {
+      var remaining = items.length - updated;
+      statusEl.textContent = remaining > 0
+        ? updated+' levels assigned. '+remaining+' item(s) remain uncertain — tap Refresh for a full fresh card.'
+        : '✅ All '+updated+' evidence levels successfully assigned.';
+      statusEl.style.color = remaining > 0 ? '#b45309' : '#065f46';
+    }
+  } catch(e) {
+    if (btn) { btn.disabled=false; btn.innerHTML='🔬 Assess Evidence'; btn.style.background=''; btn.style.color=''; }
+    if (statusEl) { statusEl.textContent='⚠️ Assessment failed — '+e.message; statusEl.style.color='#c0392b'; }
+  }
 }
 function renderDDxListFromCache(targetEl) {
   if (_ddxLastDifferentials.length) {
@@ -10625,7 +11396,7 @@ async function generateDiseaseProto() {
   if (!isOnline()) { showOfflineBanner('dp-result', 'Generate BNYS Protocol'); return; }
   btn.disabled = true; btn.textContent = 'Generating...';
   result.innerHTML = '<div style="text-align:center;padding:36px 20px;font-size:13px;color:#555"><div style="font-size:30px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:10px">&#127973;</div><br>' + 'Generating BNYS protocol for <b>' + _mainInput + '</b>...<br><span style="font-size:11px;opacity:.6;margin-top:4px;display:block">Usually 10-15 seconds</span></div>';
-  var _sys2 = 'You are an expert clinical AI assistant supporting a Naturopathy and Yogic Sciences (BNYS) practice. Your primary responsibility is to generate structured, practical, and medically sound wellness and diet plans based on the patient symptoms, vitals, or diagnoses provided by the attending physician.\n\nClinical Guidelines:\n- Ground all recommendations in evidence-based naturopathic principles, clinical nutrition, hydrotherapy, and therapeutic yoga.\n- When relevant, factor in metabolic health and biochemical pathways (e.g., intracellular mineral balance such as magnesium and phosphate) to support deep cellular healing.\n- Maintain a highly professional, clinical, yet patient-friendly tone.\n\nStrict Formatting Rules:\n- All daily routines and diet plans MUST use specific times (e.g., 6:00 AM, 8:00 AM, 12:30 PM). Never group by broad categories alone.\n- NEVER use the abbreviation cd under any circumstances. Write all instructions clearly.\n- Every plan must end with the signature: Dr. Vikranth — the name only, no preceding words like Regards or Sincerely.\n\nRespond ONLY with valid JSON (no markdown, no backticks).';
+  var _sys2 = 'You are an expert clinical AI assistant supporting a Naturopathy and Yogic Sciences (BNYS) practice. Your primary responsibility is to generate structured, practical, and medically sound wellness and diet plans based on the patient symptoms, vitals, or diagnoses provided by the attending physician.\n\nClinical Guidelines:\n- Ground all recommendations in evidence-based naturopathic principles, clinical nutrition, hydrotherapy, and therapeutic yoga.\n- When relevant, factor in metabolic health and biochemical pathways (e.g., intracellular mineral balance such as magnesium and phosphate) to support deep cellular healing.\n- Maintain a highly professional, clinical, yet patient-friendly tone.\n\nStrict Formatting Rules:\n- All daily routines and diet plans MUST use specific times (e.g., 6:00 AM, 8:00 AM, 12:30 PM). Never group by broad categories alone.\n- NEVER use the abbreviation cd under any circumstances. Write all instructions clearly.\n- Every plan must end with the signature: Dr. Vikranth — the name only, no preceding words like Regards or Sincerely.\n- For every herb, yoga asana, and hydrotherapy item that has an evidence_level field, assign exactly one value: RCT (randomised trial), SR (systematic review), OBS (observational study), TU (traditional use), or EXP (expert opinion). Never copy the placeholder text.\n\nRespond ONLY with valid JSON (no markdown, no backticks).';
   var prompt = 'Disease: ' + _mainInput
     + '\nStage: ' + _stage
     + '\nAge: ' + (_age||'adult')
@@ -10633,7 +11404,7 @@ async function generateDiseaseProto() {
     + '\nDiet preference: ' + _diet
     + '\nProgramme duration: ' + _dpDuration
     + (_dpContra?'\nComorbidities and contraindications: '+_dpContra:'')
-    + '\n\nGenerate a complete BNYS management protocol. Use specific times for all schedules. Address metabolic pathways. Never use cd. Sign as Dr. Vikranth only.\n\nReturn JSON: {"title":"BNYS Protocol for DISEASE","overview":"3-4 sentence overview with metabolic rationale","goals":["goal 1","goal 2","goal 3"],"dailyRoutine":[{"time":"6:00 AM","activity":"specific"},{"time":"7:00 AM","activity":"activity"},{"time":"8:00 AM","activity":"breakfast"},{"time":"10:00 AM","activity":"treatment"},{"time":"12:30 PM","activity":"lunch"},{"time":"4:00 PM","activity":"treatment"},{"time":"6:00 PM","activity":"yoga or walk"},{"time":"8:30 PM","activity":"night routine"}],"diet":{"principles":"principles with metabolic rationale","include":["food 1 - reason","food 2","food 3","food 4","food 5"],"avoid":["food 1 - reason","food 2","food 3"],"fasting":"specific fasting recommendation"},"yoga":{"asanas":[{"name":"asana","duration":"duration","benefit":"specific benefit"}],"pranayama":"specific pranayama with duration","duration":"total session duration"},"hydrotherapy":[{"treatment":"name","temperature":"specific temp in Celsius","technique":"technique","duration":"duration","frequency":"times per week"}],"herbs":[{"name":"herb","dose":"specific dose","timing":"time of day","benefit":"specific benefit"}],"acupressure":[{"point":"code and name","location":"precise location","benefit":"specific benefit"}],"lifestyle":["tip 1","tip 2","tip 3","tip 4"],"monitoring":["parameter to monitor"],"contraindications":["caution 1","caution 2"],"referral":"specific criteria for conventional referral","note":"clinical disclaimer","signature":"Dr. Vikranth"}';
+    + '\n\nGenerate a complete BNYS management protocol. Use specific times for all schedules. Address metabolic pathways. Never use cd. Sign as Dr. Vikranth only.\n\nReturn JSON: {"title":"BNYS Protocol for DISEASE","overview":"3-4 sentence overview with metabolic rationale","goals":["goal 1","goal 2","goal 3"],"dailyRoutine":[{"time":"6:00 AM","activity":"specific"},{"time":"7:00 AM","activity":"activity"},{"time":"8:00 AM","activity":"breakfast"},{"time":"10:00 AM","activity":"treatment"},{"time":"12:30 PM","activity":"lunch"},{"time":"4:00 PM","activity":"treatment"},{"time":"6:00 PM","activity":"yoga or walk"},{"time":"8:30 PM","activity":"night routine"}],"diet":{"principles":"principles with metabolic rationale","include":["food 1 - reason","food 2","food 3","food 4","food 5"],"avoid":["food 1 - reason","food 2","food 3"],"fasting":"specific fasting recommendation"},"yoga":{"asanas":[{"name":"asana","duration":"duration","benefit":"specific benefit","evidence_level":"RCT|SR|OBS|TU|EXP"}],"pranayama":"specific pranayama with duration","duration":"total session duration"},"hydrotherapy":[{"treatment":"name","temperature":"specific temp in Celsius","technique":"technique","duration":"duration","frequency":"times per week","evidence_level":"RCT|SR|OBS|TU|EXP"}],"herbs":[{"name":"herb","dose":"specific dose","timing":"time of day","benefit":"specific benefit","evidence_level":"RCT|SR|OBS|TU|EXP"}],"acupressure":[{"point":"code and name","location":"precise location","benefit":"specific benefit"}],"lifestyle":["tip 1","tip 2","tip 3","tip 4"],"monitoring":["parameter to monitor"],"contraindications":["caution 1","caution 2"],"referral":"specific criteria for conventional referral","note":"clinical disclaimer","signature":"Dr. Vikranth"}';
   try {
     var raw = await callAI([{ role: 'system', content: _sys2 }, { role: 'user', content: prompt }], 6000);
     var out = extractJSON(raw);
@@ -10673,15 +11444,15 @@ function renderDiseaseProto(out) {
     var y = out.yoga;
     var yogaContent = (y.pranayama?'<div style="font-size:12px;margin-bottom:5px"><b>Pranayama:</b> '+y.pranayama+'</div>':'')
       + (y.duration?'<div style="font-size:12px;margin-bottom:6px"><b>Duration:</b> '+y.duration+'</div>':'')
-      + (y.asanas&&y.asanas.length?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px">'+y.asanas.map(function(a){return '<div style="background:#fff;border:1px solid #c5cae9;border-radius:7px;padding:6px 9px;font-size:11.5px"><b>'+a.name+'</b><div style="color:#555;font-size:11px;margin-top:2px">'+a.benefit+'</div></div>';}).join('')+'</div>':'');
+      + (y.asanas&&y.asanas.length?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px">'+y.asanas.map(function(a){return '<div style="background:#fff;border:1px solid #c5cae9;border-radius:7px;padding:6px 9px;font-size:11.5px"><b>'+a.name+'</b>'+evBadge(a.evidence_level)+'<div style="color:#555;font-size:11px;margin-top:2px">'+a.benefit+'</div></div>';}).join('')+'</div>':'');
     html += block('&#129496;','Yoga Therapy','#1565c0','#e8eaf6', yogaContent);
   }
   if (out.hydrotherapy && out.hydrotherapy.length) {
-    var htContent = '<div style="display:flex;flex-direction:column;gap:5px">'+out.hydrotherapy.map(function(h){return '<div style="background:#fff;border:1px solid #90caf9;border-radius:7px;padding:7px 10px"><div style="font-size:12.5px;font-weight:700;color:#0d47a1">'+h.treatment+'</div><div style="font-size:11.5px;color:#555;margin-top:2px">'+h.technique+' &nbsp;|&nbsp; <b>'+h.duration+'</b> &nbsp;|&nbsp; '+h.frequency+'</div></div>';}).join('')+'</div>';
+    var htContent = '<div style="display:flex;flex-direction:column;gap:5px">'+out.hydrotherapy.map(function(h){return '<div style="background:#fff;border:1px solid #90caf9;border-radius:7px;padding:7px 10px"><div style="font-size:12.5px;font-weight:700;color:#0d47a1">'+h.treatment+evBadge(h.evidence_level)+'</div><div style="font-size:11.5px;color:#555;margin-top:2px">'+h.technique+' &nbsp;|&nbsp; <b>'+h.duration+'</b> &nbsp;|&nbsp; '+h.frequency+'</div></div>';}).join('')+'</div>';
     html += block('&#128167;','Hydrotherapy','#0369a1','#dbeafe', htContent);
   }
   if (out.herbs && out.herbs.length) {
-    var herbContent = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px">'+out.herbs.map(function(h){return '<div style="background:#fff;border:1px solid #ffe082;border-radius:7px;padding:7px 10px"><div style="font-size:12.5px;font-weight:700;color:#e65100">'+h.name+'</div><div style="font-size:11px;color:#bf360c">'+h.dose+'</div><div style="font-size:11.5px;color:#5a4200;margin-top:2px">'+h.benefit+'</div></div>';}).join('')+'</div>';
+    var herbContent = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px">'+out.herbs.map(function(h){return '<div style="background:#fff;border:1px solid #ffe082;border-radius:7px;padding:7px 10px"><div style="font-size:12.5px;font-weight:700;color:#e65100">'+h.name+evBadge(h.evidence_level)+'</div><div style="font-size:11px;color:#bf360c">'+h.dose+'</div><div style="font-size:11.5px;color:#5a4200;margin-top:2px">'+h.benefit+'</div></div>';}).join('')+'</div>';
     html += block('&#127807;','Herbal Prescription','#e65100','#fff8e1', herbContent);
   }
   if (out.acupressure && out.acupressure.length) {
@@ -10833,10 +11604,10 @@ async function generateAcuPoints() {
   btn.disabled = true; btn.textContent = 'Generating prescription...';
   result.innerHTML = '<div style="text-align:center;padding:40px 20px;font-size:13px;color:#555"><div style="font-size:34px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:10px">&#128070;</div><br>Generating point prescription for <b>' + disease + '</b>...<br><span style="font-size:11px;opacity:.6;margin-top:4px;display:block">Usually 10-20 seconds</span></div>';
 
-  var prompt = 'You are an expert BNYS acupuncture, acupressure, and Ayurvedic Marma therapist with 20 years clinical experience. Generate a complete point prescription.\n\nCondition: '+disease+'\nTherapeutic goal: '+goal+'\nPoint system: '+system+(pattern?'\nTCM/Ayurvedic pattern: '+pattern:'')+'\nPatient type: '+patient+'\nTarget number of points: '+count+'\n\nRespond ONLY with valid JSON, no markdown, no backticks:\n{\n  "title": "Point Prescription for CONDITION",\n  "intro": "2-3 sentence TCM/naturopathic rationale for this prescription",\n  "tcmPattern": "TCM diagnosis or Ayurvedic imbalance",\n  "principleOfTreatment": "TCM treatment principle (e.g. Tonify Kidney Yin, Regulate Liver Qi)",\n  "primaryPoints": [\n    {\n      "code": "e.g. LI4, ST36, PC6",\n      "name": "Full point name",\n      "meridian": "meridian channel name",\n      "location": "precise anatomical location using body landmarks",\n      "acupressureMethod": "pressure technique, direction, rotation",\n      "needleDepth": "depth in cun for acupuncture (e.g. 0.5-1 cun perpendicular)",\n      "stimulation": "tonification or sedation method",\n      "duration": "duration for acupressure per point per session",\n      "benefit": "specific therapeutic action for this condition",\n      "caution": "any specific caution for this point"\n    }\n  ],\n  "marmaPoints": [\n    {\n      "name": "Marma name",\n      "location": "anatomical location",\n      "technique": "specific technique including oil or pressure",\n      "benefit": "therapeutic benefit"\n    }\n  ],\n  "earAcupuncture": [\n    {\n      "point": "ear point name",\n      "location": "location on auricle",\n      "indication": "therapeutic use"\n    }\n  ],\n  "sessionProtocol": {\n    "frequency": "sessions per week",\n    "totalSessions": "recommended course length",\n    "duration": "minutes per session",\n    "pressure": "pressure level for acupressure",\n    "timing": "best time of day",\n    "sequence": "order of point stimulation"\n  },\n  "lifestyle": [\n    "dietary recommendation relevant to TCM pattern",\n    "lifestyle recommendation"\n  ],\n  "selfCareInstructions": [\n    "self-acupressure instruction the patient can do at home"\n  ],\n  "contraindications": ["absolute contraindication for this prescription"],\n  "note": "safety disclaimer"\n}';
+  var prompt = 'You are an expert BNYS acupuncture, acupressure, and Ayurvedic Marma therapist with 20 years clinical experience. Generate a complete point prescription.\n\nCondition: '+disease+'\nTherapeutic goal: '+goal+'\nPoint system: '+system+(pattern?'\nTCM/Ayurvedic pattern: '+pattern:'')+'\nPatient type: '+patient+'\nTarget number of points: '+count+'\n\nRespond ONLY with valid JSON, no markdown, no backticks:\n{\n  "title": "Point Prescription for CONDITION",\n  "intro": "2-3 sentence TCM/naturopathic rationale for this prescription",\n  "tcmPattern": "TCM diagnosis or Ayurvedic imbalance",\n  "principleOfTreatment": "TCM treatment principle (e.g. Tonify Kidney Yin, Regulate Liver Qi)",\n  "primaryPoints": [\n    {\n      "code": "e.g. LI4, ST36, PC6",\n      "name": "Full point name",\n      "meridian": "meridian channel name",\n      "location": "precise anatomical location using body landmarks",\n      "acupressureMethod": "pressure technique, direction, rotation",\n      "needleDepth": "depth in cun for acupuncture (e.g. 0.5-1 cun perpendicular)",\n      "stimulation": "tonification or sedation method",\n      "duration": "duration for acupressure per point per session",\n      "benefit": "specific therapeutic action for this condition",\n      "caution": "any specific caution for this point",\n      "evidence_level": "RCT|SR|OBS|TU|EXP"\n    }\n  ],\n  "marmaPoints": [\n    {\n      "name": "Marma name",\n      "location": "anatomical location",\n      "technique": "specific technique including oil or pressure",\n      "benefit": "therapeutic benefit",\n      "evidence_level": "RCT|SR|OBS|TU|EXP"\n    }\n  ],\n  "earAcupuncture": [\n    {\n      "point": "ear point name",\n      "location": "location on auricle",\n      "indication": "therapeutic use"\n    }\n  ],\n  "sessionProtocol": {\n    "frequency": "sessions per week",\n    "totalSessions": "recommended course length",\n    "duration": "minutes per session",\n    "pressure": "pressure level for acupressure",\n    "timing": "best time of day",\n    "sequence": "order of point stimulation"\n  },\n  "lifestyle": [\n    "dietary recommendation relevant to TCM pattern",\n    "lifestyle recommendation"\n  ],\n  "selfCareInstructions": [\n    "self-acupressure instruction the patient can do at home"\n  ],\n  "contraindications": ["absolute contraindication for this prescription"],\n  "note": "safety disclaimer"\n}';
 
   try {
-    var raw = await callAI([{ role: 'system', content: 'You are an expert BNYS acupuncture, acupressure, and Ayurvedic Marma therapist with 20 years clinical experience. Respond ONLY with valid JSON (no markdown, no backticks).' }, { role: 'user', content: prompt }], 5000);
+    var raw = await callAI([{ role: 'system', content: 'You are an expert BNYS acupuncture, acupressure, and Ayurvedic Marma therapist with 20 years clinical experience. Respond ONLY with valid JSON (no markdown, no backticks). For every item with an evidence_level field assign exactly one of: RCT, SR, OBS, TU, or EXP.' }, { role: 'user', content: prompt }], 5000);
     var out = extractJSON(raw);
     if (!out) {
       result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Could not parse response — please try again.</div>';
@@ -10876,7 +11647,7 @@ function renderAcuPoints(out) {
         + '<div style="background:#b45309;color:#fff;padding:9px 13px">'
         + '<div style="display:flex;align-items:center;gap:8px">'
         + '<div style="background:rgba(255,255,255,.25);border-radius:6px;padding:3px 9px;font-size:14px;font-weight:800;font-family:monospace">'+(p.code||'')+'</div>'
-        + '<div><div style="font-size:12.5px;font-weight:700">'+(p.name||'')+'</div>'
+        + '<div><div style="font-size:12.5px;font-weight:700">'+(p.name||'')+evBadge(p.evidence_level)+'</div>'
         + (p.meridian?'<div style="font-size:10.5px;opacity:.85">'+p.meridian+' meridian</div>':'')+'</div></div></div>'
         + '<div style="padding:10px 13px;display:flex;flex-direction:column;gap:4px">'
         + (p.location?'<div style="font-size:11.5px;background:#fff7ed;border-radius:5px;padding:4px 8px;color:#92400e"><b>&#128205; Location:</b> '+p.location+'</div>':'')
@@ -10897,7 +11668,7 @@ function renderAcuPoints(out) {
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:16px">';
     out.marmaPoints.forEach(function(p) {
       html += '<div style="background:var(--surf);border:1.5px solid #ede9fe;border-radius:10px;overflow:hidden">'
-        + '<div style="background:#7c3aed;color:#fff;padding:8px 12px;font-size:13px;font-weight:700">'+p.name+'</div>'
+        + '<div style="background:#7c3aed;color:#fff;padding:8px 12px;font-size:13px;font-weight:700">'+p.name+evBadge(p.evidence_level)+'</div>'
         + '<div style="padding:9px 12px">'
         + (p.location?'<div style="font-size:11.5px;color:#5b21b6;margin-bottom:4px">&#128205; '+p.location+'</div>':'')
         + (p.technique?'<div style="font-size:11.5px;padding:2px 0;border-bottom:0.5px solid #ede9fe"><b>Technique:</b> '+p.technique+'</div>':'')
@@ -11619,7 +12390,7 @@ async function generateYogaChart() {
     + '<br>Building yoga protocol for <b>' + disease + '</b>...<br>'
     + '<span style="font-size:11px;opacity:.7;margin-top:4px;display:block">Usually 10-15 seconds</span></div>';
 
-  var _yogaSys = 'You are an expert BNYS yoga therapist. Respond ONLY with valid JSON (no markdown, no backticks).';
+  var _yogaSys = 'You are an expert BNYS yoga therapist. Respond ONLY with valid JSON (no markdown, no backticks). For every asana and pranayama item assign evidence_level as exactly one of: RCT, SR, OBS, TU, or EXP.';
   var prompt = 'Generate a therapeutic yoga protocol for:\n'
     + 'Disease: ' + disease + '\nAge: ' + (age || 'adult')
     + '\nGender: ' + gender + '\nFitness Level: ' + level
@@ -11628,8 +12399,8 @@ async function generateYogaChart() {
     + '{"title":"Therapeutic Yoga Protocol for [Disease]",'
     + '"intro":"2-sentence overview and evidence base",'
     + '"asanas":[{"name":"Sanskrit name","english":"English name","duration":"time/rounds",'
-    + '"benefit":"specific benefit for this disease","technique":"brief steps","contraindication":"who should avoid"}],'
-    + '"pranayama":[{"name":"name","duration":"time","benefit":"benefit","technique":"how to"}],'
+    + '"benefit":"specific benefit for this disease","technique":"brief steps","contraindication":"who should avoid","evidence_level":"RCT|SR|OBS|TU|EXP"}],'
+    + '"pranayama":[{"name":"name","duration":"time","benefit":"benefit","technique":"how to","evidence_level":"RCT|SR|OBS|TU|EXP"}],'
     + '"meditation":{"name":"type","duration":"time","benefit":"benefit","instructions":"brief guide"},'
     + '"shatkarma":[{"name":"kriya name","technique":"brief procedure","duration":"time","indication":"why for this disease"}],'
     + '"mudra":[{"name":"mudra name","duration":"hold time","benefit":"specific benefit for this disease"}],'
@@ -11670,7 +12441,11 @@ function renderYogaChart(chart) {
         + '<div style="background:linear-gradient(135deg,#0e7490,#0f766e);padding:9px 13px;display:flex;align-items:center;justify-content:space-between">'
         + '<div><div style="color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,255,255,.4)" onclick="jumpToYogaAsana(\'' + a.name.replace(/'/g,"\\'") + '\')">' + a.name + '</div>'
         + (a.english ? '<div style="color:rgba(255,255,255,.75);font-size:10.5px">' + a.english + '</div>' : '')
-        + '</div><div style="background:rgba(255,255,255,.2);color:#fff;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:600">' + (a.duration || '') + '</div></div>'
+        + '</div>'
+        + '<div style="display:flex;align-items:center;gap:5px">'
+        + evBadge(a.evidence_level)
+        + '<div style="background:rgba(255,255,255,.2);color:#fff;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:600">' + (a.duration || '') + '</div>'
+        + '</div></div>'
         + '<div style="padding:10px 13px">'
         + (a.benefit ? '<div style="font-size:11.5px;color:#0e7490;font-weight:600;margin-bottom:3px">&#127807; ' + a.benefit + '</div>' : '')
         + (a.technique ? '<div style="font-size:11px;color:var(--mu);line-height:1.55;margin-bottom:4px">' + a.technique + '</div>' : '')
@@ -11685,7 +12460,7 @@ function renderYogaChart(chart) {
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-bottom:14px">';
     chart.pranayama.forEach(function(p) {
       html += '<div style="background:#e0f2fe;border:1px solid #7dd3fc;border-radius:9px;padding:11px 13px">'
-        + '<div style="font-size:12.5px;font-weight:700;color:#0369a1;margin-bottom:2px">' + p.name + '</div>'
+        + '<div style="font-size:12.5px;font-weight:700;color:#0369a1;margin-bottom:2px">' + p.name + evBadge(p.evidence_level) + '</div>'
         + (p.duration ? '<div style="font-size:10px;font-weight:600;color:#0e7490;margin-bottom:5px">&#8987; ' + p.duration + '</div>' : '')
         + (p.benefit ? '<div style="font-size:11.5px;color:#0c4a6e;margin-bottom:4px">' + p.benefit + '</div>' : '')
         + (p.technique ? '<div style="font-size:11px;color:#075985;line-height:1.5">' + p.technique + '</div>' : '')
@@ -11790,9 +12565,9 @@ async function generateNaturoPlanner() {
   if (!isOnline()) { showOfflineBanner('naturo-planner-result', 'AI Naturopathy Planner'); return; }
   btn.disabled = true; btn.textContent = 'Generating...';
   result.innerHTML = '<div style="text-align:center;padding:36px 20px;font-size:13px;color:#555"><div style="font-size:30px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:10px">🌿</div><br>Generating naturopathy plan for <b>' + disease + '</b>...<br><span style="font-size:11px;opacity:.6;margin-top:4px;display:block">Usually 15–20 seconds</span></div>';
-  var prompt = 'You are an expert BNYS naturopathy physician. Generate a comprehensive personalised naturopathy treatment plan.\nDisease: ' + disease + '\nStage: ' + stage + '\nAge: ' + (age || 'adult') + '\nContraindications: ' + (contra || 'none') + '\nSetting: ' + setting + '\n\nRespond ONLY with valid JSON (no markdown):\n{"title":"Naturopathy Treatment Plan for DISEASE","overview":"2-3 sentence naturopathic overview","hydrotherapy":[{"treatment":"name","temperature":"temp","duration":"duration","frequency":"freq/week","benefits":"benefits","contraindications":"contraindications","procedure":"brief steps"}],"mudTherapy":[{"application":"type","area":"body area","duration":"duration","frequency":"freq","benefits":"benefits","contraindications":"contraindications"}],"massage":[{"type":"type","area":"area","oil":"oil","duration":"duration","frequency":"freq","benefits":"benefits"}],"dietPlan":{"principle":"core principle","eatMore":["food1","food2","food3","food4","food5"],"avoid":["food1","food2","food3"],"fasting":"fasting recommendation","timing":"meal timing"},"yogaAsanas":[{"name":"name","duration":"duration","benefit":"benefit"}],"pranayama":[{"name":"name","duration":"duration","benefit":"benefit"}],"acupressure":[{"point":"point name","location":"location","benefit":"benefit"}],"chromotherapy":"colour and application","magneto":"pole and application","lifestyle":["tip1","tip2","tip3","tip4"],"duration":"total programme duration","followUp":"follow-up plan","contraindications":["caution1","caution2"],"note":"disclaimer"}';
+  var prompt = 'You are an expert BNYS naturopathy physician. Generate a comprehensive personalised naturopathy treatment plan.\nDisease: ' + disease + '\nStage: ' + stage + '\nAge: ' + (age || 'adult') + '\nContraindications: ' + (contra || 'none') + '\nSetting: ' + setting + '\n\nRespond ONLY with valid JSON (no markdown):\n{"title":"Naturopathy Treatment Plan for DISEASE","overview":"2-3 sentence naturopathic overview","hydrotherapy":[{"treatment":"name","temperature":"temp","duration":"duration","frequency":"freq/week","benefits":"benefits","contraindications":"contraindications","procedure":"brief steps","evidence_level":"RCT|SR|OBS|TU|EXP"}],"mudTherapy":[{"application":"type","area":"body area","duration":"duration","frequency":"freq","benefits":"benefits","contraindications":"contraindications"}],"massage":[{"type":"type","area":"area","oil":"oil","duration":"duration","frequency":"freq","benefits":"benefits"}],"dietPlan":{"principle":"core principle","eatMore":[{"item":"food1","evidence_level":"RCT|SR|OBS|TU|EXP"},{"item":"food2","evidence_level":"TU"}],"avoid":["food1","food2","food3"],"fasting":"fasting recommendation","timing":"meal timing"},"yogaAsanas":[{"name":"name","duration":"duration","benefit":"benefit","evidence_level":"RCT|SR|OBS|TU|EXP"}],"pranayama":[{"name":"name","duration":"duration","benefit":"benefit"}],"acupressure":[{"point":"point name","location":"location","benefit":"benefit","evidence_level":"RCT|SR|OBS|TU|EXP"}],"chromotherapy":"colour and application","magneto":"pole and application","lifestyle":["tip1","tip2","tip3","tip4"],"duration":"total programme duration","followUp":"follow-up plan","contraindications":["caution1","caution2"],"note":"disclaimer"}';
   try {
-    var raw = await callAI([{ role: 'system', content: 'You are an expert BNYS naturopathy physician. Respond ONLY with valid JSON (no markdown, no backticks).' }, { role: 'user', content: prompt }], 6000);
+    var raw = await callAI([{ role: 'system', content: 'You are an expert BNYS naturopathy physician. Respond ONLY with valid JSON (no markdown, no backticks). For every intervention item that has an evidence_level field, assign exactly one value from: RCT, SR, OBS, TU, or EXP — never leave it empty or copy the placeholder text.' }, { role: 'user', content: prompt }], 6000);
     var out = extractJSON(raw);
     if (!out) {
       result.innerHTML = '<div style="color:#c0392b;padding:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px">&#9888; Parse error — please try again.</div>';
@@ -11819,7 +12594,7 @@ function renderNaturoPlanner(out) {
   if (out.hydrotherapy && out.hydrotherapy.length) {
     var htm = out.hydrotherapy.map(function(h) {
       return '<div class="proto-diet-card" style="background:#fff;border:1px solid #bfdbfe;padding:9px 11px;margin-bottom:7px">'
-        +'<div style="font-size:12.5px;font-weight:700;color:#1e3a5f">💧 '+h.treatment+'</div>'
+        +'<div style="font-size:12.5px;font-weight:700;color:#1e3a5f">💧 '+h.treatment+evBadge(h.evidence_level)+'</div>'
         +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px;font-size:11px">'
         +(h.temperature?'<span style="color:#0369a1"><b>Temp:</b> '+h.temperature+'</span>':'')
         +(h.duration?'<span style="color:#0369a1"><b>Duration:</b> '+h.duration+'</span>':'')
@@ -11860,8 +12635,16 @@ function renderNaturoPlanner(out) {
   }
   if (out.dietPlan) {
     var dp = out.dietPlan;
+    var eatMoreHtml = '';
+    if (dp.eatMore && dp.eatMore.length) {
+      eatMoreHtml = dp.eatMore.map(function(i){
+        var txt = (i && typeof i === 'object') ? (i.item || safeStr(i)) : String(i);
+        var lv  = (i && typeof i === 'object') ? i.evidence_level : null;
+        return txt + evBadge(lv);
+      }).join(', ');
+    }
     var dc = (dp.principle?'<div style="font-size:12px;color:#1a6b3c;font-weight:600;margin-bottom:6px">'+dp.principle+'</div>':'')
-      +(dp.eatMore&&dp.eatMore.length?'<div style="font-size:11.5px;margin-bottom:4px"><b>Eat more:</b> '+dp.eatMore.join(', ')+'</div>':'')
+      +(eatMoreHtml?'<div style="font-size:11.5px;margin-bottom:4px"><b>Eat more:</b> '+eatMoreHtml+'</div>':'')
       +(dp.avoid&&dp.avoid.length?'<div style="font-size:11.5px;color:#c0392b;margin-bottom:4px"><b>Avoid:</b> '+dp.avoid.join(', ')+'</div>':'')
       +(dp.fasting?'<div style="font-size:11.5px;margin-bottom:4px"><b>Fasting:</b> '+dp.fasting+'</div>':'')
       +(dp.timing?'<div style="font-size:11.5px"><b>Timing:</b> '+dp.timing+'</div>':'');
@@ -11871,7 +12654,7 @@ function renderNaturoPlanner(out) {
     var yam = '<div style="display:flex;flex-wrap:wrap;gap:6px">'
       + out.yogaAsanas.map(function(a) {
         return '<div class="proto-evidence-tag" style="background:#fff;border:1px solid #a7f3d0;border-radius:7px;flex:1;min-width:130px">'
-          +'<div style="font-size:11.5px;font-weight:700;color:#065f46">🧘 '+a.name+'</div>'
+          +'<div style="font-size:11.5px;font-weight:700;color:#065f46">🧘 '+a.name+evBadge(a.evidence_level)+'</div>'
           +(a.duration?'<div style="font-size:10px;color:#0e7490">'+a.duration+'</div>':'')
           +(a.benefit?'<div style="font-size:10.5px;color:#374151;margin-top:2px">'+a.benefit+'</div>':'')
           +'</div>';
@@ -11886,7 +12669,7 @@ function renderNaturoPlanner(out) {
   }
   if (out.acupressure && out.acupressure.length) {
     var acu = out.acupressure.map(function(a) {
-      return '<div class="proto-herb-row" style="border-bottom-color:#fed7aa"><b style="color:#c2410c">👆 '+a.point+'</b>'+(a.location?' — '+a.location:'')+(a.benefit?'<br><span style="color:#374151;font-size:11px">'+a.benefit+'</span>':'')+'</div>';
+      return '<div class="proto-herb-row" style="border-bottom-color:#fed7aa"><b style="color:#c2410c">👆 '+a.point+'</b>'+evBadge(a.evidence_level)+(a.location?' — '+a.location:'')+(a.benefit?'<br><span style="color:#374151;font-size:11px">'+a.benefit+'</span>':'')+'</div>';
     }).join('');
     html += sec('👆','Acupressure','#b45309','#fff7ed',acu);
   }
@@ -13707,15 +14490,16 @@ window.loadDiseaseCard = async function(name, category, targetEl) {
   panel.innerHTML = '<div class="ddx-loading"><div class="ddx-spinner"></div><span>Building complete disease profile for <strong>'+name+'</strong>…</span></div>';
   var SYS = 'You are a Senior Naturopathic Physician (BNYS). Generate a comprehensive disease profile. '
     + 'STRICT: Return ONLY valid JSON. No markdown. No preamble.\n\n'
+    + 'For every herb, yoga asana, hydrotherapy treatment, and diet include item assign evidence_level as exactly ONE of: RCT, SR, OBS, TU, or EXP. Never copy the placeholder text.\n\n'
     + 'Schema:\n'
     + '{"name":"...","icd":"...","introduction":"2-3 sentence summary","etiology":["..."],"incubation":"period or null",'
     + '"pathophysiology":"clear mechanism paragraph","prognosis":"...","classical_signs":["..."],'
     + '"golden_signs":["Sign: description"],'
     + '"diagnostics":{"history":["..."],"examination":["..."],"labs":["Test: expected finding"],"imaging":["Modality: finding"],"naturopathy":["Iris: ...","Tongue: ...","Pulse: ..."],"special_tests":["..."]},'
     + '"iris_diagnosis":"detailed iridology description",'
-    + '"management":{"diet":{"include":["..."],"avoid":["..."],"fasting":"protocol or null"},'
-    + '"yoga":["Asana/Pranayama: benefit"],"hydrotherapy":["treatment: method"],"mud_therapy":["application: indication"],'
-    + '"acupuncture":["Point: indication"],"herbal":["Herb: dose/preparation"],"massage":["technique: benefit"],'
+    + '"management":{"diet":{"include":[{"item":"food: reason","evidence_level":"OBS"}],"avoid":["..."],"fasting":"protocol or null"},'
+    + '"yoga":[{"item":"Asana/Pranayama: benefit","evidence_level":"OBS"}],"hydrotherapy":[{"item":"treatment: method","evidence_level":"TU"}],"mud_therapy":["application: indication"],'
+    + '"acupuncture":["Point: indication"],"herbal":[{"item":"Herb: dose/preparation","evidence_level":"TU"}],"massage":["technique: benefit"],'
     + '"lifestyle":["..."],"modern_drugs":["drug class: when to use"],"surgery":"when indicated or null"},'
     + '"when_to_refer":"clear criteria","naturopathy_philosophy":"naturopathic framework for this disease"}';
 
@@ -13729,12 +14513,12 @@ window.loadDiseaseCard = async function(name, category, targetEl) {
         return;
       }
       panel.innerHTML = '<div class="ddx-loading"><div class="ddx-spinner"></div><span>Retrying for <strong>'+name+'</strong>…</span></div>';
-      var SYS2 = 'Output ONLY a JSON object. Start with { end with }. No markdown. Disease: '+name
+      var SYS2 = 'Output ONLY a JSON object. Start with { end with }. No markdown. For every herb, yoga, and hydrotherapy item assign evidence_level as exactly one of: RCT, SR, OBS, TU, EXP. Disease: '+name
         + '. Return: {"name":"'+name+'","icd":"ICD code","introduction":"summary","etiology":["cause"],'
         + '"classical_signs":["sign"],"golden_signs":["sign: desc"],'
         + '"diagnostics":{"labs":["test: finding"],"imaging":["mod: finding"],"naturopathy":["Iris: finding"]},'
-        + '"iris_diagnosis":"iridology","management":{"diet":{"include":["food"],"avoid":["food"],"fasting":"protocol"},'
-        + '"yoga":["asana: benefit"],"hydrotherapy":["treatment"],"herbal":["herb: dose"],"lifestyle":["tip"]},'
+        + '"iris_diagnosis":"iridology","management":{"diet":{"include":[{"item":"food","evidence_level":"OBS"}],"avoid":["food"],"fasting":"protocol"},'
+        + '"yoga":[{"item":"asana: benefit","evidence_level":"OBS"}],"hydrotherapy":[{"item":"treatment","evidence_level":"TU"}],"herbal":[{"item":"herb: dose","evidence_level":"TU"}],"lifestyle":["tip"]},'
         + '"when_to_refer":"criteria","naturopathy_philosophy":"framework"}';
       callAI([{role:'system',content:SYS2},{role:'user',content:'Disease: '+name}], 2500)
         .then(async function(raw2){
@@ -14325,12 +15109,12 @@ window.loadDiseaseCard = async function(name, category, targetEl) {
     + '"iris_diagnosis":"detailed iridology description — zone, marking, naturopathic significance",'
     + '"management":{'
     + '"acute_phase":"specific immediate management during acute exacerbation — first 48-72 hours protocol",'
-    + '"diet":{"include":["specific food: mechanism of benefit"],"avoid":["specific food: reason to avoid"],"fasting":"specific fasting protocol with type, duration, contraindications or null"},'
-    + '"yoga":["Asana/Pranayama: specific benefit for this disease — contraindications if any"],'
-    + '"hydrotherapy":["Treatment name: temperature/duration/frequency — specific physiological mechanism"],'
+    + '"diet":{"include":[{"item":"specific food: mechanism of benefit","evidence_level":"RCT|SR|OBS|TU|EXP"}],"avoid":["specific food: reason to avoid"],"fasting":"specific fasting protocol with type, duration, contraindications or null"},'
+    + '"yoga":[{"item":"Asana/Pranayama: specific benefit for this disease — contraindications if any","evidence_level":"RCT|SR|OBS|TU|EXP"}],'
+    + '"hydrotherapy":[{"item":"Treatment name: temperature/duration/frequency — specific physiological mechanism","evidence_level":"RCT|SR|OBS|TU|EXP"}],'
     + '"mud_therapy":["Application site: type of mud/pack — duration, frequency, indication"],'
     + '"acupuncture":["Point code and name: specific indication for this disease"],'
-    + '"herbal":["Herb (Sanskrit/Latin): dose, preparation, evidence level — key action"],'
+    + '"herbal":[{"item":"Herb (Sanskrit/Latin): dose, preparation — key action","evidence_level":"RCT|SR|OBS|TU|EXP"}],'
     + '"massage":["Technique: specific area, pressure, benefit for this disease"],'
     + '"lifestyle":["specific lifestyle measure: rationale and implementation"],'
     + '"modern_drugs":["Drug class/name: indication — when to co-manage or refer for prescription"],'
@@ -14356,7 +15140,7 @@ window.loadDiseaseCard = async function(name, category, targetEl) {
         return;
       }
       panel.innerHTML = '<div class="ddx-loading"><div class="ddx-spinner"></div><span>Retrying for <strong>'+name+'</strong>…</span></div>';
-      callAI([{role:'system',content:'Output ONLY JSON for disease: '+name+'. Include physiotherapy for MSK conditions.'},{role:'user',content:'Disease: '+name}], 2500)
+      callAI([{role:'system',content:'Output ONLY JSON for disease: '+name+'. Include physiotherapy for MSK conditions. For every herb, yoga, and hydrotherapy item assign evidence_level as exactly one of: RCT, SR, OBS, TU, or EXP.'},{role:'user',content:'Disease: '+name}], 2500)
         .then(async function(raw2){
           var data2 = safeParseJSON(raw2);
           if (data2 && data2.name) {
@@ -19136,9 +19920,17 @@ function _yogaShowLevel(n) {
 }
 
 /* ── Native back via popstate ── */
-/* NOTE: Yoga back-navigation is now handled centrally by NR_BackManager.
-   _yogaRegPop() is kept as a no-op so existing call-sites don't throw. */
-function _yogaRegPop() { /* delegated to NR_BackManager */ }
+function _yogaRegPop() {
+  if (_yogaPopReg) return;
+  _yogaPopReg = true;
+  window.addEventListener('popstate', function() {
+    var dv = document.getElementById('yoga-detail-view');
+    if (dv && dv.style.display === 'block') { yogoBack(); return; }
+    var sv = document.getElementById('sv-yogalib');
+    if (!sv || sv.style.display !== 'flex') return;
+    yogoBack();
+  });
+}
 
 /* ── Open yoga section ── */
 function openYogaLibrary() {
@@ -20868,9 +21660,11 @@ document.addEventListener('DOMContentLoaded', function() {
   /* ── Hide on load ── */
   _g('ddx-sv').style.display = 'none';
 
-  /* ── Handle hardware back button — delegated to NR_BackManager ── */
-  /* NR_BackManager checks _sv.detail and _sv.active directly, so no
-     separate listener needed here. Removing to avoid double-handling. */
+  /* ── Handle hardware back button on Android ── */
+  window.addEventListener('popstate', function () {
+    if (_sv.detail) { closeDdxDetail(); history.pushState(null, ''); return; }
+    if (_sv.active) { closeDdxSV(); return; }
+  });
 
 })();
 </script>
