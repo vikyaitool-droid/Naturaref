@@ -2261,6 +2261,62 @@ body.dark .tab-index{background:#1a1612}
   }
 }
 
+/* ── NNT/NNH BADGE STYLES ─────────────────────────────── */
+.nnt-badge, .nnh-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  cursor: help;
+  vertical-align: middle;
+  margin-left: 5px;
+  letter-spacing: 0.02em;
+  position: relative;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.nnt-badge { background:#d1fae5; color:#065f46; border:1px solid #6ee7b7; }
+.nnt-badge::before { content:"✓"; font-size:0.6rem; }
+.nnh-badge { background:#fef3c7; color:#92400e; border:1px solid #fcd34d; }
+.nnh-badge::before { content:"⚠"; font-size:0.6rem; }
+.nnt-badge[data-tooltip]:hover::after,
+.nnh-badge[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 0.7rem;
+  font-weight: 400;
+  padding: 5px 9px;
+  border-radius: 6px;
+  white-space: normal;
+  max-width: 260px;
+  text-align: center;
+  z-index: 999;
+  pointer-events: none;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+.evidence-grade {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.evidence-grade-A { background:#bbf7d0; color:#14532d; }
+.evidence-grade-B { background:#bfdbfe; color:#1e3a5f; }
+.evidence-grade-C { background:#fde8d8; color:#7c2d12; }
+
 </style>
 </head>
 <body>
@@ -2565,8 +2621,8 @@ body.dark .tab-index{background:#1a1612}
         <div class="nr-title">Welcome, Doctor</div>
         <div class="nr-sub">Sign in to access the NaturaRef Clinical Portal.</div>
         <div class="nr-form-group">
-          <label>Username</label>
-          <input type="text" id="nr-f-login-username" placeholder="e.g. drvikranth" autocomplete="username" />
+          <label>Username or Email</label>
+          <input type="text" id="nr-f-login-username" placeholder="Username or email address" autocomplete="username" />
         </div>
         <div class="nr-form-group">
           <label>Password</label>
@@ -2630,7 +2686,7 @@ body.dark .tab-index{background:#1a1612}
       <div class="nr-screen" id="nr-scr-forgot">
         <div class="nr-icon">🔑</div>
         <div class="nr-title">Forgot Password?</div>
-        <div class="nr-sub">Enter your username or email. Dr. Vikranth will generate a reset password for you.</div>
+        <div class="nr-sub">Enter your registered username or email address and we'll send you a password reset link.</div>
         <div class="nr-form-group">
           <label>Username or Email</label>
           <input type="text" id="nr-f-forgot-input" placeholder="Your username or email" />
@@ -2643,8 +2699,8 @@ body.dark .tab-index{background:#1a1612}
       <!-- Reset Requested -->
       <div class="nr-screen" id="nr-scr-reset-sent">
         <div class="nr-icon">✅</div>
-        <div class="nr-title">Request Sent!</div>
-        <div class="nr-sub">Dr. Vikranth has been notified. A reset password will be provided to you directly. Please check back soon.</div>
+        <div class="nr-title">Check Your Email</div>
+        <div class="nr-sub">A password reset link has been sent to your registered email address. Please check your inbox (and spam folder) and follow the link to set a new password.</div>
         <button class="nr-btn-outline" onclick="nrShow('nr-scr-login')" style="margin-top:16px">← Back to Login</button>
       </div>
 
@@ -2755,6 +2811,7 @@ const FIREBASE_CONFIG = {
 
 var _nrIsAdmin = false;
 var _nrDb = null;
+var _nrFbAuth = null;
 var _nrAuthUser = null;  // { docId, username, name, email, uid }
 var _nrBadgeInterval = null;
 
@@ -2767,17 +2824,23 @@ function _nrLoadScript(src) {
 }
 
 async function _nrInitFirebase() {
-  if (_nrDb) return;
+  if (_nrDb && _nrFbAuth) return;
+  // Load app SDK only if firebase isn't present at all
   if (!window.firebase) {
     await _nrLoadScript('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
+  }
+  // Load Firestore SDK only if not already available
+  if (!firebase.firestore) {
     await _nrLoadScript('https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js');
   }
-  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-  _nrDb = firebase.firestore();
-  // Flush any tracking calls that were queued before Firestore was ready
-  if (typeof _nrFlushTrackQueue === 'function') {
-    setTimeout(_nrFlushTrackQueue, 200);
+  // Load Auth SDK only if not already available
+  if (!firebase.auth) {
+    await _nrLoadScript('https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js');
   }
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  if (!_nrDb)     _nrDb     = firebase.firestore();
+  if (!_nrFbAuth) _nrFbAuth = firebase.auth();
+  if (typeof _nrFlushTrackQueue === 'function') setTimeout(_nrFlushTrackQueue, 200);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -3472,56 +3535,120 @@ function nrPreviewId(val) {
 
 // ── LOGIN ──
 async function nrLogin() {
-  var un = (document.getElementById('nr-f-login-username').value || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-  var pw = document.getElementById('nr-f-login-password').value || '';
-  var errEl = document.getElementById('nr-login-err');
+  var rawInput = (document.getElementById('nr-f-login-username').value || '').trim().toLowerCase();
+  var pw       = document.getElementById('nr-f-login-password').value || '';
+  var errEl    = document.getElementById('nr-login-err');
   errEl.textContent = '';
-  if (!un) { errEl.textContent = 'Please enter your username.'; return; }
-  if (!pw) { errEl.textContent = 'Please enter your password.'; return; }
+
+  if (!rawInput) { errEl.textContent = 'Please enter your username or email.'; return; }
+  if (!pw)       { errEl.textContent = 'Please enter your password.'; return; }
+
+  // Detect whether the user typed an email or a username
+  var isEmail = rawInput.includes('@');
+  var un      = isEmail ? rawInput : rawInput.replace(/[^a-z0-9]/g, '');
+
+  if (!un) { errEl.textContent = 'Please enter your username or email.'; return; }
 
   nrShow('nr-scr-loading');
   try {
     await _nrInitFirebase();
-    var hash = await nrHashPassword(pw);
-    var snap = await _nrDb.collection('naturaref_users').where('username', '==', un).limit(1).get();
+
+    // Step 1: Look up Firestore record by username OR email
+    var snap;
+    if (isEmail) {
+      snap = await _nrDb.collection('naturaref_users')
+        .where('email', '==', un).limit(1).get();
+    } else {
+      snap = await _nrDb.collection('naturaref_users')
+        .where('username', '==', un).limit(1).get();
+      // Fallback: maybe they typed their email without realising
+      if (snap.empty) {
+        snap = await _nrDb.collection('naturaref_users')
+          .where('email', '==', rawInput).limit(1).get();
+      }
+    }
+
     if (snap.empty) {
       nrShow('nr-scr-login');
-      errEl.textContent = 'Username not found. Please check and try again.';
+      errEl.textContent = 'Username or email not found. Please check and try again.';
       return;
     }
-    var doc = snap.docs[0];
+
+    var doc  = snap.docs[0];
     var data = doc.data();
 
-    // Check password (normal or temp reset)
-    var pwMatch = false;
-    var isTempPw = false;
-    if (data.passwordHash === hash) { pwMatch = true; }
-    else if (data.tempPasswordHash && data.tempPasswordHash === hash) { pwMatch = true; isTempPw = true; }
-
-    if (!pwMatch) {
+    if (!data.email) {
       nrShow('nr-scr-login');
-      errEl.textContent = 'Incorrect password. Please try again.';
+      errEl.textContent = 'No email linked to this account. Contact admin.';
       return;
     }
 
-    _nrAuthUser = { docId: doc.id, username: data.username, name: data.name || '', email: data.email || '', qual: data.qual || 'BNYS', city: data.city || '', photoB64: data.photoB64 || null, uid: doc.id };
+    // Step 2: Sign in via Firebase Auth
+    var cred;
+    try {
+      cred = await _nrFbAuth.signInWithEmailAndPassword(data.email, pw);
+    } catch (authErr) {
+      nrShow('nr-scr-login');
+      var msg = (authErr.message || '').toUpperCase();
+      if (
+        authErr.code === 'auth/wrong-password' ||
+        authErr.code === 'auth/invalid-credential' ||
+        authErr.code === 'auth/invalid-login-credentials' ||
+        msg.includes('INVALID_LOGIN_CREDENTIALS') ||
+        msg.includes('INVALID_PASSWORD')
+      ) {
+        errEl.textContent = 'Incorrect password. Please try again.';
+      } else if (authErr.code === 'auth/too-many-requests' || msg.includes('TOO_MANY_ATTEMPTS')) {
+        errEl.textContent = 'Too many attempts. Please wait a few minutes and try again.';
+      } else if (authErr.code === 'auth/user-not-found' || msg.includes('USER_NOT_FOUND')) {
+        errEl.textContent = 'No account found. Please check your details or contact admin.';
+      } else if (authErr.code === 'auth/network-request-failed') {
+        errEl.textContent = 'Network error. Please check your connection and try again.';
+      } else {
+        errEl.textContent = 'Sign-in failed. Please try again or use Forgot Password.';
+      }
+      return;
+    }
+
+    var authUid = cred.user.uid;
+
+    // Step 3: Self-heal — update Firestore uid field if still old format
+    if (!data.uid || data.uid !== authUid) {
+      try {
+        await _nrDb.collection('naturaref_users').doc(doc.id).update({ uid: authUid });
+      } catch(e) { console.warn('[NR] uid self-heal failed:', e); }
+    }
+
+    // Step 4: Build session (docId stays as-is — used for Firestore lookups)
+    _nrAuthUser = {
+      docId:    doc.id,
+      uid:      authUid,
+      username: data.username,
+      name:     data.name     || '',
+      email:    data.email    || '',
+      qual:     data.qual     || 'BNYS',
+      city:     data.city     || '',
+      photoB64: data.photoB64 || null
+    };
+
     var status = data.status || 'pending';
 
     if (status === 'active') {
-      // If temp password used, clear it
-      if (isTempPw) {
-        try { await _nrDb.collection('naturaref_users').doc(doc.id).update({ tempPasswordHash: firebase.firestore.FieldValue.delete() }); } catch(e) {}
-      }
       nrSaveSession(_nrAuthUser);
       nrUnlock();
-      setTimeout(function() { if (typeof nrFetchInbox === 'function') nrFetchInbox(doc.id); }, 700);
+      setTimeout(function() {
+        if (typeof nrFetchInbox === 'function') nrFetchInbox(doc.id);
+      }, 700);
     } else if (status === 'pending') {
+      await _nrFbAuth.signOut(); // don't leave them signed in
       var el = document.getElementById('nr-pending-id');
       if (el) el.textContent = data.username + '@naturaref.com';
       nrShow('nr-scr-pending');
     } else {
+      await _nrFbAuth.signOut();
       nrShow('nr-scr-rejected');
     }
+
   } catch(e) {
     console.warn('[NaturaRef] Login error:', e);
     nrShow('nr-scr-login');
@@ -3559,16 +3686,34 @@ async function nrSubmitSignup() {
     if (!emailExisting.empty) { errEl.textContent = 'An account with that email already exists.'; return; }
 
     errEl.textContent = '';
-    var hash = await nrHashPassword(pw);
-    var ts = Date.now();
-    var docId = uname + '_' + ts;  // unique doc ID
+    var ts    = Date.now();
+    var docId = uname + '_' + ts;  // Firestore doc ID (stable, username-based)
 
+    // Create Firebase Auth account — this becomes the canonical identity
+    var authCred;
+    try {
+      authCred = await _nrFbAuth.createUserWithEmailAndPassword(email, pw);
+    } catch (authErr) {
+      if (authErr.code === 'auth/email-already-in-use') {
+        errEl.textContent = 'An account with that email already exists.';
+      } else if (authErr.code === 'auth/weak-password') {
+        errEl.textContent = 'Password is too weak. Please use at least 8 characters.';
+      } else {
+        errEl.textContent = 'Account creation error: ' + (authErr.message || authErr.code);
+      }
+      return;
+    }
+
+    var authUid = authCred.user.uid;
+
+    // Write Firestore profile — uid is the real Firebase Auth UID
     await _nrDb.collection('naturaref_users').doc(docId).set({
       name: name, qual: qual, username: uname, email: email, city: city,
-      uid: docId, passwordHash: hash,
+      uid: authUid,
       status: 'pending', ts: String(ts)
     });
-    try { await _nrDb.collection('naturaref_audit').add({ action: 'signup', uid: docId, username: uname, by: 'self', ts: ts }); } catch(e) {}
+    try { await _nrFbAuth.signOut(); } catch(e) {} // don't leave pending users signed in
+    try { await _nrDb.collection('naturaref_audit').add({ action: 'signup', uid: authUid, username: uname, by: 'self', ts: ts }); } catch(e) {}
     var el = document.getElementById('nr-pending-id');
     if (el) el.textContent = uname + '@naturaref.com';
     nrShow('nr-scr-pending');
@@ -3586,17 +3731,47 @@ async function nrRequestReset() {
 
   try {
     await _nrInitFirebase();
-    var ts = Date.now();
-    // Store request so admin can see it
-    await _nrDb.collection('naturaref_forgot_requests').add({
-      input: input,
-      requestedAt: ts,
-      status: 'pending'
-    });
+
+    // Resolve email: if input looks like an email use it directly,
+    // otherwise look up by username in Firestore first.
+    var resolvedEmail = input;
+    if (!input.includes('@')) {
+      var snap = await _nrDb.collection('naturaref_users')
+        .where('username', '==', input).limit(1).get();
+      if (snap.empty) {
+        // Don't reveal whether username exists — show success either way
+        nrShow('nr-scr-reset-sent');
+        return;
+      }
+      resolvedEmail = snap.docs[0].data().email || '';
+    }
+
+    if (resolvedEmail) {
+      try {
+        await _nrFbAuth.sendPasswordResetEmail(resolvedEmail);
+        console.log('[NR] Reset email sent to:', resolvedEmail);
+      } catch(e) {
+        console.warn('[NR] sendPasswordResetEmail failed:', e.code, e.message);
+        if (e.code === 'auth/user-not-found') {
+          errEl.textContent = 'No account found with that email. Please contact admin.';
+        } else if (e.code === 'auth/invalid-email') {
+          errEl.textContent = 'Invalid email address. Please check and try again.';
+        } else if (e.code === 'auth/too-many-requests') {
+          errEl.textContent = 'Too many attempts. Please wait a few minutes and try again.';
+        } else {
+          errEl.textContent = 'Could not send reset email. Please try again or contact admin.';
+        }
+        return;
+      }
+    } else {
+      console.warn('[NR] Reset: resolved email was empty for input:', input);
+      errEl.textContent = 'No account found with that username. Please contact admin.';
+      return;
+    }
     nrShow('nr-scr-reset-sent');
   } catch(e) {
-    // Even if Firestore fails, show success — admin will handle via other means
-    nrShow('nr-scr-reset-sent');
+    console.warn('[NR] nrRequestReset outer error:', e);
+    errEl.textContent = 'Something went wrong. Please try again or contact admin.';
   }
 }
 
@@ -3612,7 +3787,7 @@ async function nrCheckSessionStatus() {
     var data = doc.data();
     var status = data.status || 'pending';
     if (status === 'active') {
-      _nrAuthUser = { docId: doc.id, username: data.username, name: data.name || '', email: data.email || '', qual: data.qual || 'BNYS', city: data.city || '', photoB64: data.photoB64 || null, uid: doc.id };
+      _nrAuthUser = { docId: doc.id, username: data.username, name: data.name || '', email: data.email || '', qual: data.qual || 'BNYS', city: data.city || '', photoB64: data.photoB64 || null, uid: data.uid || doc.id };
       nrSaveSession(_nrAuthUser);
       nrUnlock();
       setTimeout(function() { if (typeof nrFetchInbox === 'function') nrFetchInbox(doc.id); }, 700);
@@ -3657,7 +3832,7 @@ async function nrCheckSessionStatus() {
         qual:     sess.qual     || 'BNYS',
         city:     sess.city     || '',
         photoB64: sess.photoB64 || null,
-        uid:      sess.docId
+        uid:      sess.uid || sess.docId
       };
       clearTimeout(_watchdog);
 
@@ -3690,7 +3865,7 @@ async function nrCheckSessionStatus() {
           var data = doc.data();
           if (data.status === 'active') {
             /* Refresh in-memory user with latest Firestore data */
-            _nrAuthUser = { docId: doc.id, username: data.username, name: data.name || '', email: data.email || '', qual: data.qual || 'BNYS', city: data.city || '', photoB64: data.photoB64 || null, uid: doc.id };
+            _nrAuthUser = { docId: doc.id, username: data.username, name: data.name || '', email: data.email || '', qual: data.qual || 'BNYS', city: data.city || '', photoB64: data.photoB64 || null, uid: data.uid || doc.id };
             /* Persist refreshed data so next page load is instant */
             nrSaveSession(_nrAuthUser);
             /* Refresh all avatar / name / greeting UI with real Firestore data */
@@ -8879,6 +9054,44 @@ function cardChecklistHtml(d, escapedName, escapedCat) {
   return html;
 }
 
+/* ── NNT/NNH BADGE SYSTEM ────────────────────────────────── */
+const NNT_CDN_URL = 'https://cdn.jsdelivr.net/gh/vikyaitool-droid/ccr-data@main/data/v1/nnt_bnys.json';
+let nntMap = {};
+async function loadNNTData() {
+  try {
+    const res = await fetch(NNT_CDN_URL);
+    if (!res.ok) throw new Error('NNT fetch failed');
+    const data = await res.json();
+    data.interventions.forEach(item => {
+      item.matchKeys.forEach(k => { nntMap[k.toLowerCase()] = item; });
+    });
+    console.log('[NNT] Loaded ' + data.interventions.length + ' entries.');
+  } catch(err) {
+    console.warn('[NNT] Could not load nnt_bnys.json — badges suppressed.', err);
+  }
+}
+function getNNTBadgeHTML(interventionName) {
+  if (!interventionName || Object.keys(nntMap).length === 0) return '';
+  const lower = interventionName.toLowerCase().trim();
+  let entry = nntMap[lower];
+  if (!entry) {
+    const matchKey = Object.keys(nntMap).find(k => lower.includes(k) || k.includes(lower));
+    if (matchKey) entry = nntMap[matchKey];
+  }
+  if (!entry) return '';
+  const nntTooltip = 'NNT ' + entry.nnt + ' — ' + entry.nnt + ' patients treated per 1 who benefit (' + entry.outcome + '). ' + entry.evidence_note + '.';
+  let html = '<span class="nnt-badge" data-tooltip="' + nntTooltip + '">NNT=' + entry.nnt + '</span>';
+  if (entry.nnh !== null) {
+    const nnhTooltip = 'NNH ' + entry.nnh + ' — 1 adverse event per ' + entry.nnh + ' treated. Event: ' + entry.nnh_event + '.';
+    html += '<span class="nnh-badge" data-tooltip="' + nnhTooltip + '">NNH=' + entry.nnh + '</span>';
+  }
+  if (entry.evidence_grade) {
+    html += '<span class="evidence-grade evidence-grade-' + entry.evidence_grade + '" title="Evidence Grade ' + entry.evidence_grade + '">Grade ' + entry.evidence_grade + '</span>';
+  }
+  return html;
+}
+/* ─────────────────────────────────────────────────────────── */
+
 function renderDiseaseCard(d, targetEl) {
   var panel = targetEl || document.getElementById('ddx-results');
   window._activeCardPanel = panel;
@@ -8991,7 +9204,7 @@ function renderDiseaseCard(d, targetEl) {
               var txt = isObj ? (i.item || safeStr(i)) : safeStr(i);
               var badge = isObj ? (evBadge(i.evidence_level)||evBadge('UNKNOWN')) : (evBadgeFromText(txt)||evBadge('UNKNOWN'));
               var evAttr = ' data-ev-item="'+txt.replace(/"/g,'&quot;')+'"';
-              return '<li class="ddx-mgmt-tile li proto-herb-row"'+evAttr+' style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+txt+badge+'</li>';
+              return '<li class="ddx-mgmt-tile li proto-herb-row"'+evAttr+' style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+txt+badge+getNNTBadgeHTML(txt)+'</li>';
             }).join('') + '</ul>';
       }
       if (mg.diet.avoid && mg.diet.avoid.length) dt += '<div class="proto-section-head" style="color:#c0392b;margin:5px 0 3px">✗ Avoid</div>'+miniList(mg.diet.avoid.slice(0,5));
@@ -9006,7 +9219,7 @@ function renderDiseaseCard(d, targetEl) {
             var txt = isObj ? (i.item || safeStr(i)) : safeStr(i);
             var badge = isObj ? (evBadge(i.evidence_level)||evBadge('UNKNOWN')) : (evBadgeFromText(txt)||evBadge('UNKNOWN'));
             var evAttr = ' data-ev-item="'+txt.replace(/"/g,'&quot;')+'"';
-            return '<li class="ddx-mgmt-tile li proto-herb-row"'+evAttr+' style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+txt+badge+'</li>';
+            return '<li class="ddx-mgmt-tile li proto-herb-row"'+evAttr+' style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+txt+badge+getNNTBadgeHTML(txt)+'</li>';
           }).join('') + '</ul>';
       html += mgmtTile('🧘 Yoga & Pranayama', yogaList + aiToolLink('🧘 Full Yoga Plan', 'yogachart', d.name));
     }
@@ -9017,7 +9230,7 @@ function renderDiseaseCard(d, targetEl) {
             var txt = isObj ? (i.item || safeStr(i)) : safeStr(i);
             var badge = isObj ? (evBadge(i.evidence_level)||evBadge('UNKNOWN')) : (evBadgeFromText(txt)||evBadge('UNKNOWN'));
             var evAttr = ' data-ev-item="'+txt.replace(/"/g,'&quot;')+'"';
-            return '<li class="ddx-mgmt-tile li proto-herb-row"'+evAttr+' style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+txt+badge+'</li>';
+            return '<li class="ddx-mgmt-tile li proto-herb-row"'+evAttr+' style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+txt+badge+getNNTBadgeHTML(txt)+'</li>';
           }).join('') + '</ul>';
       html += mgmtTile('💧 Hydrotherapy', hydroList + aiToolLink('💧 Hydro Protocol', 'hydroproto', d.name));
     }
@@ -9030,7 +9243,7 @@ function renderDiseaseCard(d, targetEl) {
             var txt = isObj ? (i.item || safeStr(i)) : safeStr(i);
             var badge = isObj ? (evBadge(i.evidence_level)||evBadge('UNKNOWN')) : (evBadgeFromText(txt)||evBadge('UNKNOWN'));
             var evAttr = ' data-ev-item="'+txt.replace(/"/g,'&quot;')+'"';
-            return '<li class="ddx-mgmt-tile li proto-herb-row"'+evAttr+' style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+txt+badge+'</li>';
+            return '<li class="ddx-mgmt-tile li proto-herb-row"'+evAttr+' style="padding-left:10px;position:relative;margin-bottom:2px"><span style="position:absolute;left:0;color:var(--sage-deep)">·</span>'+txt+badge+getNNTBadgeHTML(txt)+'</li>';
           }).join('') + '</ul>';
       html += mgmtTile('🌱 Herbal Medicine', herbalList + aiToolLink('🌿 Herb Interactions', 'herbdrug', d.name));
     }
@@ -12979,7 +13192,7 @@ function renderNaturoPlanner(out) {
   if (out.hydrotherapy && out.hydrotherapy.length) {
     var htm = out.hydrotherapy.map(function(h) {
       return '<div class="proto-diet-card" style="background:#fff;border:1px solid #bfdbfe;padding:9px 11px;margin-bottom:7px">'
-        +'<div style="font-size:12.5px;font-weight:700;color:#1e3a5f">💧 '+h.treatment+evBadge(h.evidence_level)+'</div>'
+        +'<div style="font-size:12.5px;font-weight:700;color:#1e3a5f">💧 '+h.treatment+evBadge(h.evidence_level)+getNNTBadgeHTML(h.treatment)+'</div>'
         +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px;font-size:11px">'
         +(h.temperature?'<span style="color:#0369a1"><b>Temp:</b> '+h.temperature+'</span>':'')
         +(h.duration?'<span style="color:#0369a1"><b>Duration:</b> '+h.duration+'</span>':'')
@@ -13039,7 +13252,7 @@ function renderNaturoPlanner(out) {
     var yam = '<div style="display:flex;flex-wrap:wrap;gap:6px">'
       + out.yogaAsanas.map(function(a) {
         return '<div class="proto-evidence-tag" style="background:#fff;border:1px solid #a7f3d0;border-radius:7px;flex:1;min-width:130px">'
-          +'<div style="font-size:11.5px;font-weight:700;color:#065f46">🧘 '+a.name+evBadge(a.evidence_level)+'</div>'
+          +'<div style="font-size:11.5px;font-weight:700;color:#065f46">🧘 '+a.name+evBadge(a.evidence_level)+getNNTBadgeHTML(a.name)+'</div>'
           +(a.duration?'<div style="font-size:10px;color:#0e7490">'+a.duration+'</div>':'')
           +(a.benefit?'<div style="font-size:10.5px;color:#374151;margin-top:2px">'+a.benefit+'</div>':'')
           +'</div>';
@@ -20905,6 +21118,7 @@ function makeSheetSwipe(sheetEl, bodyEl, dismissFn) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  loadNNTData(); /* NNT badge data */
 
   /* 0 — Card detail sheet */
   (function() {
@@ -22584,813 +22798,535 @@ window._showSheet      = _showSheet;
 
 })();
 </script>
+<!-- ═══════════════════════════════════════════════════════════
+     NATURAREF · LAB REFERENCE · INDIA  v3.0
+     Append before </body>.
+     FIX: Data embedded inline — no CDN dependency.
+          IDB caches on first run; CDN refreshes in background.
+          Registration is SYNCHRONOUS (patch is at EOF).
+     ═══════════════════════════════════════════════════════════ -->
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     NATURAREF v2.11.0 — LAB REFERENCE MODULE
-     Patch: append this block immediately before </body> in the main file.
-     ─────────────────────────────────────────────────────────────────
-     Features:
-       • lab_ranges_india.json loaded from GitHub CDN → cached in IndexedDB
-       • Panel auto-registered into SECS + sidebar nav
-       • Lab value input → instant colour-coded status badge
-       • AI naturopathic commentary + confirmatory test suggestions
-       • Gender-aware ranges, India-specific notes, critical value alerts
-       • Dark-mode aware
-     ═══════════════════════════════════════════════════════════════════ -->
-
-<!-- ══ LAB REFERENCE CSS ══ -->
 <style>
-/* ── Panel chrome ── */
-#ca-labref{background:var(--bg)}
-.lr-hero{
-  background:linear-gradient(135deg,#1a3a5a 0%,#0f6b5c 55%,#1a5a3a 100%);
-  border-radius:14px;padding:16px 18px 14px;margin-bottom:14px;
-  color:#fff;display:flex;align-items:flex-start;gap:14px;position:relative;overflow:hidden;
-}
-.lr-hero::before{
-  content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;
-  border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none;
-}
+.lr-hero{background:linear-gradient(135deg,#1a3a5a 0%,#0f6b5c 55%,#1a5a3a 100%);border-radius:14px;padding:16px 18px 14px;margin-bottom:14px;color:#fff;display:flex;align-items:flex-start;gap:14px;position:relative;overflow:hidden}
+.lr-hero::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none}
 .lr-hero-icon{font-size:32px;flex-shrink:0;margin-top:2px}
 .lr-hero-title{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:700;line-height:1.2;margin-bottom:4px}
 .lr-hero-sub{font-size:10.5px;opacity:.78;line-height:1.5}
-.lr-hero-badge{
-  display:inline-flex;align-items:center;gap:5px;
-  margin-top:8px;padding:3px 10px;border-radius:12px;
-  background:rgba(255,255,255,.14);font-size:9.5px;font-weight:700;letter-spacing:.04em;
-  border:1px solid rgba(255,255,255,.22);
-}
-
-/* ── Panel selector pills ── */
-.lr-panel-tabs{
-  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;
-}
-.lr-ptab{
-  flex:1;min-width:calc(25% - 6px);padding:7px 4px;font-size:10.5px;font-weight:700;
-  border-radius:10px;border:1.5px solid var(--bdr);background:var(--surf);
-  color:var(--mu);cursor:pointer;text-align:center;transition:all .14s;
-  font-family:Inter,sans-serif;
-}
-.lr-ptab:hover{border-color:var(--sage-lt);color:var(--sage-deep)}
-.lr-ptab.active{
-  background:linear-gradient(135deg,#0f6b5c,#1a5a3a);
-  color:#fff;border-color:transparent;
-  box-shadow:0 3px 12px rgba(15,107,92,.28);
-}
-
-/* ── Input card ── */
-.lr-input-card{
-  background:var(--surf);border:1.5px solid var(--bdr);border-radius:14px;
-  padding:14px;margin-bottom:14px;
-}
-.lr-input-hdr{
-  font-size:11px;font-weight:700;color:var(--em);text-transform:uppercase;
-  letter-spacing:.08em;margin-bottom:11px;display:flex;align-items:center;gap:6px;
-}
-.lr-field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px}
-@media(min-width:640px){.lr-field-row{grid-template-columns:2fr 1fr 1fr}}
-.lr-label{font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
-.lr-select,.lr-input{
-  width:100%;padding:9px 11px;border:1.5px solid var(--bdr);border-radius:9px;
-  background:var(--bg);color:var(--tx);font-family:Inter,sans-serif;font-size:13px;
-  outline:none;transition:border-color .15s;
-}
-.lr-select:focus,.lr-input:focus{border-color:var(--sage-lt);background:var(--white)}
-.lr-go-btn{
-  width:100%;padding:13px;background:linear-gradient(135deg,#0f6b5c,#1a5a3a);
-  color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;
-  cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.02em;
-  transition:all .2s;box-shadow:0 4px 16px rgba(15,107,92,.28);
-}
-.lr-go-btn:hover{opacity:.92;transform:translateY(-1px)}
-.lr-go-btn:active{transform:translateY(0)}
-.lr-go-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-
-/* ── Result badge ── */
-.lr-result-wrap{margin-bottom:14px;display:none}
-.lr-status-card{
-  border-radius:14px;padding:14px 16px;
-  border:2px solid transparent;
-  animation:lr-popIn .28s cubic-bezier(.34,1.56,.64,1);
-}
-@keyframes lr-popIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-.lr-status-normal{background:#edf7ee;border-color:#86efac;color:#14532d}
-.lr-status-low{background:#eff6ff;border-color:#93c5fd;color:#1e3a5f}
-.lr-status-high{background:#fff7ed;border-color:#fdba74;color:#7c2d12}
-.lr-status-critical{background:#fef2f2;border-color:#fca5a5;color:#7f1d1d}
-.lr-status-indicator{
-  display:flex;align-items:center;gap:10px;margin-bottom:10px;
-}
-.lr-status-dot{
-  width:12px;height:12px;border-radius:50%;flex-shrink:0;
-  box-shadow:0 0 0 3px rgba(255,255,255,.5);
-}
-.lr-status-normal .lr-status-dot{background:#22c55e}
-.lr-status-low .lr-status-dot{background:#3b82f6}
-.lr-status-high .lr-status-dot{background:#f97316}
-.lr-status-critical .lr-status-dot{background:#ef4444;animation:lr-pulse 1s infinite}
-@keyframes lr-pulse{0%,100%{box-shadow:0 0 0 3px rgba(239,68,68,.2)}50%{box-shadow:0 0 0 6px rgba(239,68,68,.35)}}
-.lr-status-label{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
-.lr-value-display{font-size:28px;font-weight:900;line-height:1;margin-bottom:6px;font-family:'Cormorant Garamond',serif}
-.lr-range-info{font-size:11.5px;opacity:.82;line-height:1.6}
-.lr-india-note{
-  background:rgba(212,175,55,.14);border:1px solid rgba(212,175,55,.35);
-  border-radius:9px;padding:9px 11px;margin-top:10px;
-  font-size:11.5px;color:#5a3a00;line-height:1.55;
-}
-.lr-critical-banner{
-  background:#fef2f2;border:2px solid #ef4444;border-radius:9px;
-  padding:10px 12px;margin-top:10px;font-size:12px;
-  color:#7f1d1d;font-weight:700;line-height:1.5;
-}
-
-/* ── AI Commentary ── */
-.lr-ai-card{
-  background:linear-gradient(135deg,#0f2c24,#1a3a30);
-  border-radius:14px;padding:14px 16px;margin-top:12px;
-}
+.lr-hero-badge{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.14);font-size:9.5px;font-weight:700;letter-spacing:.04em;border:1px solid rgba(255,255,255,.22)}
+.lr-ptabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.lr-ptab{flex:1;min-width:calc(25% - 6px);padding:7px 4px;font-size:10.5px;font-weight:700;border-radius:10px;border:1.5px solid var(--bdr);background:var(--surf);color:var(--mu);cursor:pointer;text-align:center;transition:all .14s;font-family:Inter,sans-serif}
+.lr-ptab:hover{border-color:#0f6b5c;color:#0f6b5c}
+.lr-ptab.active{background:linear-gradient(135deg,#0f6b5c,#1a5a3a);color:#fff;border-color:transparent;box-shadow:0 3px 12px rgba(15,107,92,.28)}
+.lr-card{background:var(--surf);border:1.5px solid var(--bdr);border-radius:14px;padding:14px;margin-bottom:14px}
+.lr-lbl{font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.lr-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px}
+@media(min-width:520px){.lr-row{grid-template-columns:2fr 1fr 1fr}}
+.lr-sel,.lr-inp{width:100%;padding:9px 11px;border:1.5px solid var(--bdr);border-radius:9px;background:var(--bg);color:var(--tx);font-family:Inter,sans-serif;font-size:13px;outline:none;transition:border-color .15s;-webkit-appearance:none;box-sizing:border-box}
+.lr-sel:focus,.lr-inp:focus{border-color:#0f6b5c}
+.lr-go{width:100%;padding:13px;background:linear-gradient(135deg,#0f6b5c,#1a5a3a);color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.02em;transition:all .2s;box-shadow:0 4px 16px rgba(15,107,92,.28)}
+.lr-go:hover{opacity:.92;transform:translateY(-1px)}
+.lr-go:active{transform:translateY(0)}
+.lr-res{margin-bottom:14px;display:none}
+.lr-sc{border-radius:14px;padding:14px 16px;border:2px solid transparent;animation:lrpop .28s cubic-bezier(.34,1.56,.64,1)}
+@keyframes lrpop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.lr-sn{background:#edf7ee;border-color:#86efac;color:#14532d}
+.lr-sl{background:#eff6ff;border-color:#93c5fd;color:#1e3a5f}
+.lr-sh{background:#fff7ed;border-color:#fdba74;color:#7c2d12}
+.lr-sk{background:#fef2f2;border-color:#fca5a5;color:#7f1d1d}
+.lr-sdot{width:12px;height:12px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 3px rgba(255,255,255,.5)}
+.lr-sn .lr-sdot{background:#22c55e}
+.lr-sl .lr-sdot{background:#3b82f6}
+.lr-sh .lr-sdot{background:#f97316}
+.lr-sk .lr-sdot{background:#ef4444;animation:lrpulse 1s infinite}
+@keyframes lrpulse{0%,100%{box-shadow:0 0 0 3px rgba(239,68,68,.2)}50%{box-shadow:0 0 0 7px rgba(239,68,68,.35)}}
+.lr-vdisp{font-size:28px;font-weight:900;line-height:1;margin-bottom:6px;font-family:'Cormorant Garamond',serif}
+.lr-ri{font-size:11.5px;opacity:.82;line-height:1.6;margin-bottom:4px}
+.lr-inote{background:rgba(212,175,55,.14);border:1px solid rgba(212,175,55,.35);border-radius:9px;padding:9px 11px;margin-top:10px;font-size:11.5px;color:#5a3a00;line-height:1.55}
+.lr-critbanner{background:#fef2f2;border:2px solid #ef4444;border-radius:9px;padding:10px 12px;margin-top:10px;font-size:12px;color:#7f1d1d;font-weight:700;line-height:1.5}
+.lr-ai{background:linear-gradient(135deg,#0f2c24,#1a3a30);border-radius:14px;padding:14px 16px;margin-top:12px}
 .lr-ai-hdr{color:#e8f0e4;font-size:11.5px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .lr-ai-body{color:#c4d8c0;font-size:12.5px;line-height:1.75}
-.lr-ai-body p{margin:0 0 8px}
 .lr-ai-body strong{color:#d4af37}
-.lr-ai-body ul{margin:4px 0 8px 18px}
 .lr-ai-body li{margin-bottom:3px}
-.lr-ai-streaming{display:inline-block;width:8px;height:14px;background:#d4af37;border-radius:2px;animation:lr-blink .7s step-end infinite;vertical-align:text-bottom;margin-left:2px}
-@keyframes lr-blink{0%,100%{opacity:1}50%{opacity:0}}
-
-/* ── Confirm tests pills ── */
-.lr-confirm-section{margin-top:12px}
-.lr-confirm-hdr{font-size:10.5px;font-weight:700;color:var(--em);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
-.lr-confirm-pills{display:flex;flex-wrap:wrap;gap:5px}
-.lr-confirm-pill{
-  padding:4px 11px;background:var(--em-lt);border:1px solid var(--sage-lt);
-  border-radius:14px;font-size:11px;font-weight:600;color:var(--sage-deep);cursor:default;
-}
-
-/* ── Reference browser ── */
-.lr-browser-wrap{margin-bottom:14px}
-.lr-browser-search{
-  display:flex;align-items:center;gap:8px;
-  background:var(--surf);border:1.5px solid var(--bdr);border-radius:10px;
-  padding:8px 12px;margin-bottom:11px;
-}
-.lr-browser-search input{
-  flex:1;background:transparent;border:none;outline:none;
-  color:var(--tx);font-family:Inter,sans-serif;font-size:13px;
-}
-.lr-browser-search input::placeholder{color:var(--lt)}
-.lr-ref-group{margin-bottom:12px}
-.lr-ref-group-hdr{
-  font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.10em;
-  color:var(--mu);padding:5px 2px;margin-bottom:6px;
-  border-bottom:1.5px solid var(--bdr);
-  display:flex;align-items:center;gap:6px;
-}
-.lr-ref-row{
-  display:flex;align-items:center;gap:10px;padding:9px 11px;
-  background:var(--surf);border:1px solid var(--bdr);border-radius:10px;
-  margin-bottom:5px;cursor:pointer;transition:all .12s;
-}
-.lr-ref-row:hover{border-color:var(--sage-lt);box-shadow:var(--sh)}
-.lr-ref-name{flex:1;font-size:12.5px;font-weight:600;color:var(--tx)}
-.lr-ref-range{font-size:11px;color:var(--mu);text-align:right;white-space:nowrap}
-.lr-ref-unit{font-size:10px;color:var(--lt);margin-top:1px}
-.lr-ref-pill{
-  padding:2px 8px;border-radius:10px;font-size:9.5px;font-weight:700;
-  background:var(--em-lt);color:var(--sage-deep);white-space:nowrap;
-}
-
-/* ── Load state ── */
-.lr-loading{text-align:center;padding:40px 16px;color:var(--mu)}
-.lr-spinner{
-  width:32px;height:32px;border:3px solid var(--bdr);border-top-color:var(--sage);
-  border-radius:50%;animation:lr-spin 0.8s linear infinite;margin:0 auto 12px;
-}
-@keyframes lr-spin{to{transform:rotate(360deg)}}
-
-/* ── Dark mode overrides ── */
-body.dark .lr-hero{filter:brightness(.9)}
-body.dark .lr-input-card{background:#221e18;border-color:#3a3028}
-body.dark .lr-select,body.dark .lr-input{background:#1a1612;border-color:#3a3028;color:var(--tx)}
+.lr-cur{display:inline-block;width:8px;height:14px;background:#d4af37;border-radius:2px;animation:lrblink .7s step-end infinite;vertical-align:text-bottom;margin-left:2px}
+@keyframes lrblink{0%,100%{opacity:1}50%{opacity:0}}
+.lr-cpills{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.lr-cpill{padding:4px 11px;background:#e0f5ee;border:1px solid #86efac;border-radius:14px;font-size:11px;font-weight:600;color:#1a5a3a}
+.lr-bsrchwrap{display:flex;align-items:center;gap:8px;background:var(--surf);border:1.5px solid var(--bdr);border-radius:10px;padding:8px 12px;margin-bottom:11px}
+.lr-bsrchwrap input{flex:1;background:transparent;border:none;outline:none;color:var(--tx);font-family:Inter,sans-serif;font-size:13px}
+.lr-bsrchwrap input::placeholder{color:var(--lt,#aaa)}
+.lr-brow{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--surf);border:1px solid var(--bdr);border-radius:10px;margin-bottom:5px;cursor:pointer;transition:all .12s}
+.lr-brow:hover{border-color:#0f6b5c;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.lr-bname{flex:1;font-size:12.5px;font-weight:600;color:var(--tx)}
+.lr-brange{font-size:11px;color:var(--mu);text-align:right;white-space:nowrap}
+.lr-bunit{font-size:10px;color:var(--lt,#aaa);margin-top:1px}
+.lr-bipill{padding:2px 8px;border-radius:10px;font-size:9.5px;font-weight:700;background:#e6f5ec;color:#1a5a3a;white-space:nowrap}
+.lr-errbox{padding:14px;border-radius:10px;background:#fef2f2;border:1.5px solid #fca5a5;color:#7f1d1d;font-size:12.5px;line-height:1.6;margin-top:8px}
+body.dark .lr-card{background:#221e18;border-color:#3a3028}
+body.dark .lr-sel,body.dark .lr-inp{background:#1a1612;border-color:#3a3028;color:var(--tx)}
 body.dark .lr-ptab{background:#1a1612;border-color:#3a3028;color:#b7d4c0}
 body.dark .lr-ptab.active{background:linear-gradient(135deg,#0f4a3a,#0a3028);color:#d8ede4}
-body.dark .lr-ref-row{background:#221e18;border-color:#3a3028}
-body.dark .lr-status-normal{background:#0d2a0d;border-color:#166534;color:#86efac}
-body.dark .lr-status-low{background:#0d1020;border-color:#1e3a8a;color:#93c5fd}
-body.dark .lr-status-high{background:#1a1000;border-color:#9a3412;color:#fcd34d}
-body.dark .lr-status-critical{background:#1a0505;border-color:#991b1b;color:#fca5a5}
-body.dark .lr-india-note{background:rgba(212,175,55,.08);color:#c4a882}
-body.dark .lr-browser-wrap .lr-browser-search{background:#1a1612;border-color:#3a3028}
-body.dark .lr-browser-wrap .lr-browser-search input{color:var(--tx)}
-body.dark .lr-confirm-pill{background:rgba(107,143,110,.15);border-color:#2a4a3a;color:var(--sage-lt)}
+body.dark .lr-brow{background:#221e18;border-color:#3a3028}
+body.dark .lr-bsrchwrap{background:#1a1612;border-color:#3a3028}
+body.dark .lr-sn{background:#0d2a0d;border-color:#166534;color:#86efac}
+body.dark .lr-sl{background:#0d1020;border-color:#1e3a8a;color:#93c5fd}
+body.dark .lr-sh{background:#1a1000;border-color:#9a3412;color:#fcd34d}
+body.dark .lr-sk{background:#1a0505;border-color:#991b1b;color:#fca5a5}
+body.dark .lr-inote{background:rgba(212,175,55,.08);color:#c4a882}
+body.dark .lr-cpill{background:rgba(107,143,110,.15);border-color:#2a4a3a;color:#86efac}
 </style>
 
-<!-- ══ LAB REFERENCE JAVASCRIPT ══ -->
+<script>
+/* ── INLINE DATA — works immediately, no CDN required ── */
+</script>
+<script>
+var LR_INLINE_DATA={"meta":{"version":"1.0.0","authored":"Dr. Vikranth BNYS \u00b7 NaturaRef","note":"Indian population-calibrated reference ranges. Values reflect ICMR / RGUHS BNYS clinical guidelines. Ranges may vary slightly by laboratory method \u2014 always correlate clinically.","south_asian_note":"South Asian populations carry higher cardiometabolic risk at lower BMI and HbA1c thresholds. Interpret accordingly."},"CBC":{"Hemoglobin":{"male":[13.0,17.0],"female":[11.0,15.0],"unit":"g/dL","critical_low":7.0,"critical_high":20.0,"notes":"ICMR-adjusted lower threshold for Indian population. Anaemia highly prevalent \u2014 Hb < 11 g/dL warrants iron studies.","bnys_insight":"Iron-deficiency anaemia: increase dietary iron (amaranth, drumstick, jaggery), vitamin C co-ingestion, avoid tea/coffee with meals. Fasting therapy contraindicated below 10 g/dL.","confirm_tests":["Serum Ferritin","Serum Iron","TIBC","Peripheral smear","Reticulocyte count"]},"WBC (Total Leucocyte Count)":{"range":[4000,11000],"unit":"cells/\u00b5L","critical_low":2000,"critical_high":30000,"notes":"Leucocytosis > 11000 suggests infection/inflammation. Leucopenia < 4000 in viral illness or bone marrow suppression.","bnys_insight":"Chronic low-grade leucocytosis may indicate subclinical inflammation \u2014 address gut health, sleep, and stress. Tulsi, Guduchi support immune regulation.","confirm_tests":["Differential count","C-reactive protein","ESR","Blood culture if febrile","Bone marrow biopsy if persistent"]},"Neutrophils":{"range":[40,70],"unit":"%","notes":"Neutrophilia > 70%: bacterial infection. Neutropenia < 40%: viral, drugs, bone marrow issue.","confirm_tests":["Blood culture","Viral serology","ANA/ANCA if autoimmune suspected"]},"Lymphocytes":{"range":[20,40],"unit":"%","notes":"Lymphocytosis > 40%: viral infection, CLL. Lymphopenia < 20%: HIV, TB, corticosteroid use.","confirm_tests":["HIV ELISA","CD4/CD8 count","CBNAAT for TB","Peripheral smear"]},"Eosinophils":{"range":[1,6],"unit":"%","notes":"Eosinophilia > 6% common in India \u2014 allergy, parasitic infection, ABPA.","bnys_insight":"Persistent eosinophilia with GI symptoms \u2014 stool examination for parasites mandatory. Neem, turmeric support anti-parasitic action.","confirm_tests":["Stool for ova and cysts","IgE total","Serology for filaria/strongyloides","Chest X-ray if pulmonary eosinophilia"]},"Platelets":{"range":[150000,400000],"unit":"cells/\u00b5L","critical_low":50000,"critical_high":1000000,"notes":"Thrombocytopenia < 100,000 in dengue, ITP, SLE. Thrombocytosis > 400,000 in reactive or CML.","bnys_insight":"Dengue thrombocytopenia \u2014 papaya leaf extract (Carica papaya) has evidence (RCT) for platelet improvement. Avoid invasive procedures below 50,000.","confirm_tests":["Peripheral smear","NS1 antigen/dengue serology","ANA","Bone marrow biopsy"]},"MCV":{"range":[80,100],"unit":"fL","notes":"Microcytic (< 80): iron deficiency, thalassaemia. Macrocytic (> 100): B12/folate deficiency, hypothyroidism.","confirm_tests":["Serum Ferritin","Serum B12","Folate","Haemoglobin electrophoresis if microcytic with normal ferritin"]},"Hematocrit (PCV)":{"male":[39,50],"female":[35,45],"unit":"%","notes":"Reflects red cell mass. Elevated in polycythaemia vera or dehydration.","confirm_tests":["Erythropoietin level","JAK2 mutation","Arterial blood gas"]}},"Metabolic":{"Vitamin D (25-OH)":{"range":[30,100],"deficiency_cutoff":20,"insufficiency_cutoff":30,"optimal_range":[40,60],"unit":"ng/mL","india_note":"Paradoxically, > 80% of Indians are deficient despite high sun exposure \u2014 melanin, sunscreen, indoor lifestyle, vegetarian diet reduce synthesis. Target 40\u201360 ng/mL for optimal BNYS outcomes.","bnys_insight":"Sunlight exposure (10:00 AM \u2013 2:00 PM, 20 minutes, 40% skin exposure) is first-line. Supplement: Cholecalciferol 60,000 IU weekly \u00d7 8 weeks, then 2,000 IU daily maintenance. Monitor at 3 months.","confirm_tests":["iPTH","Serum Calcium","Serum Phosphorus","24-hr urine calcium","Repeat 25-OH Vit D at 3 months"]},"Vitamin B12":{"range":[200,900],"unit":"pg/mL","deficiency_cutoff":200,"grey_zone":[200,300],"india_note":"Vegetarians have 4\u00d7 higher risk of B12 deficiency. Treat grey zone (200\u2013300) symptomatically in vegetarians.","bnys_insight":"Dairy, eggs (if lacto-ovo), fortified foods. Supplement: Methylcobalamin 1500 \u00b5g daily or 500 \u00b5g TDS. IM cyanocobalamin 1000 \u00b5g \u00d7 10 days for severe neurological deficiency.","confirm_tests":["Homocysteine","MMA (methylmalonic acid)","Peripheral smear for macrocytosis","Intrinsic factor antibody if pernicious anaemia suspected"]},"Fasting Blood Glucose":{"range":[70,99],"unit":"mg/dL","prediabetes":[100,125],"diabetes_cutoff":126,"critical_low":55,"critical_high":400,"india_note":"South Asians develop T2DM at lower BMI (\u2265 23 kg/m\u00b2). Prediabetes management is critical \u2014 lifestyle intervention can prevent progression in 58% of cases (DPP trial).","bnys_insight":"Naturopathic protocol: Karela (bitter gourd) 50 mL juice fasting, Gurmar (Gymnema sylvestre) 400 mg BD, Fenugreek seed soaking overnight then consuming. Structured walking 45 min/day reduces FBG significantly.","confirm_tests":["HbA1c","Post-prandial glucose (2hr)","Fasting insulin","HOMA-IR","C-peptide","GAD antibody if type 1 suspected"]},"HbA1c":{"range":[4.0,5.6],"unit":"%","prediabetes":[5.7,6.4],"diabetes_cutoff":6.5,"south_asian_note":"South Asian T2DM risk begins at HbA1c > 5.7%. Earlier intervention indicated compared to Western populations. Target HbA1c < 7.0% for managed T2DM.","bnys_insight":"HbA1c reflects 3-month average. 1% reduction possible with: combined yoga + diet + fasting therapy programme over 12 weeks. Amla (Indian gooseberry) has RCT evidence for HbA1c reduction.","confirm_tests":["Fasting blood glucose","Postprandial glucose","Fasting insulin + HOMA-IR","Urine microalbumin","Lipid profile","Renal function tests"]},"Fasting Insulin":{"range":[2,20],"unit":"\u00b5IU/mL","notes":"HOMA-IR > 2.5 indicates insulin resistance. Optimal fasting insulin < 8 \u00b5IU/mL for metabolic health.","india_note":"Indians have inherently higher insulin resistance \u2014 even lean individuals may have HOMA-IR > 2.5 due to central adiposity.","bnys_insight":"Intermittent fasting, low-glycaemic diet, aerobic exercise reduce fasting insulin significantly. Berberine 500 mg TDS has RCT evidence comparable to metformin for insulin resistance.","confirm_tests":["HbA1c","Fasting glucose","Lipid profile","Liver function tests","PCOS workup if female with IR"]},"Iron (Serum)":{"male":[60,170],"female":[50,150],"unit":"\u00b5g/dL","notes":"Must interpret with TIBC and ferritin for complete iron status.","confirm_tests":["Serum Ferritin","TIBC","Transferrin saturation","Peripheral smear","Reticulocyte count"]},"Ferritin":{"male":[12,300],"female":[12,150],"unit":"ng/mL","iron_deficiency_cutoff":30,"iron_overload_cutoff":300,"notes":"Ferritin < 30 ng/mL even with normal Hb indicates depleted iron stores. Ferritin is also an acute-phase reactant \u2014 elevated in infection/inflammation masking true deficiency.","bnys_insight":"Iron-rich foods: dried figs, raisins, curry leaves, drumstick leaves, moringa, til (sesame). Combine with vitamin C sources. Avoid tea/coffee within 1 hour of iron-rich meals.","confirm_tests":["Serum Iron","TIBC","CRP (to exclude inflammatory state elevating ferritin)","Liver enzymes if > 500"]}},"Liver":{"ALT (SGPT)":{"male":[7,56],"female":[7,45],"unit":"U/L","critical_high":500,"notes":"Most liver-specific transaminase. Elevated in hepatitis, NAFLD, drugs, alcohol. > 3\u00d7 ULN is significant.","bnys_insight":"Hepato-protective BNYS herbs: Bhumi amla (Phyllanthus niruri) 300 mg TDS, Milk thistle (silymarin 140 mg TDS), Kutki (Picrorhiza kurroa) 200 mg BD. Avoid hepatotoxic supplements.","confirm_tests":["AST/ALT ratio","GGT","Alkaline phosphatase","Bilirubin","Albumin","PT/INR","Ultrasound abdomen","HBsAg","Anti-HCV"]},"AST (SGOT)":{"male":[10,40],"female":[10,35],"unit":"U/L","notes":"Less liver-specific than ALT \u2014 also elevated in muscle, heart. AST:ALT ratio > 2:1 suggests alcoholic liver disease.","confirm_tests":["ALT","GGT","CK (if muscle suspected)","LDH"]},"Total Bilirubin":{"range":[0.3,1.2],"unit":"mg/dL","critical_high":15.0,"notes":"Direct > 0.3: conjugated hyperbilirubinaemia (obstructive). Indirect > 1.0: haemolysis or Gilbert's syndrome.","bnys_insight":"Mild jaundice with normal liver enzymes: screen for Gilbert's syndrome (benign). Fasting aggravates Gilbert's \u2014 avoid prolonged fasts.","confirm_tests":["Direct/indirect bilirubin fractionation","Liver enzymes","Full blood count","Reticulocyte count","USG abdomen"]},"Albumin":{"range":[3.5,5.0],"unit":"g/dL","notes":"Marker of hepatic synthetic function and nutritional status. Albumin < 3.5 in cirrhosis, malnutrition, nephrotic syndrome.","confirm_tests":["Total protein","PT/INR","Urine protein","Liver enzymes"]},"GGT":{"male":[10,71],"female":[6,42],"unit":"U/L","notes":"Sensitive marker of alcohol consumption, enzyme induction, biliary disease. Elevated in NAFLD before ALT rises.","confirm_tests":["Liver function panel","AUDIT alcohol questionnaire","USG liver"]},"Alkaline Phosphatase":{"range":[44,147],"unit":"U/L","notes":"Elevated in cholestasis, bone disease, pregnancy. Physiologically elevated in children and adolescents \u2014 cannot use adult range.","confirm_tests":["GGT (if elevated \u2014 liver source confirmed)","Bilirubin","USG abdomen","ALP isoenzymes","Bone density scan if bone source suspected"]}},"Kidney":{"Serum Creatinine":{"male":[0.7,1.2],"female":[0.5,1.0],"unit":"mg/dL","critical_high":10.0,"india_note":"Indian population has lower muscle mass \u2014 creatinine may be lower at equivalent GFR. Use CKD-EPI equation. Vegetarians have inherently lower creatinine.","bnys_insight":"CKD naturopathic support: low-protein plant-based diet, Punarnava (Boerhavia diffusa) 500 mg BD, avoid nephrotoxic herbs (aristolochic acid, comfrey). Monitor closely.","confirm_tests":["eGFR (CKD-EPI)","BUN/Urea","Urine microalbumin-creatinine ratio","Urine routine examination","Serum electrolytes","USG kidneys"]},"eGFR":{"range":[60,120],"unit":"mL/min/1.73m\u00b2","ckd_stages":{"G1":"\u2265 90 \u2014 Normal","G2":"60\u201389 \u2014 Mildly decreased","G3a":"45\u201359 \u2014 Mild-moderate decrease","G3b":"30\u201344 \u2014 Moderate-severe decrease","G4":"15\u201329 \u2014 Severely decreased","G5":"< 15 \u2014 Kidney failure"},"notes":"Calculate using CKD-EPI formula for most accurate estimation in Indian patients.","confirm_tests":["Serum creatinine","Urine ACR","Serum cystatin C if borderline"]},"BUN (Blood Urea Nitrogen)":{"range":[8,20],"unit":"mg/dL","notes":"BUN:Creatinine ratio > 20:1 suggests pre-renal cause (dehydration, GI bleed). < 10:1 suggests intrinsic renal disease or low protein intake.","confirm_tests":["Serum creatinine","Serum electrolytes","Urine specific gravity"]},"Uric Acid":{"male":[3.5,7.2],"female":[2.6,6.0],"unit":"mg/dL","notes":"Hyperuricaemia > 7.0 associated with gout, CKD, metabolic syndrome.","india_note":"Rising hyperuricaemia in India linked to high fructose corn syrup, meat consumption, and diuretic use in hypertension.","bnys_insight":"Low-purine diet (avoid red meat, organ meat, shellfish, alcohol). Cherry extract 480 mg/day has RCT evidence for reducing gout flares. Dandelion root supports uric acid excretion.","confirm_tests":["24-hr urine uric acid","Joint fluid crystal analysis if gout","Renal function tests","Metabolic panel"]},"Urine Microalbumin-Creatinine Ratio (ACR)":{"range":[0,30],"unit":"mg/g creatinine","microalbuminuria":[30,300],"macroalbuminuria":300,"notes":"First sign of diabetic nephropathy and hypertensive nephropathy. Screen annually in all diabetics and hypertensives.","confirm_tests":["Repeat ACR on 2 more occasions over 3 months","Renal function tests","HbA1c","BP monitoring"]}},"Thyroid":{"TSH (Thyroid Stimulating Hormone)":{"range":[0.4,4.0],"unit":"mIU/L","subclinical_hypo":[4.0,10.0],"critical_low":0.01,"critical_high":100.0,"india_note":"Iodine deficiency thyroid disease prevalent in inland states. Hypothyroidism affects 1 in 10 Indians, higher in women. TSH > 2.5 in pregnancy needs treatment.","bnys_insight":"Hypothyroidism BNYS support: seaweed (Kelp \u2014 use cautiously, iodine source), Ashwagandha 300 mg BD (RCT evidence for TSH normalisation in subclinical hypo), yoga (Sarvangasana, Matsyasana) for thyroid stimulation. Soy, cruciferous vegetables reduce absorption \u2014 separate by 4 hours from levothyroxine.","confirm_tests":["Free T4","Free T3","TPO antibody","Anti-TG antibody","Thyroid USG"]},"Free T4":{"range":[0.7,1.9],"unit":"ng/dL","notes":"Low in hypothyroidism. Elevated in hyperthyroidism or acute illness. Test alongside TSH for complete picture.","confirm_tests":["TSH","Free T3","TPO antibody","Thyroid USG"]},"Free T3":{"range":[2.0,4.4],"unit":"pg/mL","notes":"Active thyroid hormone. Useful in monitoring T3 toxicosis and conversion efficiency assessment.","confirm_tests":["TSH","Free T4","Reverse T3 if suspected impaired conversion"]},"TPO Antibody":{"range":[0,34],"unit":"IU/mL","notes":"Positive in Hashimoto's thyroiditis and Graves' disease. Strong predictor of progression to overt hypothyroidism.","bnys_insight":"Autoimmune thyroiditis \u2014 gluten-free trial for 3 months may reduce TPO antibody levels (evidence: PMID 27238603). Selenium 200 \u00b5g/day (Brazil nuts or supplement) reduces TPO antibodies (multiple RCTs).","confirm_tests":["TSH","Free T4","Anti-TG antibody","Thyroid USG","Coeliac serology"]}},"Lipids":{"Total Cholesterol":{"optimal":[0,199],"borderline":[200,239],"high":240,"unit":"mg/dL","notes":"Total cholesterol alone has limited clinical utility \u2014 always interpret with LDL, HDL, non-HDL, and TG.","confirm_tests":["Full lipid panel with LDL, HDL, TG, non-HDL","Thyroid function (hypothyroidism causes dyslipidaemia)","Liver enzymes"]},"LDL Cholesterol":{"optimal":[0,99],"near_optimal":[100,129],"borderline_high":[130,159],"high":[160,189],"very_high":190,"unit":"mg/dL","india_note":"South Asian guidelines recommend more aggressive LDL targets: < 70 mg/dL for very high CV risk, < 55 mg/dL post-MI.","bnys_insight":"Plant stanols/sterols 2 g/day reduce LDL by 10\u201315%. Red yeast rice (10 mg monacolin K) equivalent to low-dose statin (RCT evidence). Flaxseed 30 g/day, psyllium 10 g/day, oat beta-glucan 3 g/day all have evidence.","confirm_tests":["Lipoprotein(a)","ApoB","hs-CRP","CIMT (carotid intima media thickness)","Coronary calcium score if intermediate risk"]},"HDL Cholesterol":{"male_low":40,"female_low":50,"optimal":60,"unit":"mg/dL","india_note":"Indians have characteristically low HDL even with normal-weight BMI \u2014 a major CV risk factor in this population.","bnys_insight":"Exercise (aerobic \u00d7 30 min daily) raises HDL 3\u20139%. Niacin (nicotinic acid) 1\u20132 g/day raises HDL significantly but flush side-effect limits use. Moderate wine \u2192 replaced by grape seed extract in BNYS practice.","confirm_tests":["Full lipid panel","Non-HDL cholesterol calculation","ApoA1"]},"Triglycerides":{"optimal":[0,149],"borderline":[150,199],"high":[200,499],"very_high":500,"unit":"mg/dL","india_note":"Hypertriglyceridaemia disproportionately prevalent in India \u2014 refined carbohydrate diet, alcohol, uncontrolled diabetes.","bnys_insight":"Most modifiable lipid fraction \u2014 carbohydrate restriction and omega-3 (EPA+DHA 3\u20134 g/day) reduce TG 20\u201350%. Fish oil RCTs strongest evidence. Alcohol cessation essential.","confirm_tests":["HbA1c (diabetes-driven TG elevation)","Thyroid function","Fasting glucose","Lipoprotein panel"]}},"HbA1c":{"HbA1c":{"range":[4.0,5.6],"unit":"%","prediabetes":[5.7,6.4],"diabetes_cutoff":6.5,"south_asian_note":"South Asian populations carry T2DM risk at HbA1c > 5.7% \u2014 earlier than WHO/ADA thresholds designed for Western populations. Indian populations develop T2DM at younger age, lower BMI, and higher CV risk. Aggressive lifestyle intervention is indicated in prediabetes range.","bnys_insight":"12-week structured naturopathic programme: caloric restriction + 45-min brisk walk daily + yoga (Surya namaskar \u00d7 12 rounds) + Karela 50 mL juice fasting + Fenugreek 10 g soaked seeds can reduce HbA1c by 0.5\u20131.0% in prediabetes.","confirm_tests":["Fasting blood glucose","Post-prandial glucose","Fasting insulin","HOMA-IR","Urine microalbumin","Lipid profile","Renal function","Ophthalmology review if > 7.0%"]}},"Inflammatory":{"hs-CRP (High Sensitivity CRP)":{"low_risk":[0,1.0],"intermediate_risk":[1.0,3.0],"high_risk":[3.0,10.0],"unit":"mg/L","notes":"Values > 10 mg/L suggest acute infection or tissue injury rather than chronic inflammation \u2014 repeat when acute event resolved.","bnys_insight":"Anti-inflammatory BNYS protocol: curcumin (BCM-95 formulation) 500 mg TDS has RCT-level evidence for CRP reduction. Omega-3 FA 3 g/day, elimination of refined carbohydrates, sleep optimisation (7\u20139 hrs). Mediterranean diet reduces hs-CRP significantly.","confirm_tests":["ESR","Liver function tests","Full blood count","ANA, ANCA, RF if autoimmune suspected","Lipid profile (CRP + LDL composite risk)"]},"ESR (Erythrocyte Sedimentation Rate)":{"male":[0,15],"female":[0,20],"unit":"mm/hr","age_correction":"Upper limit \u2248 Age/2 (male) or Age/2+5 (female) \u2014 Westergren method","notes":"Non-specific marker of inflammation. Elevated in anaemia, pregnancy, infection, autoimmune disease, malignancy.","confirm_tests":["hs-CRP","Full blood count","Urine routine","ANA/RF/ANCA if autoimmune suspected"]},"Homocysteine":{"range":[5,15],"unit":"\u00b5mol/L","cardiovascular_risk_cutoff":15,"india_note":"Hyperhomocysteinaemia prevalent in vegetarians due to B12 deficiency. B12 + B6 + folate supplementation reduces homocysteine.","bnys_insight":"Treat underlying B12/folate deficiency first. Riboflavin 10 mg/day if MTHFR polymorphism (use methylfolate 400 \u00b5g/day). Betaine 3 g/day as adjunct.","confirm_tests":["Serum B12","Serum Folate","MTHFR genetic testing","Cardiovascular risk assessment"]},"Ferritin (as inflammatory marker)":{"range":[12,300],"unit":"ng/mL","hyperferritinaemia_cutoff":500,"notes":"Ferritin > 500 \u2014 exclude adult-onset Still's disease, haemophagocytic lymphohistiocytosis, hepatic disease, haemochromatosis. In metabolic syndrome, ferritin elevates without iron overload.","confirm_tests":["Liver function tests","Serum iron / transferrin saturation","Full blood count","ANA if autoimmune","HFE gene if haemochromatosis suspected"]},"LDH (Lactate Dehydrogenase)":{"range":[140,280],"unit":"U/L","notes":"Non-specific marker \u2014 elevated in haemolysis, MI, PE, hepatitis, lymphoma. Useful in dengue, COVID complications.","confirm_tests":["Context-specific: CK-MB/troponin for cardiac, haptoglobin for haemolysis, CT-PA for PE"]},"ANA (Anti-Nuclear Antibody)":{"range":"Negative (< 1:80 titre)","unit":"titre","notes":"Positive ANA alone is insufficient for SLE diagnosis \u2014 up to 15% of healthy population may have low-titre positive. Requires specific ENA panel for diagnosis.","confirm_tests":["dsDNA antibody","ENA panel (anti-Sm, anti-SSA/SSB, anti-Jo-1, anti-Scl-70)","Complement C3/C4","Urine for casts","Full blood count"]}},"Electrolytes":{"Sodium":{"range":[136,145],"unit":"mEq/L","critical_low":125,"critical_high":155,"notes":"Hyponatraemia: excess water, SIADH, diuretics, hypothyroidism. Hypernatraemia: dehydration, diabetes insipidus.","confirm_tests":["Serum osmolality","Urine sodium","Urine osmolality","Thyroid function"]},"Potassium":{"range":[3.5,5.0],"unit":"mEq/L","critical_low":3.0,"critical_high":6.0,"notes":"Hypokalaemia: diarrhoea, diuretics, hyperaldosteronism. Hyperkalaemia: CKD, ACE inhibitors, Addison's disease.","bnys_insight":"Dietary potassium: bananas, coconut water, sweet potato, spinach. For hypokalaemia \u2014 avoid loop diuretics without monitoring. Hypertension patients on naturo protocol often achieve BP control allowing diuretic reduction.","confirm_tests":["ECG (both hypo and hyperkalaemia cause arrhythmia)","Renal function","Aldosterone/renin ratio if recurrent hypo"]},"Calcium (Total)":{"range":[8.5,10.5],"unit":"mg/dL","critical_low":7.0,"critical_high":13.0,"notes":"Always correct for albumin: corrected Ca = total Ca + 0.8 \u00d7 (4 \u2013 albumin). Ionised calcium is more reliable.","confirm_tests":["Ionised calcium","iPTH","Vitamin D (25-OH)","Phosphorus","Alkaline phosphatase"]}}}
+;
+</script>
+
 <script>
 (function(){
 'use strict';
 
-/* ── Constants ────────────────────────────────────────────────────── */
-var LR_JSON_URL = 'https://cdn.jsdelivr.net/gh/vikyaitool-droid/ccr-data@main/data/v1/lab_ranges_india.json';
-var LR_IDB_KEY  = 'naturaref:lab_ranges_india:v1';
-var LR_IDB_TS   = 'naturaref:lab_ranges_india:ts';
-var LR_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+/* ── State ── */
+var _lrPanel  = 'CBC';
+var _lrGender = 'male';
+var _lrAbort  = null;
+var _lrData   = null;   // set synchronously from LR_INLINE_DATA
 
-/* ── State ───────────────────────────────────────────────────────── */
-var _lrData      = null;   // parsed JSON from CDN
-var _lrLoading   = false;
-var _lrPanel     = null;   // currently selected panel key
-var _lrGender    = 'male';
-var _lrAbort     = null;
+/* ── Grab inline data immediately ── */
+if(typeof LR_INLINE_DATA !== 'undefined') _lrData = LR_INLINE_DATA;
 
-/* ═══════════════════════════════════════════════════════════════════
-   IDB HELPERS (mirrors NrKV pattern used elsewhere in the app)
-   ═══════════════════════════════════════════════════════════════════ */
-function _lrIdbOpen() {
-  return new Promise(function(res, rej) {
-    var req = indexedDB.open('NaturaRefKV', 1);
-    req.onupgradeneeded = function(e) {
-      e.target.result.createObjectStore('kv', { keyPath: 'k' });
-    };
-    req.onsuccess  = function(e) { res(e.target.result); };
-    req.onerror    = function(e) { rej(e.target.error); };
-  });
-}
-function idbGet(key) {
-  return _lrIdbOpen().then(function(db) {
-    return new Promise(function(res, rej) {
-      var tx  = db.transaction('kv', 'readonly');
-      var req = tx.objectStore('kv').get(key);
-      req.onsuccess = function() { res(req.result ? req.result.v : null); };
-      req.onerror   = function() { rej(req.error); };
-    });
-  });
-}
-function idbSet(key, val) {
-  return _lrIdbOpen().then(function(db) {
-    return new Promise(function(res, rej) {
-      var tx  = db.transaction('kv', 'readwrite');
-      var req = tx.objectStore('kv').put({ k: key, v: val });
-      req.onsuccess = function() { res(); };
-      req.onerror   = function() { rej(req.error); };
-    });
-  });
-}
+/* ── IDB cache helpers ── */
+function _idb(){return new Promise(function(res,rej){var r=indexedDB.open('NaturaRefKV',1);r.onupgradeneeded=function(e){e.target.result.createObjectStore('kv',{keyPath:'k'});};r.onsuccess=function(e){res(e.target.result);};r.onerror=function(e){rej(e);};});}
+function idbGet(k){return _idb().then(function(db){return new Promise(function(res,rej){var tx=db.transaction('kv','readonly');var r=tx.objectStore('kv').get(k);r.onsuccess=function(){res(r.result?r.result.v:null);};r.onerror=function(){rej(r.error);};});});}
+function idbSet(k,v){return _idb().then(function(db){return new Promise(function(res,rej){var tx=db.transaction('kv','readwrite');var r=tx.objectStore('kv').put({k:k,v:v});r.onsuccess=function(){res();};r.onerror=function(){rej(r.error);};});});}
 
-/* ═══════════════════════════════════════════════════════════════════
-   DATA LOADING — CDN → IDB cache
-   ═══════════════════════════════════════════════════════════════════ */
-async function _lrLoadData() {
-  if (_lrData) return _lrData;
-  if (_lrLoading) return null;
-  _lrLoading = true;
-
-  // 1. Try IDB cache first
-  try {
-    var ts    = await idbGet(LR_IDB_TS);
-    var fresh = ts && (Date.now() - parseInt(ts, 10)) < LR_CACHE_TTL;
-    if (fresh) {
-      var cached = await idbGet(LR_IDB_KEY);
-      if (cached) {
-        _lrData = JSON.parse(cached);
-        _lrLoading = false;
-        return _lrData;
-      }
+/* ── Background: try IDB then CDN; update _lrData if newer ── */
+(async function(){
+  try{
+    var ts=await idbGet('nr:lab:ts');
+    if(ts&&Date.now()-parseInt(ts,10)<7*24*60*60*1000){
+      var c=await idbGet('nr:lab:v1');
+      if(c){_lrData=JSON.parse(c);_lrRebuildSel(_lrPanel);return;}
     }
-  } catch(e) {}
+    var r=await fetch('https://cdn.jsdelivr.net/gh/vikyaitool-droid/ccr-data@main/data/v1/lab_ranges_india.json');
+    if(r.ok){var j=await r.json();_lrData=j;try{await idbSet('nr:lab:v1',JSON.stringify(j));await idbSet('nr:lab:ts',String(Date.now()));}catch(e){}_lrRebuildSel(_lrPanel);}
+  }catch(e){}
+})();
 
-  // 2. Fetch from CDN
-  try {
-    var res  = await fetch(LR_JSON_URL);
-    var json = await res.json();
-    _lrData  = json;
-    // Cache to IDB
-    try {
-      await idbSet(LR_IDB_KEY, JSON.stringify(json));
-      await idbSet(LR_IDB_TS, String(Date.now()));
-    } catch(e) {}
-    _lrLoading = false;
-    return _lrData;
-  } catch(e) {
-    _lrLoading = false;
-    throw new Error('Lab ranges JSON could not be loaded — check CDN URL or offline status: ' + e.message);
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION BUILDER — called by openSection() override
-   ═══════════════════════════════════════════════════════════════════ */
-function _lrBuildPanel(container) {
-  container.innerHTML = [
-    '<div class="ca" id="ca-labref" style="overflow-y:auto">',
-    '<div style="max-width:900px;margin:0 auto;padding:10px 14px 80px">',
-
-    /* Hero */
-    '<div class="lr-hero">',
-      '<div class="lr-hero-icon">🔬</div>',
-      '<div>',
-        '<div class="lr-hero-title">Lab Reference · India</div>',
-        '<div class="lr-hero-sub">Indian population–calibrated ranges · Colour-coded interpretation · AI naturopathic commentary</div>',
-        '<div class="lr-hero-badge">🇮🇳 ICMR-aligned &nbsp;|&nbsp; ♀♂ Gender-aware &nbsp;|&nbsp; 📶 IndexedDB cached</div>',
-      '</div>',
-    '</div>',
-
-    /* Panel tabs */
-    '<div class="lr-panel-tabs" id="lr-panel-tabs">',
-      '<button class="lr-ptab active" onclick="lrSelectPanel(\'CBC\')">🩸 CBC</button>',
-      '<button class="lr-ptab" onclick="lrSelectPanel(\'Metabolic\')">⚗️ Metabolic</button>',
-      '<button class="lr-ptab" onclick="lrSelectPanel(\'Liver\')">🫀 Liver</button>',
-      '<button class="lr-ptab" onclick="lrSelectPanel(\'Kidney\')">🫘 Kidney</button>',
-      '<button class="lr-ptab" onclick="lrSelectPanel(\'Thyroid\')">🦋 Thyroid</button>',
-      '<button class="lr-ptab" onclick="lrSelectPanel(\'Lipids\')">💧 Lipids</button>',
-      '<button class="lr-ptab" onclick="lrSelectPanel(\'HbA1c\')">🩻 HbA1c</button>',
-      '<button class="lr-ptab" onclick="lrSelectPanel(\'Inflammatory\')">🔥 Inflam.</button>',
-      '<button class="lr-ptab" onclick="lrSelectPanel(\'Electrolytes\')">⚡ Electrolytes</button>',
-    '</div>',
-
-    /* Input card */
-    '<div class="lr-input-card">',
-      '<div class="lr-input-hdr">🧪 Enter Lab Value for Interpretation</div>',
-      '<div class="lr-field-row">',
-        '<div>',
-          '<div class="lr-label">Test Name</div>',
-          '<select class="lr-select" id="lr-test-select" onchange="lrOnTestChange()"><option value="">— select panel first —</option></select>',
-        '</div>',
-        '<div>',
-          '<div class="lr-label">Value</div>',
-          '<input class="lr-input" id="lr-value-input" type="number" step="any" placeholder="e.g. 9.8" oninput="lrClearResult()"/>',
-        '</div>',
-        '<div>',
-          '<div class="lr-label">Gender</div>',
-          '<select class="lr-select" id="lr-gender-select" onchange="_lrGender=this.value;lrClearResult()">',
-            '<option value="male">Male</option>',
-            '<option value="female">Female</option>',
-          '</select>',
-        '</div>',
-      '</div>',
-      '<button class="lr-go-btn" id="lr-go-btn" onclick="lrInterpret()">🔬 Interpret Value + AI Commentary</button>',
-    '</div>',
-
-    /* Result area */
-    '<div class="lr-result-wrap" id="lr-result-wrap">',
-      '<div id="lr-status-card" class="lr-status-card lr-status-normal">',
-        '<div class="lr-status-indicator">',
-          '<div class="lr-status-dot"></div>',
-          '<div class="lr-status-label" id="lr-status-label">Normal</div>',
-        '</div>',
-        '<div class="lr-value-display" id="lr-value-display">—</div>',
-        '<div class="lr-range-info" id="lr-range-info"></div>',
-        '<div id="lr-india-note"></div>',
-        '<div id="lr-critical-banner" style="display:none" class="lr-critical-banner"></div>',
-        '<div class="lr-confirm-section" id="lr-confirm-section" style="display:none">',
-          '<div class="lr-confirm-hdr">🧾 Confirmatory Tests Recommended</div>',
-          '<div class="lr-confirm-pills" id="lr-confirm-pills"></div>',
-        '</div>',
-      '</div>',
-      '<div class="lr-ai-card" id="lr-ai-card" style="display:none">',
-        '<div class="lr-ai-hdr">🌿 BNYS Naturopathic Interpretation <span id="lr-ai-badge" style="margin-left:auto;font-size:9px;font-weight:600;padding:2px 8px;background:rgba(212,175,55,.2);border:1px solid rgba(212,175,55,.35);border-radius:8px;color:#d4af37">AI</span></div>',
-        '<div class="lr-ai-body" id="lr-ai-body"></div>',
-      '</div>',
-    '</div>',
-
-    /* Reference browser */
-    '<div class="lr-browser-wrap" id="lr-browser-wrap">',
-      '<div class="lr-input-hdr" style="margin-bottom:10px">📖 Reference Browser — <span id="lr-browser-panel-name">CBC</span></div>',
-      '<div class="lr-browser-search">',
-        '<span style="color:var(--lt);font-size:15px">🔍</span>',
-        '<input type="text" id="lr-search-input" placeholder="Search test name…" oninput="lrFilterBrowser(this.value)"/>',
-      '</div>',
-      '<div id="lr-browser-list"><div class="lr-loading"><div class="lr-spinner"></div><div>Loading lab ranges…</div></div></div>',
-    '</div>',
-
-    '</div></div>'
-  ].join('');
-
-  // Auto-load first panel
-  _lrPanel = 'CBC';
-  _lrLoadData()
-    .then(function() { lrRenderBrowser('CBC'); })
-    .catch(function(err) {
-      var el = document.getElementById('lr-browser-list');
-      if (el) el.innerHTML = '<div style="padding:20px;color:#c0392b;font-size:12.5px">⚠️ ' + err.message + '</div>';
-    });
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   PANEL TAB SWITCHING
-   ═══════════════════════════════════════════════════════════════════ */
-window.lrSelectPanel = function(panelKey) {
-  _lrPanel = panelKey;
-  // Update tabs
-  document.querySelectorAll('.lr-ptab').forEach(function(b) {
-    b.classList.toggle('active', b.textContent.trim().replace(/^[\S]+\s/, '').trim() === _lrPanelLabel(panelKey) || b.getAttribute('onclick') === 'lrSelectPanel(\'' + panelKey + '\')');
-  });
-  // Update browser header
-  var hn = document.getElementById('lr-browser-panel-name');
-  if (hn) hn.textContent = panelKey;
-  // Rebuild test select
-  lrBuildTestSelect(panelKey);
-  // Render browser
-  lrRenderBrowser(panelKey);
-  lrClearResult();
-};
-
-function _lrPanelLabel(key) {
-  var map = {CBC:'CBC',Metabolic:'Metabolic',Liver:'Liver',Kidney:'Kidney',Thyroid:'Thyroid',Lipids:'Lipids',HbA1c:'HbA1c',Inflammatory:'Inflam.',Electrolytes:'Electrolytes'};
-  return map[key] || key;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   TEST SELECT BUILDER
-   ═══════════════════════════════════════════════════════════════════ */
-function lrBuildTestSelect(panelKey) {
-  var sel = document.getElementById('lr-test-select');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">— select test —</option>';
-  if (!_lrData || !_lrData[panelKey]) return;
-  Object.keys(_lrData[panelKey]).forEach(function(testName) {
-    var opt = document.createElement('option');
-    opt.value = testName;
-    opt.textContent = testName;
-    sel.appendChild(opt);
-  });
-}
-
-window.lrOnTestChange = function() { lrClearResult(); };
-window.lrClearResult  = function() {
-  var w = document.getElementById('lr-result-wrap');
-  if (w) w.style.display = 'none';
-  if (_lrAbort) { _lrAbort.abort(); _lrAbort = null; }
-};
-
-/* ═══════════════════════════════════════════════════════════════════
-   REFERENCE BROWSER RENDERER
-   ═══════════════════════════════════════════════════════════════════ */
-function lrRenderBrowser(panelKey, filter) {
-  var wrap = document.getElementById('lr-browser-list');
-  if (!wrap) return;
-  if (!_lrData) {
-    wrap.innerHTML = '<div class="lr-loading"><div class="lr-spinner"></div><div>Loading…</div></div>';
-    _lrLoadData().then(function() { lrRenderBrowser(panelKey, filter); }).catch(function(){});
-    return;
-  }
-  var panel = _lrData[panelKey];
-  if (!panel) { wrap.innerHTML = '<div style="padding:20px;color:var(--mu);font-size:13px">No data for this panel.</div>'; return; }
-
-  var filterLow = (filter || '').toLowerCase().trim();
-  var html = '';
-  Object.keys(panel).forEach(function(testName) {
-    if (filterLow && testName.toLowerCase().indexOf(filterLow) === -1) return;
-    var t = panel[testName];
-    var rangeStr = _lrRangeStr(t);
-    var unitStr  = t.unit || '';
-    html += '<div class="lr-ref-row" onclick="lrQuickFill(\'' + testName.replace(/'/g,"\\'") + '\')" title="Tap to auto-fill input">';
-    html += '<div class="lr-ref-name">' + testName + '</div>';
-    html += '<div style="text-align:right">';
-    html += '<div class="lr-ref-range">' + rangeStr + '</div>';
-    html += '<div class="lr-ref-unit">' + unitStr + '</div>';
-    html += '</div>';
-    if (t.india_note || t.south_asian_note) {
-      html += '<span class="lr-ref-pill">🇮🇳 India</span>';
-    }
-    html += '</div>';
-  });
-  wrap.innerHTML = html || '<div style="padding:20px;color:var(--mu);font-size:13px;text-align:center">No matches found.</div>';
-}
-
-window.lrFilterBrowser = function(q) { lrRenderBrowser(_lrPanel, q); };
-
-window.lrQuickFill = function(testName) {
-  var sel = document.getElementById('lr-test-select');
-  if (!sel) return;
-  // Ensure right panel options are loaded
-  lrBuildTestSelect(_lrPanel);
-  sel.value = testName;
-  var inp = document.getElementById('lr-value-input');
-  if (inp) { inp.value = ''; inp.focus(); }
-  lrClearResult();
-};
-
-/* ═══════════════════════════════════════════════════════════════════
-   RANGE HELPERS
-   ═══════════════════════════════════════════════════════════════════ */
-function _lrRangeStr(t) {
-  if (!t) return '—';
-  var g = _lrGender;
-  if (t.male && t.female) return (g === 'female' ? t.female : t.male)[0] + ' – ' + (g === 'female' ? t.female : t.male)[1];
-  if (t.range)            return t.range[0] + ' – ' + t.range[1];
-  if (t.optimal)          return 'Optimal: < ' + t.optimal[1];
+/* ── Helpers ── */
+function _rangeStr(t){
+  var g=_lrGender;
+  if(t.male&&t.female){var a=g==='female'?t.female:t.male;return a[0]+' – '+a[1];}
+  if(t.range) return t.range[0]+' – '+t.range[1];
   return '—';
 }
-
-function _lrGetRange(t) {
-  var g = _lrGender;
-  if (t.male && t.female) return g === 'female' ? t.female : t.male;
-  if (t.range)            return t.range;
+function _getRange(t){
+  if(t.male&&t.female) return _lrGender==='female'?t.female:t.male;
+  if(t.range) return t.range;
   return null;
 }
+function _status(t,val){
+  var r=_getRange(t);
+  if(!r) return {cls:'lr-sn',lbl:'ℹ️ Reference Only'};
+  var lo=r[0],hi=r[1];
+  if(t.critical_low!=null&&val<t.critical_low)  return {cls:'lr-sk',lbl:'🚨 CRITICAL — Too Low'};
+  if(t.critical_high!=null&&val>t.critical_high) return {cls:'lr-sk',lbl:'🚨 CRITICAL — Too High'};
+  if(val<lo) return {cls:'lr-sl',lbl:'↓ Below Normal Range'};
+  if(val>hi) return {cls:'lr-sh',lbl:'↑ Above Normal Range'};
+  return       {cls:'lr-sn',lbl:'✓ Within Normal Range'};
+}
+function _md(s){
+  if(!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^[-•*] (.+)$/gm,'<li>$1</li>')
+    .replace(/\n{2,}/g,'<br><br>').replace(/\n/g,'<br>');
+}
+function _esc(s){return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 
-/* Status → Normal | Low | High | Critical */
-function _lrGetStatus(t, val) {
-  var range = _lrGetRange(t);
-  if (!range) {
-    // For tests without simple ranges (ANA etc.)
-    return { status: 'info', label: 'Reference Only', cls: 'lr-status-normal' };
-  }
-  var lo = range[0], hi = range[1];
-  var clo = t.critical_low  !== undefined ? t.critical_low  : null;
-  var chi = t.critical_high !== undefined ? t.critical_high : null;
-
-  if (clo !== null && val < clo) return { status: 'critical', label: '⚠️ CRITICAL — Low',  cls: 'lr-status-critical' };
-  if (chi !== null && val > chi) return { status: 'critical', label: '⚠️ CRITICAL — High', cls: 'lr-status-critical' };
-  if (val < lo)                  return { status: 'low',      label: '↓ Low',               cls: 'lr-status-low'     };
-  if (val > hi)                  return { status: 'high',     label: '↑ Elevated',          cls: 'lr-status-high'    };
-  return                                 { status: 'normal',  label: '✓ Normal',             cls: 'lr-status-normal'  };
+/* ── Rebuild panel ── */
+function _lrRebuildSel(panel){
+  var sel=document.getElementById('lr-test-sel');
+  if(!sel||!_lrData||!_lrData[panel]) return;
+  sel.innerHTML='<option value="">— select test —</option>';
+  Object.keys(_lrData[panel]).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);});
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   MAIN INTERPRET FUNCTION
-   ═══════════════════════════════════════════════════════════════════ */
-window.lrInterpret = async function() {
-  var testName = (document.getElementById('lr-test-select') || {}).value || '';
-  var valStr   = (document.getElementById('lr-value-input') || {}).value || '';
-  var gender   = (document.getElementById('lr-gender-select') || {}).value || 'male';
-  _lrGender    = gender;
+/* ═══════════════════════
+   PANEL HTML BUILDER
+   ═══════════════════════ */
+function _lrBuild(){
+  var panels=['CBC','Metabolic','Liver','Kidney','Thyroid','Lipids','HbA1c','Inflammatory','Electrolytes'];
+  var icons={CBC:'🩸',Metabolic:'⚗️',Liver:'🫀',Kidney:'🫘',Thyroid:'🦋',Lipids:'💧',HbA1c:'🩻',Inflammatory:'🔥',Electrolytes:'⚡'};
 
-  if (!testName) { if (typeof ccToast === 'function') ccToast('⚠️ Select a test first'); return; }
-  if (!valStr)   { if (typeof ccToast === 'function') ccToast('⚠️ Enter a value'); return; }
+  return '<div style="max-width:900px;margin:0 auto;padding:10px 14px 80px">'
+    /* Hero */
+    +'<div class="lr-hero"><div class="lr-hero-icon">🔬</div><div>'
+    +'<div class="lr-hero-title">Lab Reference · India</div>'
+    +'<div class="lr-hero-sub">ICMR-calibrated ranges · Colour-coded · AI naturopathic commentary · Gender-aware</div>'
+    +'<div class="lr-hero-badge">🇮🇳 India-specific &nbsp;|&nbsp; ♀♂ Gender-aware &nbsp;|&nbsp; 📦 Embedded data</div>'
+    +'</div></div>'
 
-  var val = parseFloat(valStr);
-  if (isNaN(val)) { if (typeof ccToast === 'function') ccToast('⚠️ Enter a valid number'); return; }
+    /* Panel tabs */
+    +'<div class="lr-ptabs" id="lr-ptabs">'
+    +panels.map(function(p){return '<button class="lr-ptab'+(p===_lrPanel?' active':'')+'" onclick="lrTab(\''+p+'\')">'+icons[p]+' '+p+'</button>';}).join('')
+    +'</div>'
 
-  if (!_lrData) {
-    try { await _lrLoadData(); } catch(e) { return; }
-  }
+    /* Input card */
+    +'<div class="lr-card">'
+    +'<div style="font-size:11px;font-weight:700;color:var(--sage-deep,#1a5a3a);text-transform:uppercase;letter-spacing:.08em;margin-bottom:11px">🧪 Enter Lab Value for Interpretation</div>'
+    +'<div class="lr-row">'
+    +'<div><div class="lr-lbl">Test Name</div>'
+    +'<select class="lr-sel" id="lr-test-sel"><option value="">— select test —</option></select></div>'
+    +'<div><div class="lr-lbl">Value</div>'
+    +'<input class="lr-inp" id="lr-val" type="number" step="any" placeholder="e.g. 9.8" oninput="lrClear()"/></div>'
+    +'<div><div class="lr-lbl">Gender</div>'
+    +'<select class="lr-sel" id="lr-gen" onchange="_lrGender=this.value;lrClear()">'
+    +'<option value="male">Male</option><option value="female">Female</option>'
+    +'</select></div>'
+    +'</div>'
+    +'<button class="lr-go" onclick="lrInterpret()">🔬 Interpret + AI Commentary</button>'
+    +'</div>'
 
-  var panel    = _lrData[_lrPanel];
-  if (!panel)  { if (typeof ccToast === 'function') ccToast('⚠️ Panel data missing — reload page'); return; }
-  var testData = panel[testName];
-  if (!testData) { if (typeof ccToast === 'function') ccToast('⚠️ Test not found in panel'); return; }
+    /* Result area */
+    +'<div class="lr-res" id="lr-res">'
+    +'<div id="lr-sc" class="lr-sc lr-sn">'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+    +'<div class="lr-sdot"></div>'
+    +'<div id="lr-lbl" style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em">Normal</div>'
+    +'</div>'
+    +'<div class="lr-vdisp" id="lr-vdisp">—</div>'
+    +'<div class="lr-ri" id="lr-ri"></div>'
+    +'<div id="lr-inote" class="lr-inote" style="display:none"></div>'
+    +'<div id="lr-crit" class="lr-critbanner" style="display:none"></div>'
+    +'<div id="lr-conf" style="display:none">'
+    +'<div style="font-size:10.5px;font-weight:700;color:var(--sage-deep,#1a5a3a);text-transform:uppercase;letter-spacing:.07em;margin-top:10px;margin-bottom:6px">🧾 Confirmatory Tests</div>'
+    +'<div class="lr-cpills" id="lr-cpills"></div>'
+    +'</div>'
+    +'</div>'
+    +'<div class="lr-ai" id="lr-ai" style="display:none">'
+    +'<div class="lr-ai-hdr">🌿 BNYS Naturopathic Interpretation'
+    +'<span style="margin-left:auto;font-size:9px;font-weight:600;padding:2px 8px;background:rgba(212,175,55,.2);border:1px solid rgba(212,175,55,.35);border-radius:8px;color:#d4af37">AI</span>'
+    +'</div>'
+    +'<div class="lr-ai-body" id="lr-ai-body"></div>'
+    +'</div>'
+    +'</div>'
 
-  var { status, label, cls } = _lrGetStatus(testData, val);
-  var range    = _lrGetRange(testData);
-  var unit     = testData.unit || '';
+    /* Browser */
+    +'<div><div style="font-size:11px;font-weight:700;color:var(--sage-deep,#1a5a3a);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">📖 Reference Browser — <span id="lr-bpname">'+_lrPanel+'</span></div>'
+    +'<div class="lr-bsrchwrap"><span style="color:var(--lt,#aaa);font-size:15px">🔍</span>'
+    +'<input type="text" id="lr-bsrch" placeholder="Search test name…" oninput="lrFilter(this.value)"/></div>'
+    +'<div id="lr-blist"></div>'
+    +'</div>'
+    +'</div>';
+}
 
-  /* ── 1. Paint status card ── */
-  var wrap = document.getElementById('lr-result-wrap');
-  var card = document.getElementById('lr-status-card');
-  var lbl  = document.getElementById('lr-status-label');
-  var disp = document.getElementById('lr-value-display');
-  var info = document.getElementById('lr-range-info');
-  var note = document.getElementById('lr-india-note');
-  var crit = document.getElementById('lr-critical-banner');
+/* ═══════════════════════
+   RENDER VIEW
+   ═══════════════════════ */
+function lrRenderView(container){
+  container.innerHTML=_lrBuild();
+  _lrRebuildSel(_lrPanel);
+  lrRenderBrowser(_lrPanel);
+}
 
-  card.className = 'lr-status-card ' + cls;
-  lbl.textContent  = label;
-  disp.textContent = val + ' ' + unit;
-  info.innerHTML   = range
-    ? 'Reference range: <strong>' + range[0] + ' – ' + range[1] + ' ' + unit + '</strong>'
-    : (testData.notes || '');
-  if (testData.notes && range) info.innerHTML += '<br><span style="opacity:.8">' + testData.notes + '</span>';
-
-  // India note
-  var indiaNote = testData.india_note || testData.south_asian_note || '';
-  if (indiaNote) {
-    note.innerHTML = '🇮🇳 <strong>India context:</strong> ' + indiaNote;
-    note.className = 'lr-india-note';
-    note.style.display = '';
-  } else { note.style.display = 'none'; }
-
-  // Critical banner
-  if (status === 'critical') {
-    crit.innerHTML = '🚨 CRITICAL VALUE — Immediate clinical action required. Verify result, assess patient, consider urgent referral.';
-    crit.style.display = '';
-  } else { crit.style.display = 'none'; }
-
-  // Confirm tests
-  var confirmEl    = document.getElementById('lr-confirm-section');
-  var confirmPills = document.getElementById('lr-confirm-pills');
-  var confirmTests = testData.confirm_tests || [];
-  if (confirmTests.length && status !== 'normal') {
-    confirmPills.innerHTML = confirmTests.map(function(t) {
-      return '<span class="lr-confirm-pill">🧾 ' + t + '</span>';
-    }).join('');
-    confirmEl.style.display = '';
-  } else {
-    confirmEl.style.display = 'none';
-  }
-
-  wrap.style.display = '';
-
-  /* ── 2. AI Commentary (only for abnormal or user-requested) ── */
-  var aiCard = document.getElementById('lr-ai-card');
-  var aiBody = document.getElementById('lr-ai-body');
-  aiCard.style.display = '';
-  aiBody.innerHTML = '<span class="lr-ai-streaming"></span>';
-
-  // Cancel previous stream
-  if (_lrAbort) { _lrAbort.abort(); }
-  _lrAbort = new AbortController();
-
-  var statusLabel = label.replace(/[⚠️↓↑✓]/g, '').trim();
-  var rangeStr    = range ? range[0] + ' – ' + range[1] + ' ' + unit : 'no standard range';
-  var bnysHint    = testData.bnys_insight || '';
-  var confirmHint = confirmTests.length ? confirmTests.join(', ') : '';
-
-  var sysPrompt = 'You are Dr. Vikranth, BNYS naturopathic physician. Provide a concise clinical commentary in 3 parts:\n'
-    + '**1. Clinical Significance** — what this result means physiologically (2-3 sentences)\n'
-    + '**2. BNYS Naturopathic Protocol** — specific dietary, herbal, yoga, hydrotherapy interventions with doses and evidence where available (4-6 bullet points)\n'
-    + '**3. What Tests to Confirm** — 3-5 specific follow-up investigations to confirm cause and monitor (brief list)\n\n'
-    + 'Rules: Be specific, cite herbs with doses, mention any relevant BNYS/naturopathic evidence. End with: "— Dr. Vikranth · BNYS". No generic statements.';
-
-  var userPrompt = 'Patient: ' + gender + '\n'
-    + 'Test: ' + testName + '\n'
-    + 'Value: ' + val + ' ' + unit + '\n'
-    + 'Status: ' + statusLabel + '\n'
-    + 'Normal range: ' + rangeStr + '\n'
-    + (bnysHint   ? 'BNYS hint: ' + bnysHint + '\n' : '')
-    + (confirmHint ? 'Likely confirmatory tests: ' + confirmHint + '\n' : '');
-
-  // Use streaming if available, fallback to callAI
-  try {
-    if (typeof callAIStream === 'function') {
-      var acc = '';
-      await callAIStream(
-        [{ role:'system', content: sysPrompt }, { role:'user', content: userPrompt }],
-        900,
-        function(tok) {
-          acc += tok;
-          aiBody.innerHTML = _lrMd(acc) + '<span class="lr-ai-streaming"></span>';
-        },
-        _lrAbort.signal
-      );
-      aiBody.innerHTML = _lrMd(acc);
-    } else if (typeof callAI === 'function') {
-      var raw = await callAI([{ role:'system', content: sysPrompt }, { role:'user', content: userPrompt }], 900);
-      aiBody.innerHTML = _lrMd(raw);
-    } else {
-      aiBody.innerHTML = '<span style="color:var(--mu);font-style:italic">AI not available — set API key in Settings.</span>';
-    }
-  } catch(e) {
-    if (e.name !== 'AbortError') {
-      aiBody.innerHTML = '<span style="color:#c0392b">⚠️ AI error: ' + (e.message || 'check API key') + '</span>';
-    }
-  }
-  _lrAbort = null;
-
-  // Scroll result into view
-  var rw = document.getElementById('lr-result-wrap');
-  if (rw) rw.scrollIntoView({ behavior:'smooth', block:'nearest' });
+/* ═══════════════════════
+   PANEL TAB
+   ═══════════════════════ */
+window.lrTab=function(p){
+  _lrPanel=p;
+  document.querySelectorAll('.lr-ptab').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('onclick')==="lrTab('"+p+"')");
+  });
+  var bp=document.getElementById('lr-bpname');if(bp)bp.textContent=p;
+  _lrRebuildSel(p);
+  lrRenderBrowser(p);
+  lrClear();
 };
 
-/* ── Minimal markdown renderer for AI output ── */
-function _lrMd(text) {
-  if (!text) return '';
-  return text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g,'<em>$1</em>')
-    .replace(/^### (.+)$/gm,'<div style="font-size:12px;font-weight:800;color:#d4af37;text-transform:uppercase;letter-spacing:.06em;margin:10px 0 5px">$1</div>')
-    .replace(/^## (.+)$/gm,'<div style="font-size:13px;font-weight:700;color:#d4af37;margin:12px 0 5px">$1</div>')
-    .replace(/^# (.+)$/gm,'<div style="font-size:14px;font-weight:700;color:#d4af37;margin:12px 0 6px">$1</div>')
-    .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-    .replace(/(<\/li>\s*<li>)/g,'$1')
-    .replace(/\n{2,}/g,'<br><br>')
-    .replace(/\n/g,'<br>');
+/* ═══════════════════════
+   BROWSER
+   ═══════════════════════ */
+function lrRenderBrowser(panel,filter){
+  var wrap=document.getElementById('lr-blist');if(!wrap)return;
+  if(!_lrData||!_lrData[panel]){wrap.innerHTML='<div style="padding:14px;color:var(--mu);font-size:12.5px">No data for this panel.</div>';return;}
+  var q=(filter||'').toLowerCase().trim();
+  var html='';
+  Object.keys(_lrData[panel]).forEach(function(name){
+    if(q&&name.toLowerCase().indexOf(q)===-1)return;
+    var t=_lrData[panel][name];
+    html+='<div class="lr-brow" onclick="lrQuickFill(\''+_esc(name)+'\')" title="Tap to fill input">';
+    html+='<div class="lr-bname">'+name+'</div>';
+    html+='<div style="text-align:right"><div class="lr-brange">'+_rangeStr(t)+'</div><div class="lr-bunit">'+(t.unit||'')+'</div></div>';
+    if(t.india_note||t.south_asian_note)html+='<span class="lr-bipill">🇮🇳</span>';
+    html+='</div>';
+  });
+  wrap.innerHTML=html||'<div style="padding:14px;color:var(--mu);font-size:13px;text-align:center">No matches.</div>';
 }
+window.lrFilter=function(q){lrRenderBrowser(_lrPanel,q);};
+window.lrQuickFill=function(name){
+  _lrRebuildSel(_lrPanel);
+  var sel=document.getElementById('lr-test-sel');if(sel)sel.value=name;
+  var inp=document.getElementById('lr-val');if(inp){inp.value='';inp.focus();}
+  lrClear();
+};
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION REGISTRATION — hooks into existing openSection() flow
-   ═══════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════
+   CLEAR RESULT
+   ═══════════════════════ */
+window.lrClear=function(){
+  var r=document.getElementById('lr-res');if(r)r.style.display='none';
+  if(_lrAbort){_lrAbort.abort();_lrAbort=null;}
+};
 
-/* Wait for SECS to be defined, then register */
-function _lrRegister() {
-  /* Inject into SECS array (used by search index, DDx banner etc.) */
-  if (typeof SECS !== 'undefined') {
-    var already = SECS.some(function(s) { return s.id === 'labref'; });
-    if (!already) {
-      SECS.push({
-        id:'labref', title:'Lab Reference · India', icon:'🔬',
-        group:'diagnose',
-        tabs:[['ref','Lab Reference','🔬','#1a5a3a']]
-      });
-    }
+/* ═══════════════════════
+   INTERPRET
+   ═══════════════════════ */
+window.lrInterpret=async function(){
+  var testName=(document.getElementById('lr-test-sel')||{}).value||'';
+  var valStr=(document.getElementById('lr-val')||{}).value||'';
+  _lrGender=(document.getElementById('lr-gen')||{}).value||'male';
+
+  /* Guard: no test selected */
+  if(!testName){
+    var sel=document.getElementById('lr-test-sel');
+    if(sel){sel.style.borderColor='#ef4444';setTimeout(function(){sel.style.borderColor='';},1500);}
+    return;
+  }
+  /* Guard: no value */
+  if(!valStr){
+    var inp=document.getElementById('lr-val');
+    if(inp){inp.style.borderColor='#ef4444';inp.focus();setTimeout(function(){inp.style.borderColor='';},1500);}
+    return;
+  }
+  var val=parseFloat(valStr);
+  if(isNaN(val)) return;
+
+  /* Guard: data missing */
+  if(!_lrData){
+    var ai=document.getElementById('lr-ai');var ab=document.getElementById('lr-ai-body');
+    if(ai&&ab){ai.style.display='';ab.innerHTML='<div class="lr-errbox">⚠️ Lab data not loaded. Check your internet connection and reload the page.</div>';}
+    return;
   }
 
-  /* Intercept openSection to handle 'labref' */
-  var _origOpenSection = window.openSection;
-  window.openSection = function(sec) {
-    if (sec && sec.id === 'labref') {
-      /* Create view if needed */
-      var secViews = document.getElementById('sec-views');
-      if (!secViews) return;
-      var existingView = document.getElementById('sv-labref');
-      if (!existingView) {
-        var view = document.createElement('div');
-        view.id = 'sv-labref';
-        view.className = 'sec-view';
-        /* Minimal sec-hdr */
-        view.innerHTML = '<div class="sec-hdr"><div class="sec-hdr-row">'
-          + '<div class="sec-hicon" style="background:#e0f5ee;color:#1a5a3a">🔬</div>'
-          + '<div><div class="sec-title" style="color:#1a5a3a">Lab Reference · India</div>'
-          + '<div class="sec-sub">Indian population–calibrated ranges · AI naturopathic commentary · IndexedDB cached</div></div>'
-          + '</div></div>'
-          + '<div id="lr-section-body"></div>';
-        secViews.appendChild(view);
-        _lrBuildPanel(view.querySelector('#lr-section-body'));
-      }
-      /* Show sec-views, hide others */
-      document.getElementById('home-view').style.display  = 'none';
-      document.getElementById('group-view').style.display = 'none';
-      secViews.style.display = 'block';
-      /* Hide all sec-view children, show ours */
-      Array.from(secViews.children).forEach(function(c) { c.style.display = 'none'; });
-      existingView = document.getElementById('sv-labref');
-      existingView.style.display = 'block';
-      /* Update topbar */
-      var tbSec = document.getElementById('tb-sec');
-      var tbSub = document.getElementById('tb-sub');
-      var tbIco = document.getElementById('tb-icon');
-      var tbTtl = document.getElementById('tb-ttl-block');
-      var tbBrand = document.getElementById('tb-brand-home');
-      if (tbBrand) tbBrand.style.display = 'none';
-      if (tbTtl)   tbTtl.style.display   = 'flex';
-      if (tbIco)   { tbIco.innerHTML = '🔬'; tbIco.style.background = '#e0f5ee'; tbIco.style.color = '#1a5a3a'; }
-      if (tbSec)   { tbSec.textContent = 'Lab Reference · India'; tbSec.style.color = '#1a5a3a'; }
-      if (tbSub)   tbSub.textContent = 'ICMR-calibrated · AI naturopathic · Cached';
-      /* curSec / back button */
-      if (typeof curSec !== 'undefined') window.curSec = 'labref';
-      var bb = document.getElementById('back-btn');
-      if (bb) bb.classList.add('visible');
-      document.body.classList.remove('in-group');
-      document.body.classList.add('in-section');
-      if (typeof syncBotNav === 'function') syncBotNav('diagnose');
-      /* Ensure test select is populated for current panel */
-      setTimeout(function() { lrBuildTestSelect(_lrPanel || 'CBC'); }, 150);
-      return;
+  var panel=_lrData[_lrPanel];
+  if(!panel){return;}
+  var td=panel[testName];
+  if(!td){return;}
+
+  /* ── Paint status card ── */
+  var {cls,lbl}=_status(td,val);
+  var range=_getRange(td);
+  var unit=td.unit||'';
+
+  var sc=document.getElementById('lr-sc');   if(sc)sc.className='lr-sc '+cls;
+  var ll=document.getElementById('lr-lbl');  if(ll)ll.textContent=lbl;
+  var vd=document.getElementById('lr-vdisp');if(vd)vd.textContent=val+' '+unit;
+  var ri=document.getElementById('lr-ri');
+  if(ri){
+    ri.innerHTML=range?'Reference: <strong>'+range[0]+' – '+range[1]+' '+unit+'</strong>':'';
+    if(td.notes)ri.innerHTML+=(range?'<br>':'')+'<span style="opacity:.82">'+td.notes+'</span>';
+  }
+
+  /* India note */
+  var ind=document.getElementById('lr-inote');
+  var iNote=td.india_note||td.south_asian_note||'';
+  if(ind){ind.style.display=iNote?'':'none';if(iNote)ind.innerHTML='🇮🇳 <strong>India:</strong> '+iNote;}
+
+  /* Critical banner */
+  var crit=document.getElementById('lr-crit');
+  if(crit){
+    crit.style.display=(cls==='lr-sk')?'':'none';
+    if(cls==='lr-sk')crit.innerHTML='🚨 CRITICAL VALUE — Verify immediately. Consider urgent clinical action.';
+  }
+
+  /* Confirm tests */
+  var cf=document.getElementById('lr-conf');
+  var cp=document.getElementById('lr-cpills');
+  var tests=td.confirm_tests||[];
+  var isNormal=cls==='lr-sn';
+  if(cf)cf.style.display=(tests.length&&!isNormal)?'':'none';
+  if(cp)cp.innerHTML=tests.map(function(t){return '<span class="lr-cpill">🧾 '+t+'</span>';}).join('');
+
+  document.getElementById('lr-res').style.display='';
+
+  /* ── AI Commentary ── */
+  var aiCard=document.getElementById('lr-ai');
+  var aiBody=document.getElementById('lr-ai-body');
+  if(!aiCard||!aiBody)return;
+
+  aiCard.style.display='';
+  aiBody.innerHTML='<span class="lr-cur"></span>';
+
+  if(_lrAbort){_lrAbort.abort();}
+  _lrAbort=new AbortController();
+
+  var iNote2=td.india_note||td.south_asian_note||'';
+  var hint=td.bnys_insight||'';
+
+  var sys=[
+    'You are Dr. Vikranth, a BNYS (Bachelor of Naturopathy and Yoga Sciences) physician in India.',
+    'For the given lab result, respond in this exact structure:',
+    '',
+    '**Clinical Significance**',
+    '2-3 sentences explaining what this result means physiologically and clinically.',
+    '',
+    '**BNYS Naturopathic Protocol**',
+    '4-6 specific interventions with doses — herbs, diet, yoga, hydrotherapy, lifestyle.',
+    'Include evidence where it exists (RCT, PMID).',
+    '',
+    '**Confirmatory Tests to Order**',
+    '3-5 specific follow-up investigations with brief reason.',
+    '',
+    'End with: — Dr. Vikranth · BNYS',
+    'Be specific. No generic statements. Use Indian context where relevant.'
+  ].join('\n');
+
+  var usr=[
+    'Test: '+testName,
+    'Panel: '+_lrPanel,
+    'Value: '+val+' '+unit,
+    'Status: '+lbl.replace(/[🚨↓↑✓ℹ️]/g,'').trim(),
+    'Reference range: '+(range?range[0]+' – '+range[1]+' '+unit:'Not applicable'),
+    'Patient gender: '+_lrGender,
+    iNote2?'India context: '+iNote2.substring(0,150):'',
+    hint?'BNYS hint: '+hint.substring(0,150):''
+  ].filter(Boolean).join('\n');
+
+  try{
+    if(typeof callAI==='function'){
+      var raw=await callAI([{role:'system',content:sys},{role:'user',content:usr}],800);
+      aiBody.innerHTML=_md(raw||'No response received.');
+    } else {
+      aiBody.innerHTML='<span style="color:var(--mu);font-style:italic;font-size:12px">Set an API key in Settings → AI Tools to enable AI commentary.</span>';
     }
-    if (_origOpenSection) _origOpenSection(sec);
-  };
+  }catch(e){
+    if(e.name!=='AbortError'){
+      aiBody.innerHTML='<div class="lr-errbox">⚠️ AI error: '+(e.message||'Check API key in Settings')+'</div>';
+    }
+  }
+  _lrAbort=null;
 
-  /* Add sidebar nav entry */
-  _lrInjectSidebarNav();
-}
+  /* Scroll result into view */
+  var res=document.getElementById('lr-res');
+  if(res)res.scrollIntoView({behavior:'smooth',block:'nearest'});
+};
 
-/* ── Sidebar nav injection ── */
-function _lrInjectSidebarNav() {
-  /* Find the Diagnose group body in sidebar and inject a nav item */
-  var sbNav = document.querySelector('.sb-nav');
-  if (!sbNav) return;
-  if (document.getElementById('sbh-labref')) return; // already added
-  /* Look for diagnose group */
-  var diagGroup = sbNav.querySelector('[data-group="diagnose"]');
-  if (!diagGroup) {
-    /* Fallback: find by icon/text content */
-    var groups = sbNav.querySelectorAll('.sb-group');
-    groups.forEach(function(g) {
-      var hdr = g.querySelector('.sb-hdr');
-      if (hdr && (hdr.textContent.toLowerCase().includes('diagnos') || hdr.textContent.toLowerCase().includes('clinical'))) {
-        diagGroup = g.querySelector('.sb-items');
-      }
+/* ═══════════════════════════════════════════════
+   REGISTRATION — synchronous, called immediately
+   SECS/SB_GROUPS are already defined at EOF.
+   ═══════════════════════════════════════════════ */
+function _lrRegister(){
+  /* 1. SECS */
+  if(typeof SECS!=='undefined'&&!SECS.find(function(s){return s.id==='labref';})){
+    SECS.push({
+      id:'labref',
+      icon:'🔬',
+      title:'Lab Reference · India',
+      sub:'ICMR ranges · CBC · Metabolic · Liver · Kidney · Thyroid · Lipids · HbA1c · Inflammatory',
+      color:'#0f6b5c',bg:'#e0f5ee',
+      data:{},
+      tags:['lab','reference','cbc','metabolic','thyroid','lipids','hba1c','crp','india']
     });
   }
-  if (!diagGroup) diagGroup = sbNav.querySelector('.sb-items'); // first group as last resort
-  if (!diagGroup) return;
 
-  var item = document.createElement('button');
-  item.id = 'sbh-labref';
-  item.className = 'sb-item';
-  item.innerHTML = '<span>🔬</span><span>Lab Reference · India</span>';
-  item.onclick = function() {
-    if (typeof openSec === 'function') openSec('labref', item);
-    else if (typeof openSection === 'function') openSection({ id:'labref' });
+  /* 2. SB_GROUPS — push into diagnose */
+  if(typeof SB_GROUPS!=='undefined'){
+    var dg=SB_GROUPS.find(function(g){return g.key==='diagnose';});
+    if(dg&&dg.ids&&dg.ids.indexOf('labref')===-1) dg.ids.push('labref');
+  }
+
+  /* 3. secMap */
+  if(typeof secMap!=='undefined'&&typeof SECS!=='undefined'){
+    SECS.forEach(function(s){secMap[s.id]=s;});
+  }
+
+  /* 4. Patch openSec */
+  var _orig=window.openSec;
+  window.openSec=function(id,btn,skipHistory,groupKey){
+    if(id==='labref'){_lrOpen(btn,skipHistory,groupKey||'diagnose');return;}
+    if(_orig)_orig(id,btn,skipHistory,groupKey);
   };
-  diagGroup.insertBefore(item, diagGroup.firstChild);
+
+  /* 5. Patch openSecFromGroup (mobile grid tap path) */
+  var _origFG=window.openSecFromGroup;
+  window.openSecFromGroup=function(id,groupKey){
+    if(id==='labref'){_lrOpen(null,false,groupKey||'diagnose');return;}
+    if(_origFG)_origFG(id,groupKey);
+  };
+
+  /* 6. Patch navTo in case it's used */
+  var _origNavTo=window.navTo;
+  window.navTo=function(id){
+    if(id==='labref'){_lrOpen(null,false,'diagnose');return;}
+    if(_origNavTo)_origNavTo(id);
+  };
 }
 
-/* ── Also expose a direct global to open from anywhere ── */
-window.openLabRef = function() {
-  if (typeof openSection === 'function') openSection({ id:'labref' });
-};
+/* ═══════════════════════
+   OPEN VIEW
+   ═══════════════════════ */
+function _lrOpen(btn,skipHistory,groupKey){
+  var sv=document.getElementById('sec-views');
+  var hv=document.getElementById('home-view');
+  var gv=document.getElementById('group-view');
+  if(!sv)return;
 
-/* ── Register on DOM ready ── */
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function() { setTimeout(_lrRegister, 400); });
-} else {
-  setTimeout(_lrRegister, 400);
+  /* Build view if first open */
+  var view=document.getElementById('sv-labref');
+  if(!view){
+    view=document.createElement('div');
+    view.className='sec-view';
+    view.id='sv-labref';
+    view.innerHTML=
+      '<div class="sec-hdr"><div class="sec-hdr-row">'
+      +'<div class="sec-hicon" style="background:#e0f5ee;color:#0f6b5c;font-size:20px">🔬</div>'
+      +'<div><div class="sec-title" style="color:#0f6b5c">Lab Reference · India</div>'
+      +'<div class="sec-sub">ICMR-calibrated · Gender-aware · AI naturopathic · Embedded data</div>'
+      +'</div></div></div>'
+      +'<div class="ca" id="ca-labref" style="overflow-y:auto"><div id="lr-body"></div></div>';
+    sv.appendChild(view);
+    lrRenderView(view.querySelector('#lr-body'));
+  }
+
+  /* Show/hide */
+  if(hv)hv.style.display='none';
+  if(gv)gv.style.display='none';
+  sv.style.display='block';
+  Array.from(sv.children).forEach(function(c){c.style.display='none';});
+  view.style.display='block';
+
+  /* Topbar */
+  ['tb-brand-home'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+  var tbTtl=document.getElementById('tb-ttl-block');if(tbTtl)tbTtl.style.display='flex';
+  var tbIco=document.getElementById('tb-icon');
+  if(tbIco){tbIco.innerHTML='🔬';tbIco.style.background='#e0f5ee';tbIco.style.color='#0f6b5c';}
+  var tbSec=document.getElementById('tb-sec');if(tbSec){tbSec.textContent='Lab Reference · India';tbSec.style.color='#0f6b5c';}
+  var tbSub=document.getElementById('tb-sub');if(tbSub)tbSub.textContent='ICMR · AI naturopathic';
+
+  /* Body classes + back button */
+  document.body.classList.remove('in-group');
+  document.body.classList.add('in-section');
+  var bb=document.getElementById('back-btn');if(bb)bb.classList.add('visible');
+
+  /* Sync */
+  if(!skipHistory)try{history.pushState({page:'sec',secId:'labref',groupKey:groupKey},'','');}catch(e){}
+  if(typeof syncBotNav==='function')syncBotNav('diagnose');
+  if(typeof window.currentGroup!=='undefined')window.currentGroup=groupKey;
+  if(typeof window.curSec!=='undefined')window.curSec='labref';
 }
 
-/* ── Also expose for manual call after app boots ── */
-window._lrRegister = _lrRegister;
+/* expose globals */
+window.openLabRef=function(){_lrOpen(null,false,'diagnose');};
+window._lrOpen=_lrOpen;
+
+/* ── SYNCHRONOUS REGISTRATION ── runs immediately at script eval */
+_lrRegister();
 
 })();
 </script>
-
-<!-- ══ SIDEBAR: add Lab Reference entry to the "Learn" or "Diagnose" group via DOM-ready hook ══
-     (The JS above injects this automatically — this comment is for documentation)
-     To manually trigger: openLabRef()  or  openSection({id:'labref'})
-     ─────────────────────────────────────────────────────────────────── -->
 
 </body>
 </html>
