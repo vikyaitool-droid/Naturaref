@@ -5084,7 +5084,7 @@ var SECS = [
   { id:'treatmanip', icon:'🖐️', title:'Treat — Manipulative Therapy', sub:'HVLA · Mobilisation · MET · Myofascial Release · Spinal Manipulation · Contraindications', color:'#0f766e', bg:'#ccfbf1', data:D_TREAT_MANIP, tabs:[['manip','🖐️','Manipulative Therapy','#0f766e']] },
   { id:'helioaero', icon:'☀️', title:'Heliotherapy & Aerotherapy', sub:'Sunlight Therapy · Air Bath · Forest Bathing · Vitamin D Protocol · Bright Light Therapy · SAD', color:'#b45309', bg:'#fef9c3', data:D_HELIO, tabs:[['helio','☀️','Helio & Aerotherapy','#b45309']] },
   { id:'acupther', icon:'🪡', title:'Acupuncture Therapeutics', sub:'Meridians · Key Acupoints · Evidence-Based Protocols · Needle Technique · Safety · Conditions', color:'#065f46', bg:'#d1fae5', data:D_ACUPTHERA, tabs:[['acupther','🪡','Acupuncture Therapeutics','#065f46']] },
-  { id:'reflexology', icon:'🦶', title:'Reflexology', sub:'Foot Zones · Hand Reflexology · Auriculotherapy · Disease Protocols · Contraindications', color:'#0f766e', bg:'#ccfbf1', data:D_REFLEXOLOGY,
+  { id:'reflexology', icon:'🦶', title:'Reflexology', sub:'Foot Zones · Hand Reflexology · Auriculotherapy · Disease Protocols · Contraindications', color:'#0f766e', bg:'#ccfbf1', data:D_REFLEXOLOGY, customRender:true,
     tabs:[
       ['foot','🦶','Foot Zones','#0f766e'],['hand','✋','Hand Reflexology','#065f46'],
       ['ear','👂','Auriculotherapy','#0369a1'],['proto','📋','Protocols','#7c3aed'],['safe','⚠️','Safety','#c0392b']
@@ -5185,7 +5185,9 @@ var SECS = [
   { id:'siddha',                icon:'🔯', title:'Siddha Medicine',                 sub:'Siddha pharmacology · Muppu · Guggulu · Tamil formulations · Varma · Thokkanam · 64 Kaḷi preparations', color:'#c0392b', bg:'#fdf0ef', data:{siddha:SIDDHA_DATA}, customRender:false,
     tabs:[['form','🔯','Formulations','#c0392b'],['varma','👆','Varma & Thokkanam','#7d5a7e'],['nadi','💓','Nadi Pariksha','#064E3B']] },
   { id:'ahara',                 icon:'🥘', title:'Ahara — Classical Diet Theory',   sub:'Ahara Vidhi · Pathya-Apathya · Samskara · Ritucharya · Viruddha Ahara · Six tastes (Shad Rasa)', color:'#166534', bg:'#dcfce7', data:{ahara:AHARA_DATA}, customRender:false,
-    tabs:[['rasa','🥘','Shad Rasa','#166534'],['pathya','🌿','Pathya-Apathya','#064E3B'],['ritu','🍃','Ritucharya','#0369a1']] }
+    tabs:[['rasa','🥘','Shad Rasa','#166534'],['pathya','🌿','Pathya-Apathya','#064E3B'],['ritu','🍃','Ritucharya','#0369a1']] },
+  { id:'iridology', icon:'👁', title:'Iridology', sub:'Interactive Iris Zone Chart · Right/Left Eye · 12 Sectors · Marker Tool · AI Constitutional Analysis · DDx Iris Finder', color:'#3730a3', bg:'#eef2ff', data:{}, customRender:true,
+    tabs:[['iris','👁','Iris Chart','#3730a3']] }
 ];
 
 // Fix imaging data key (ec vs ec2)
@@ -5206,7 +5208,7 @@ const SB_GROUPS = [
   {
     label: '🌿 Treat',
     key: 'treat',
-    ids: ['bnys','skills','bnys_protocols','naturotreat','herbal','dosing','metabolic','chromotherapy','magneto','clinnut','colon','lifestyle','detox','physio','counselling','yogathera','panchakarma','treatmanip','helioaero','acupther','reflexology','intpain','firstaid']
+    ids: ['bnys','skills','bnys_protocols','naturotreat','herbal','dosing','metabolic','chromotherapy','magneto','clinnut','colon','lifestyle','detox','physio','counselling','yogathera','panchakarma','treatmanip','helioaero','acupther','reflexology','iridology','intpain','firstaid']
   },
   {
     label: '🧬 Wellness',
@@ -6965,6 +6967,173 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
   }
 
   // ══════════════════════════════════════════════════════════════════════
+  // IRIDOLOGY — Interactive SVG Iris Zone Analyser
+  // ══════════════════════════════════════════════════════════════════════
+  if (sec.id === 'iridology') {
+    view.innerHTML = `
+      <div class="sec-hdr">
+        <div class="sec-hdr-row">
+          <div class="sec-hicon" style="background:#eef2ff;color:#3730a3">👁</div>
+          <div>
+            <div class="sec-title" style="color:#3730a3">Iridology</div>
+            <div class="sec-sub">Interactive Iris Zone Chart · Marker Tool · AI Constitutional Analysis · DDx Iris Finder</div>
+          </div>
+        </div>
+      </div>
+      <div class="ca" id="ca-iridology" style="overflow-y:auto">
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 100px">
+
+          <!-- Hero Banner -->
+          <div style="background:linear-gradient(135deg,#1e1b4b,#3730a3,#4338ca);border-radius:14px;padding:14px 18px;margin-bottom:16px;color:#fff;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden">
+            <div style="position:absolute;right:-30px;top:-30px;width:180px;height:180px;background:radial-gradient(circle,rgba(255,255,255,.07),transparent);border-radius:50%;pointer-events:none"></div>
+            <div style="font-size:38px;flex-shrink:0">👁</div>
+            <div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;margin-bottom:4px">Iridology Zone Analyser</div>
+              <div style="font-size:10.5px;opacity:.82;line-height:1.55">Tap any iris zone to view organ mapping · Place coloured markers · Generate AI constitutional analysis · Link findings to DDx disease cards</div>
+            </div>
+          </div>
+
+          <!-- Eye Toggle -->
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <button id="ird-btn-right" onclick="irdSwitchEye('right')"
+              style="flex:1;padding:10px 6px;border-radius:11px;border:2px solid #3730a3;background:#3730a3;color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px">
+              👁 Right Iris
+            </button>
+            <button id="ird-btn-left" onclick="irdSwitchEye('left')"
+              style="flex:1;padding:10px 6px;border-radius:11px;border:2px solid var(--bdr);background:var(--surf);color:#3730a3;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px">
+              👁 Left Iris
+            </button>
+          </div>
+
+          <!-- SVG Iris Chart -->
+          <div style="background:var(--surf);border:1.5px solid #c5cae9;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--sh-md)">
+            <div id="ird-eye-label" style="text-align:center;font-size:11px;font-weight:700;color:#3730a3;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Right Iris — 12 Sectors · 3 Concentric Zones</div>
+            <div style="display:flex;justify-content:center;position:relative">
+              <svg id="ird-iris-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"
+                style="width:100%;max-width:390px;height:auto;display:block;-webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation">
+                <defs>
+                  <radialGradient id="ird-pupil-grad" cx="50%" cy="44%" r="50%">
+                    <stop offset="0%" stop-color="#232340"/>
+                    <stop offset="100%" stop-color="#08080f"/>
+                  </radialGradient>
+                  <filter id="ird-glow-f" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="b"/>
+                    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+                <!-- Sclera -->
+                <circle cx="200" cy="200" r="196" fill="#f8f9ff" stroke="#d0d5f0" stroke-width="1.5"/>
+                <!-- Sector paths injected by JS -->
+                <g id="ird-sectors-g"></g>
+                <!-- Zone ring borders -->
+                <circle cx="200" cy="200" r="160" fill="none" stroke="#5c6bc0" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.55"/>
+                <circle cx="200" cy="200" r="112" fill="none" stroke="#7986cb" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.55"/>
+                <circle cx="200" cy="200" r="72"  fill="none" stroke="#9fa8da" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.55"/>
+                <!-- Collarette -->
+                <circle cx="200" cy="200" r="90" fill="none" stroke="#e8b400" stroke-width="2.2" stroke-dasharray="7 5" opacity="0.72"/>
+                <!-- Pupil -->
+                <circle cx="200" cy="200" r="54" fill="url(#ird-pupil-grad)" filter="url(#ird-glow-f)"/>
+                <ellipse cx="186" cy="187" rx="10" ry="8" fill="rgba(255,255,255,0.18)" transform="rotate(-15,186,187)" style="pointer-events:none"/>
+                <!-- Labels -->
+                <g id="ird-clock-g" style="pointer-events:none"></g>
+                <!-- Markers -->
+                <g id="ird-markers-g"></g>
+              </svg>
+            </div>
+            <!-- Ring Legend -->
+            <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:12px">
+              <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--mu)"><div style="width:9px;height:9px;background:#9fa8da;border-radius:2px"></div>Pupillary (0–72)</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--mu)"><div style="width:9px;height:9px;background:#5c6bc0;border-radius:2px"></div>Ciliary (72–112)</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--mu)"><div style="width:9px;height:9px;background:#3949ab;border-radius:2px"></div>Humoral (112–160)</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--mu)"><div style="width:9px;height:9px;background:#e8b400;border-radius:2px;opacity:.8"></div>Collarette</div>
+            </div>
+          </div>
+
+          <!-- Marking Tool -->
+          <div style="background:var(--surf);border:1.5px solid #c5cae9;border-radius:14px;padding:14px;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:#3730a3;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">🖊 Marking Tool — Select type, then tap a zone</div>
+            <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px">
+              <button onclick="irdSelectMarker('lacuna')"   id="ird-mk-lacuna"   class="ird-mk-btn" style="background:#fff3e0;border:2px solid #ff9800;color:#e65100">🟠 Lacuna</button>
+              <button onclick="irdSelectMarker('radii')"    id="ird-mk-radii"    class="ird-mk-btn" style="background:#fce4ec;border:2px solid #e91e63;color:#880e4f">🔴 Radii Solaris</button>
+              <button onclick="irdSelectMarker('crypt')"    id="ird-mk-crypt"    class="ird-mk-btn" style="background:#f3e5f5;border:2px solid #9c27b0;color:#4a148c">🟣 Crypt</button>
+              <button onclick="irdSelectMarker('pigment')"  id="ird-mk-pigment"  class="ird-mk-btn" style="background:#e8f5e9;border:2px solid #4caf50;color:#1b5e20">🟢 Pigment</button>
+              <button onclick="irdSelectMarker('ring')"     id="ird-mk-ring"     class="ird-mk-btn" style="background:#fff8e1;border:2px solid #ffc107;color:#ff6f00">🟡 Ring/Contraction</button>
+              <button onclick="irdSelectMarker(null)"       id="ird-mk-none"     class="ird-mk-btn" style="background:#f5f5f5;border:2px solid #bdbdbd;color:#616161">⬜ Deselect</button>
+            </div>
+            <div id="ird-active-lbl" style="font-size:11px;color:#7986cb;font-style:italic;margin-bottom:10px">No marker active — select a type above, then tap any iris zone</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="irdClearMarkers()" style="padding:6px 14px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#dc2626;font-size:11px;font-weight:600;cursor:pointer">🗑 Clear All</button>
+              <button onclick="irdSummary()" style="padding:6px 14px;background:#eef2ff;border:1px solid #7986cb;border-radius:8px;color:#3730a3;font-size:11px;font-weight:600;cursor:pointer">📋 Generate Findings Summary</button>
+            </div>
+          </div>
+
+          <!-- Placed Markers List -->
+          <div id="ird-mlist-wrap" style="display:none;background:var(--surf);border:1.5px solid #c5cae9;border-radius:14px;padding:14px;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:#3730a3;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">📍 Placed Markers</div>
+            <div id="ird-mlist"></div>
+          </div>
+
+          <!-- Findings Summary -->
+          <div id="ird-summary-wrap" style="display:none;background:var(--surf);border:1.5px solid #a5b4fc;border-radius:14px;padding:14px;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:#3730a3;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">📋 Clinical Findings Summary</div>
+            <div id="ird-summary-content" style="font-size:12.5px;color:var(--tx);line-height:1.7"></div>
+          </div>
+
+          <!-- DDx Iris Link -->
+          <div style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:1.5px solid #a5d6a7;border-radius:14px;padding:14px;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:#2e7d32;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">🔗 Disease → Iris Signature Finder</div>
+            <div style="font-size:11.5px;color:var(--mu);margin-bottom:10px">Search a disease to highlight its known iris signature zones on the chart above</div>
+            <div style="display:flex;gap:8px">
+              <input id="ird-ddx-input" class="calc-input" placeholder="e.g. Hypertension, Diabetes, IBS, Asthma…" style="flex:1"/>
+              <button onclick="irdLinkDDx()" style="padding:9px 14px;background:#2e7d32;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">Highlight →</button>
+            </div>
+            <div id="ird-ddx-result" style="margin-top:8px;font-size:12px;color:var(--mu)"></div>
+          </div>
+
+          <!-- AI Constitutional Analysis -->
+          <div style="background:linear-gradient(135deg,#1e1b4b,#312e81);border-radius:14px;padding:16px;margin-bottom:14px">
+            <div style="color:#fff;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;margin-bottom:5px">✨ AI Constitutional Analysis</div>
+            <div style="color:rgba(255,255,255,.72);font-size:10.5px;margin-bottom:12px;line-height:1.55">Submit marked iris findings for AI-powered constitutional type analysis, organ system weakness mapping, and personalised BNYS protocol recommendations</div>
+            <div style="margin-bottom:10px">
+              <label style="font-size:10px;font-weight:700;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px">Patient Context (optional)</label>
+              <input id="ird-ctx-input" placeholder="Age, gender, chief complaint, key symptoms, constitution type…"
+                style="width:100%;padding:9px 12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:9px;color:#fff;font-size:12px;font-family:Inter,sans-serif;outline:none;box-sizing:border-box">
+            </div>
+            <button id="ird-ai-btn" onclick="irdRunAI()"
+              style="width:100%;padding:13px;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:11px;cursor:pointer;font-size:14px;font-weight:700;font-family:Inter,sans-serif;box-shadow:0 4px 18px rgba(99,102,241,.4);transition:all .2s">
+              🔭 Analyse with AI
+            </button>
+          </div>
+          <div id="ird-ai-result" style="margin-bottom:20px"></div>
+
+          <!-- Reference Table -->
+          <div style="background:var(--surf);border:1.5px solid #c5cae9;border-radius:14px;overflow:hidden;margin-bottom:20px">
+            <div style="background:linear-gradient(135deg,#3730a3,#4338ca);padding:12px 14px">
+              <div style="color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em">📖 12-Sector Iridology Reference Chart</div>
+            </div>
+            <div id="ird-ref-table"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Zone Bottom Sheet -->
+      <div id="ird-bs-overlay" onclick="irdCloseSheet()"
+        style="display:none;position:fixed;inset:0;z-index:599;background:rgba(30,27,74,.38);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;transition:opacity .3s"></div>
+      <div id="ird-bottom-sheet"
+        style="position:fixed;left:0;right:0;bottom:0;z-index:600;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -8px 40px rgba(55,48,163,.18);max-height:72vh;overflow-y:auto;transform:translateY(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);-webkit-overflow-scrolling:touch">
+        <div style="padding:10px 0 0;display:flex;justify-content:center">
+          <div style="width:36px;height:4px;border-radius:2px;background:#d1d5db"></div>
+        </div>
+        <div id="ird-bs-content" style="padding:16px 18px 50px"></div>
+      </div>
+    `;
+    secViews.appendChild(view);
+    setTimeout(function() { irdInit(); }, 120);
+    return;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
   // REFLEXOLOGY — Custom interactive SVG module
   // ══════════════════════════════════════════════════════════════════════
   if (sec.id === 'reflexology') {
@@ -7003,20 +7172,235 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
 
             <!-- FOOT SVG -->
             <div id="rfx-foot-wrap" style="display:inline-block;position:relative;width:100%;max-width:340px">
-              <svg id="rfx-foot-svg" viewBox="0 0 340 520" xmlns="http://www.w3.org/2000/svg"
-                style="width:100%;height:auto;cursor:pointer;-webkit-tap-highlight-color:transparent">
-                <!-- Foot outline -->
-                <ellipse cx="170" cy="460" rx="78" ry="50" fill="#f5ebe0" stroke="#c4a882" stroke-width="2"/>
-                <rect x="95" y="220" width="150" height="250" rx="30" fill="#f5ebe0" stroke="#c4a882" stroke-width="2"/>
-                <ellipse cx="170" cy="220" rx="75" ry="40" fill="#f5ebe0" stroke="#c4a882" stroke-width="2"/>
-                <!-- Ball of foot -->
-                <ellipse cx="170" cy="260" rx="65" ry="30" fill="#ede0cf" stroke="#c4a882" stroke-width="1.5"/>
-                <!-- Toes -->
-                <ellipse cx="135" cy="180" rx="16" ry="22" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
-                <ellipse cx="157" cy="172" rx="14" ry="20" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
-                <ellipse cx="178" cy="170" rx="13" ry="20" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
-                <ellipse cx="198" cy="175" rx="12" ry="18" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
-                <ellipse cx="216" cy="183" rx="10" ry="16" fill="#f5ebe0" stroke="#c4a882" stroke-width="1.5"/>
+              <svg id="rfx-foot-svg" viewBox="0 0 340 520"
+                xmlns="http://www.w3.org/2000/svg"
+                style="width:100%;height:auto;display:block;cursor:pointer;border-radius:12px;border:1.5px solid var(--border);box-shadow:var(--sh-md);-webkit-tap-highlight-color:transparent">
+
+                <defs>
+                  <!-- Parchment canvas -->
+                  <linearGradient id="rfx-bg" x1="0" y1="0" x2="0.08" y2="1">
+                    <stop offset="0%"   stop-color="#f6f0e4"/>
+                    <stop offset="100%" stop-color="#ede5d2"/>
+                  </linearGradient>
+
+                  <!-- Teal foot body -->
+                  <linearGradient id="rfx-teal" x1="0.3" y1="0" x2="0.7" y2="1">
+                    <stop offset="0%"   stop-color="#7dd6c8"/>
+                    <stop offset="48%"  stop-color="#5ec3b3"/>
+                    <stop offset="100%" stop-color="#48b0a0"/>
+                  </linearGradient>
+
+                  <!-- Lighter inner arch zone -->
+                  <radialGradient id="rfx-arch-fill" cx="42%" cy="48%" r="52%">
+                    <stop offset="0%"   stop-color="#b8e8e0"/>
+                    <stop offset="70%"  stop-color="#8dd6ca"/>
+                    <stop offset="100%" stop-color="#6cc8b8"/>
+                  </radialGradient>
+
+                  <!-- Heel yellow -->
+                  <radialGradient id="rfx-heel-yellow" cx="50%" cy="42%" r="56%">
+                    <stop offset="0%"   stop-color="#f9e040"/>
+                    <stop offset="55%"  stop-color="#f5cc20"/>
+                    <stop offset="100%" stop-color="#e8b408"/>
+                  </radialGradient>
+
+                  <!-- Clip to rounded rect -->
+                  <clipPath id="rfx-clip">
+                    <rect x="0" y="0" width="340" height="520" rx="10"/>
+                  </clipPath>
+
+                  <!-- Soft drop shadow on foot -->
+                  <filter id="rfx-shadow" x="-10%" y="-4%" width="125%" height="118%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="b"/>
+                    <feOffset dx="2" dy="8" in="b" result="off"/>
+                    <feFlood flood-color="#2a5a50" flood-opacity="0.22" result="col"/>
+                    <feComposite in="col" in2="off" operator="in" result="shad"/>
+                    <feMerge><feMergeNode in="shad"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+
+                  <!-- Subtle grid texture (parchment feel) -->
+                  <pattern id="rfx-grid" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
+                    <path d="M 18 0 L 0 0 0 18" fill="none"
+                      stroke="rgba(160,140,100,0.07)" stroke-width="0.5"/>
+                  </pattern>
+                </defs>
+
+                <!-- ① Parchment canvas -->
+                <rect x="0" y="0" width="340" height="520"
+                  fill="url(#rfx-bg)" clip-path="url(#rfx-clip)"/>
+                <!-- grid overlay -->
+                <rect x="0" y="0" width="340" height="520"
+                  fill="url(#rfx-grid)" clip-path="url(#rfx-clip)" opacity="0.9"/>
+
+                <!-- ② Decorative corner ornaments (like the reference) -->
+                <g opacity="0.18" stroke="#8a7248" stroke-width="1" fill="none">
+                  <path d="M 8,8 L 28,8 M 8,8 L 8,28 M 11,11 L 22,11 M 11,11 L 11,22"/>
+                  <path d="M 332,8 L 312,8 M 332,8 L 332,28 M 329,11 L 318,11 M 329,11 L 329,22"/>
+                  <path d="M 8,512 L 28,512 M 8,512 L 8,492 M 11,509 L 22,509 M 11,509 L 11,498"/>
+                  <path d="M 332,512 L 312,512 M 332,512 L 332,492 M 329,509 L 318,509 M 329,509 L 329,498"/>
+                </g>
+
+                <!-- ③ Foot body — plantar right foot, toes at top
+                     White 'cream' outline first, then teal fill -->
+                <!-- Cream border halo -->
+                <path d="M 116,208
+                     C 107,201  98,188  101,169
+                     C 104,151  116,139  131,140
+                     Q 136,131  141,140
+                     Q 147,128  156,128
+                     C 160,118  169,114  178,118
+                     Q 186,107  196,113
+                     C 202,121  206,136  211,146
+                     Q 219,130  230,135
+                     C 237,143  241,160  237,179
+                     C 248,198  264,222  268,260
+                     C 272,294  269,327  265,358
+                     C 260,386  254,415  244,442
+                     C 231,469  215,488  196,498
+                     C 181,508  155,513  136,506
+                     C 114,497  100,479  91,454
+                     C 83,429  80,397  78,368
+                     C 76,340  77,310  79,283
+                     C 81,256  87,233  94,217
+                     C 101,210  108,210  116,208 Z"
+                  fill="#e8e0d0" filter="url(#rfx-shadow)"/>
+
+                <!-- Teal foot body -->
+                <path id="rfx-foot-body"
+                  d="M 116,208
+                     C 107,201  98,188  101,169
+                     C 104,151  116,139  131,140
+                     Q 136,131  141,140
+                     Q 147,128  156,128
+                     C 160,118  169,114  178,118
+                     Q 186,107  196,113
+                     C 202,121  206,136  211,146
+                     Q 219,130  230,135
+                     C 237,143  241,160  237,179
+                     C 248,198  264,222  268,260
+                     C 272,294  269,327  265,358
+                     C 260,386  254,415  244,442
+                     C 231,469  215,488  196,498
+                     C 181,508  155,513  136,506
+                     C 114,497  100,479  91,454
+                     C 83,429  80,397  78,368
+                     C 76,340  77,310  79,283
+                     C 81,256  87,233  94,217
+                     C 101,210  108,210  116,208 Z"
+                  fill="url(#rfx-teal)"
+                  stroke="#3aa898" stroke-width="1.2"/>
+
+                <!-- ④ Inner lighter arch region (medial concavity) -->
+                <path d="M 130,230
+                     C 120,260  112,300  113,340
+                     C 114,370  120,400  130,425
+                     C 142,450  158,465  176,468
+                     C 198,472  222,460  238,440
+                     C 228,430  215,445  196,450
+                     C 174,455  154,442  142,420
+                     C 130,396  126,368  128,338
+                     C 130,305  140,268  148,240
+                     Z"
+                  fill="url(#rfx-arch-fill)" opacity="0.68"/>
+
+                <!-- ⑤ Spine / medial bone line (grey, like reference) -->
+                <path d="M 120,200 C 112,232  105,270  104,310
+                         C 103,345  106,378  113,408
+                         C 120,432  130,450  141,462"
+                  fill="none" stroke="#b0c4be" stroke-width="5"
+                  stroke-linecap="round" opacity="0.55"/>
+                <!-- Inner spine highlight -->
+                <path d="M 120,200 C 112,232  105,270  104,310
+                         C 103,345  106,378  113,408
+                         C 120,432  130,450  141,462"
+                  fill="none" stroke="#e8f4f0" stroke-width="2"
+                  stroke-linecap="round" opacity="0.45"/>
+
+                <!-- ⑥ Heel — large yellow oval matching reference -->
+                <ellipse cx="172" cy="462" rx="62" ry="38"
+                  fill="#d8d0c0" opacity="0.6"/>
+                <ellipse cx="172" cy="460" rx="56" ry="32"
+                  fill="url(#rfx-heel-yellow)"
+                  stroke="#c8a408" stroke-width="1.6"/>
+                <!-- Heel inner ring (cream, like reference concentric) -->
+                <ellipse cx="172" cy="459" rx="40" ry="22"
+                  fill="rgba(255,252,230,0.45)"
+                  stroke="rgba(240,210,30,0.5)" stroke-width="1"/>
+
+                <!-- ⑦ TOES — plantar view, cream shell + teal body + concentric reflex rings
+                     Positions must match zone ellipse centres exactly:
+                     Big toe cx=135 cy=180 | 2nd cx=157 cy=172 | 3rd cx=178 cy=170
+                     4th cx=198 cy=175 | 5th cx=216 cy=183 -->
+
+                <!-- Helper: each toe = cream halo, teal body, coloured reflex target -->
+
+                <!-- Big toe -->
+                <ellipse cx="135" cy="177" rx="23" ry="32" fill="#d8d0c0"/>
+                <ellipse cx="135" cy="177" rx="20" ry="29"
+                  fill="url(#rfx-teal)" stroke="#3aa898" stroke-width="1.2"/>
+                <!-- Reflex rings: red outer → pink mid → yellow centre -->
+                <ellipse cx="135" cy="174" rx="14" ry="14"
+                  fill="#e84040" opacity="0.82"/>
+                <ellipse cx="135" cy="174" rx="9"  ry="9"
+                  fill="#f07070" opacity="0.7"/>
+                <ellipse cx="135" cy="174" rx="5"  ry="5"
+                  fill="#f8e040" opacity="0.92"/>
+                <!-- Toe nail (cream sliver) -->
+                <ellipse cx="135" cy="155" rx="9" ry="5.5"
+                  fill="rgba(232,222,200,0.7)" stroke="rgba(180,160,120,0.3)" stroke-width="0.8"/>
+
+                <!-- 2nd toe -->
+                <ellipse cx="157" cy="170" rx="17" ry="25" fill="#d8d0c0"/>
+                <ellipse cx="157" cy="170" rx="15" ry="22"
+                  fill="url(#rfx-teal)" stroke="#3aa898" stroke-width="1.1"/>
+                <ellipse cx="157" cy="167" rx="10" ry="10"
+                  fill="#e84040" opacity="0.75"/>
+                <ellipse cx="157" cy="167" rx="6"  ry="6"
+                  fill="#f8e040" opacity="0.88"/>
+                <ellipse cx="157" cy="151" rx="7"  ry="4.5"
+                  fill="rgba(232,222,200,0.7)" stroke="rgba(180,160,120,0.3)" stroke-width="0.7"/>
+
+                <!-- 3rd toe -->
+                <ellipse cx="178" cy="168" rx="15" ry="23" fill="#d8d0c0"/>
+                <ellipse cx="178" cy="168" rx="13" ry="20"
+                  fill="url(#rfx-teal)" stroke="#3aa898" stroke-width="1.1"/>
+                <ellipse cx="178" cy="165" rx="8"  ry="8"
+                  fill="#e84040" opacity="0.7"/>
+                <ellipse cx="178" cy="165" rx="5"  ry="5"
+                  fill="#f8e040" opacity="0.85"/>
+                <ellipse cx="178" cy="151" rx="6.5" ry="4"
+                  fill="rgba(232,222,200,0.7)" stroke="rgba(180,160,120,0.3)" stroke-width="0.7"/>
+
+                <!-- 4th toe -->
+                <ellipse cx="198" cy="174" rx="13" ry="21" fill="#d8d0c0"/>
+                <ellipse cx="198" cy="174" rx="11" ry="18"
+                  fill="url(#rfx-teal)" stroke="#3aa898" stroke-width="1"/>
+                <ellipse cx="198" cy="171" rx="7"  ry="7"
+                  fill="#e84040" opacity="0.65"/>
+                <ellipse cx="198" cy="171" rx="4"  ry="4"
+                  fill="#f8e040" opacity="0.82"/>
+                <ellipse cx="198" cy="158" rx="5.5" ry="3.5"
+                  fill="rgba(232,222,200,0.7)" stroke="rgba(180,160,120,0.3)" stroke-width="0.7"/>
+
+                <!-- 5th (little) toe -->
+                <ellipse cx="215" cy="181" rx="11" ry="18" fill="#d8d0c0"/>
+                <ellipse cx="215" cy="181" rx="9.5" ry="15"
+                  fill="url(#rfx-teal)" stroke="#3aa898" stroke-width="1"/>
+                <!-- Little toe: just small pink oval (matches reference) -->
+                <ellipse cx="215" cy="178" rx="5.5" ry="5.5"
+                  fill="#f06080" opacity="0.72"/>
+                <ellipse cx="215" cy="168" rx="4.5" ry="3"
+                  fill="rgba(232,222,200,0.7)" stroke="rgba(180,160,120,0.3)" stroke-width="0.6"/>
+
+                <!-- ⑧ Ball-of-foot pad highlight (like the pink circle in reference) -->
+                <ellipse cx="186" cy="252" rx="50" ry="26"
+                  fill="rgba(240,170,170,0.28)" stroke="rgba(220,100,100,0.22)" stroke-width="1.2"/>
+
+                <!-- ⑨ "Spine" label (matches reference style) -->
+                <text x="96" y="316" font-size="7.5" fill="#6a8880"
+                  font-family="Georgia,serif" font-style="italic"
+                  transform="rotate(-90,96,316)" text-anchor="middle"
+                  pointer-events="none" opacity="0.7">SPINE</text>
 
                 <!-- ZONE PATHS — clickable reflex zones -->
                 <!-- Brain / Head (Big toe) -->
@@ -7123,6 +7507,7 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
                   fill="rgba(190,24,93,0.15)" stroke="#be185d" stroke-width="1.8"
                   class="rfx-zone" onclick="rfxShowZone(this)" style="cursor:pointer"/>
                 <text x="210" y="434" text-anchor="middle" font-size="6.5" fill="#be185d" pointer-events="none" font-weight="700">Repro</text>
+
               </svg>
               <div style="font-size:9px;color:var(--mu);margin-top:6px;font-style:italic">Tap any shaded zone to view details</div>
             </div>
@@ -18643,6 +19028,26 @@ body.dark #ca-tonguepulse [style*="background:#f0f9ff"],
 body.dark #ca-tonguepulse [style*="background:#fef3c7"] { background:#221e18 !important; border-color:#3a3028 !important; }
 body.dark #ca-tonguepulse [style*="background:linear-gradient"] { background:#1a1612 !important; }
 
+/* ══ REFLEXOLOGY MAP — teal medical diagram ════════════════════════════
+   All rendering is inside the SVG — no external images, works offline.
+   ═══════════════════════════════════════════════════════════════════ */
+#rfx-foot-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  box-shadow: var(--sh-md);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rfx-zone { transition: opacity .15s ease, filter .15s ease; }
+.rfx-zone:hover,
+.rfx-zone:focus    { opacity:1!important; filter:brightness(1.18) drop-shadow(0 0 5px rgba(255,255,255,0.55)); }
+.rfx-zone[data-active="1"] { stroke-width:2.8!important; filter:brightness(1.22) drop-shadow(0 0 7px rgba(255,255,255,0.7)); }
+
+body.dark #rfx-foot-svg { border-color:#2a4a3a; filter:brightness(0.80) saturate(0.88); }
+
 /* ── natscoring — extended ── */
 body.dark #ca-natscoring { background:#1a1612; }
 body.dark #ca-natscoring .card { background:#221e18; border-color:#3a3028; }
@@ -21668,3 +22073,1324 @@ document.addEventListener('DOMContentLoaded', function() {
 
 })();
 </script>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     IRIDOLOGY MODULE — Styles
+     ══════════════════════════════════════════════════════════════════════ -->
+<style>
+.ird-mk-btn {
+  padding: 7px 13px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  border-width: 2px;
+  border-style: solid;
+  transition: all .18s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.ird-mk-btn:active { transform: scale(.95); }
+.ird-mk-btn.ird-selected { box-shadow: 0 0 0 3px rgba(55,48,163,.35); transform: scale(1.05); }
+.ird-sector-zone {
+  transition: opacity .14s, filter .14s;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ird-sector-zone:hover  { opacity:.82; filter:brightness(1.14); }
+.ird-sector-zone.ird-hi { filter:brightness(1.4) saturate(1.6); stroke:#fbbf24 !important; stroke-width:2.5 !important; }
+.ird-ref-row {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:9px 14px; border-bottom:1px solid #e8eaf6;
+  font-size:11.5px; cursor:pointer; transition:background .12s;
+}
+.ird-ref-row:last-child { border-bottom:none; }
+.ird-ref-row:hover { background:#f3f4ff; }
+.ird-ref-clk  { font-size:11px; font-weight:800; color:#3730a3; min-width:34px; }
+.ird-ref-org  { color:var(--tx); flex:1; line-height:1.5; }
+.ird-ref-sys  { font-size:9.5px; font-weight:700; color:var(--mu); white-space:nowrap; }
+.ird-marker-dot { cursor:pointer; }
+</style>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     IRIDOLOGY MODULE — JavaScript
+     ══════════════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+'use strict';
+
+// ── Constants ──────────────────────────────────────────────────────────────
+var CX=200,CY=200,R_PUP=54,R_COL=90,R_PUPZ=72,R_CIL=112,R_HUM=160;
+
+// ── Marker Definitions ─────────────────────────────────────────────────────
+var MKDEF = {
+  lacuna:  { label:'Lacuna',           color:'#ff9800', fill:'rgba(255,152,0,.72)',   desc:'Elliptical defect — weakness/loss of vitality in mapped organ' },
+  radii:   { label:'Radii Solaris',    color:'#e91e63', fill:'rgba(233,30,99,.75)',   desc:'Spoke-like lines from pupil — nerve irritation, toxin accumulation' },
+  crypt:   { label:'Crypt',            color:'#9c27b0', fill:'rgba(156,39,176,.72)',  desc:'Dark pit — genetic weakness, cellular degeneration' },
+  pigment: { label:'Pigment',          color:'#4caf50', fill:'rgba(76,175,80,.72)',   desc:'Coloured deposit — toxin storage, lymphatic congestion' },
+  ring:    { label:'Ring/Contraction', color:'#ffc107', fill:'rgba(255,193,7,.75)',   desc:'Concentric ring — stress response, spasm in mapped organ' }
+};
+
+// ── 12-Sector Data ─────────────────────────────────────────────────────────
+var SECTORS_R = [
+  { s:1,  clk:'12:00', org:['Brain (Frontal)','Pineal Gland'],         sys:'Neurological',      sig:'Frontal lobe function, sleep-wake cycles, melatonin regulation' },
+  { s:2,  clk:'1:00',  org:['Right Hemisphere','Pituitary'],            sys:'Neurological',      sig:'Hypothalamic-pituitary axis, hormonal coordination' },
+  { s:3,  clk:'2:00',  org:['Right Eye','Sinuses','Ear'],               sys:'Sensory / ENT',     sig:'Head orifices, cranial nerve function, sinus drainage' },
+  { s:4,  clk:'3:00',  org:['Liver','Gallbladder'],                     sys:'Hepatobiliary',     sig:'Detoxification capacity, bile flow, fat metabolism' },
+  { s:5,  clk:'4:00',  org:['Ascending Colon','Appendix','Ileocecal'], sys:'Gastrointestinal',  sig:'Bowel flora integrity, elimination, ileocecal valve function' },
+  { s:6,  clk:'5:00',  org:['Right Kidney','Adrenal (R)'],              sys:'Urogenital',        sig:'Filtration, fluid balance, cortisol/adrenaline response' },
+  { s:7,  clk:'6:00',  org:['Lumbar Spine L4-S1','Sciatic Nerve'],      sys:'Musculoskeletal',   sig:'Lower lumbar innervation, sciatic pathway, pelvic floor' },
+  { s:8,  clk:'7:00',  org:['Uterus/Prostate','Bladder','Sacrum'],      sys:'Reproductive',      sig:'Pelvic organ tone, reproductive health, urogenital axis' },
+  { s:9,  clk:'8:00',  org:['Sigmoid Colon','Rectum'],                  sys:'Gastrointestinal',  sig:'Final elimination, rectal tone, constipation tendency' },
+  { s:10, clk:'9:00',  org:['Heart','Aorta'],                           sys:'Cardiovascular',    sig:'Cardiac vitality, circulatory drive, blood pressure regulation' },
+  { s:11, clk:'10:00', org:['Left Lung','Bronchi','Left Shoulder'],     sys:'Respiratory',       sig:'Pulmonary function, oxygenation, shoulder girdle tone' },
+  { s:12, clk:'11:00', org:['Thyroid','Parathyroid','Neck'],            sys:'Endocrine',         sig:'Metabolic rate, calcium metabolism, cervical alignment' }
+];
+
+var SECTORS_L = [
+  { s:1,  clk:'12:00', org:['Brain (Frontal)','Pineal Gland'],          sys:'Neurological',         sig:'Frontal lobe function, sleep-wake cycles, melatonin regulation' },
+  { s:2,  clk:'1:00',  org:['Left Hemisphere','Pituitary'],              sys:'Neurological',         sig:'Hypothalamic-pituitary axis, hormonal coordination' },
+  { s:3,  clk:'2:00',  org:['Thyroid','Parathyroid','Neck'],             sys:'Endocrine',            sig:'Metabolic rate, calcium metabolism, cervical alignment' },
+  { s:4,  clk:'3:00',  org:['Heart','Aorta'],                            sys:'Cardiovascular',       sig:'Cardiac vitality, circulatory drive, blood pressure regulation' },
+  { s:5,  clk:'4:00',  org:['Sigmoid Colon','Rectum'],                   sys:'Gastrointestinal',     sig:'Final elimination, rectal tone, constipation tendency' },
+  { s:6,  clk:'5:00',  org:['Left Kidney','Adrenal (L)'],                sys:'Urogenital',           sig:'Filtration, fluid balance, cortisol/adrenaline response' },
+  { s:7,  clk:'6:00',  org:['Lumbar Spine L1-L4','Hip'],                 sys:'Musculoskeletal',      sig:'Lower lumbar innervation, hip joint, psoas complex' },
+  { s:8,  clk:'7:00',  org:['Uterus/Prostate','Bladder','Sacrum'],       sys:'Reproductive',         sig:'Pelvic organ tone, reproductive health, urogenital axis' },
+  { s:9,  clk:'8:00',  org:['Descending Colon','Spleen'],               sys:'GI / Immune',          sig:'Descending bowel motility, immune spleen reservoir' },
+  { s:10, clk:'9:00',  org:['Pancreas','Stomach'],                       sys:'Digestive / Endocrine', sig:'Insulin secretion, digestive enzymes, glycaemic balance' },
+  { s:11, clk:'10:00', org:['Right Lung','Bronchi','Right Shoulder'],    sys:'Respiratory',          sig:'Pulmonary function, oxygenation, shoulder girdle tone' },
+  { s:12, clk:'11:00', org:['Left Eye','Sinuses','Ear'],                 sys:'Sensory / ENT',        sig:'Head orifices, cranial nerve function, sinus drainage' }
+];
+
+var ZONE_SIGNS = {
+  pupillary: ['Lacunae (organ weakness)','Radii Solaris (nerve irritation)','Pupillary border irregularity','Arcus senilis','Neurovascular cramp rings'],
+  ciliary:   ['Crypts (genetic weakness)','Pigment deposits (toxins)','Lymphatic rosary','Contraction rings (stress)','Psora (latent inflammation)'],
+  humoral:   ['Scurf rim (skin elimination)','Sodium ring (arcus senilis)','Anxiety tetanic ring','Cholesterol ring','Lymphatic congestion signs']
+};
+
+var ZONE_DESC = {
+  pupillary: 'Inner pupillary zone — reflects bowel, nerve, and deep organ states. Signs here indicate inherited or constitutional weaknesses.',
+  ciliary:   'Middle ciliary zone — corresponds to organ function and tissue nutrition. Most diagnostic findings appear here.',
+  humoral:   'Outer humoral zone — reflects skin, lymphatic and elimination pathways. Toxin accumulation is visible here.'
+};
+
+var DDX_SIGS = {
+  'hypertension':{ secs:[4,10,11], zones:['ciliary','humoral'], note:'Cardiovascular zone stress; sodium ring; neurovascular cramp rings' },
+  'diabetes':    { secs:[10,6,4],  zones:['ciliary','humoral'], note:'Pancreatic lacunae (L10); kidney zone stress; liver pigments' },
+  'liver':       { secs:[4],       zones:['pupillary','ciliary'],note:'Hepatic sector lacunae; yellow-brown pigments; radii solaris' },
+  'thyroid':     { secs:[12,3],    zones:['pupillary','ciliary'],note:'Thyroid zone lacunae; contraction rings; lymphatic rosary' },
+  'hypothyroid': { secs:[12,3],    zones:['pupillary','ciliary'],note:'Thyroid sector lacunae; slow collarette; lymphatic signs' },
+  'ibs':         { secs:[5,9,10],  zones:['humoral'],           note:'Bowel sectors: contraction rings, lymphatic signs, colonic lacunae' },
+  'kidney':      { secs:[6],       zones:['ciliary','humoral'], note:'Renal sector lacunae; scurf rim; fluid retention signs' },
+  'anxiety':     { secs:[1,2,4],   zones:['pupillary','ciliary'],note:'Neuro sectors; neurovascular cramp rings; pupillary constriction' },
+  'depression':  { secs:[1,2,12],  zones:['pupillary'],         note:'Brain/pineal zones; lymphatic signs; sluggish collarette' },
+  'asthma':      { secs:[11,3,12], zones:['ciliary','humoral'], note:'Lung sectors; lymphatic rosary; scurf rim; contraction rings' },
+  'pcos':        { secs:[8,6,10],  zones:['ciliary'],           note:'Reproductive zone; adrenal stress; pancreatic pigments' },
+  'arthritis':   { secs:[7,8,5],   zones:['humoral'],           note:'Spine/joint zones; uric acid signs; lymphatic congestion' },
+  'obesity':     { secs:[10,4,6],  zones:['ciliary','humoral'], note:'Pancreas, liver, kidney zones; metabolic signs; pigments' },
+  'migraine':    { secs:[1,2,3],   zones:['pupillary','ciliary'],note:'Neurological zones; radii solaris; nerve rings' },
+  'insomnia':    { secs:[1,12,2],  zones:['pupillary'],         note:'Pineal/brain zones; thyroid sector; adrenal stress signs' },
+  'nafld':       { secs:[4,10],    zones:['pupillary','ciliary'],note:'Hepatic lacunae; pancreatic zone pigments; yellow tones' },
+  'ckd':         { secs:[6,8],     zones:['ciliary','humoral'], note:'Renal sector atrophy signs; urogenital zone; fluid rings' },
+  'psoriasis':   { secs:[4,5,9],   zones:['humoral'],           note:'Liver zone; bowel sectors; scurf rim; skin toxin deposits' },
+  'sinusitis':   { secs:[3,12,1],  zones:['ciliary'],           note:'ENT zones; lymphatic rosary; congestion signs' }
+};
+
+// ── State ──────────────────────────────────────────────────────────────────
+var _eye='right', _mkType=null, _markers=[], _hiSecs=[], _ready=false;
+
+// ── Init ───────────────────────────────────────────────────────────────────
+function irdInit() {
+  if (_ready) { _drawSectors(); _drawClocks(); _buildRef(); return; }
+  _ready = true;
+  _drawSectors();
+  _drawClocks();
+  _buildRef();
+  var svg = document.getElementById('ird-iris-svg');
+  if (!svg) return;
+  svg.addEventListener('click', function(e) {
+    var pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    var loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    var dx = loc.x - CX, dy = loc.y - CY;
+    var r  = Math.sqrt(dx*dx + dy*dy);
+    if (r < R_PUP + 2 || r > R_HUM + 8) return;
+    var a   = (Math.atan2(dy, dx) * 180 / Math.PI + 360 + 90) % 360;
+    var sec = Math.min(Math.floor(a / 30) + 1, 12);
+    var zone = r < R_PUPZ ? 'pupillary' : r < R_CIL ? 'ciliary' : 'humoral';
+    if (_mkType) { _placeMark(sec, zone, loc.x, loc.y); }
+    else         { _showSheet(sec, zone); }
+  });
+}
+
+// ── SVG Rendering ──────────────────────────────────────────────────────────
+function _drawSectors() {
+  var g = document.getElementById('ird-sectors-g');
+  if (!g) return;
+  g.innerHTML = '';
+  var rings = [
+    { r1:R_PUP+1, r2:R_PUPZ, name:'pupillary', alpha:0.50 },
+    { r1:R_PUPZ,  r2:R_CIL,  name:'ciliary',   alpha:0.42 },
+    { r1:R_CIL,   r2:R_HUM,  name:'humoral',   alpha:0.34 }
+  ];
+  rings.forEach(function(ring) {
+    for (var i=0; i<12; i++) {
+      var a1 = (i*30-90)*Math.PI/180, a2 = ((i+1)*30-90)*Math.PI/180;
+      var hue = i*30;
+      var el = document.createElementNS('http://www.w3.org/2000/svg','path');
+      el.setAttribute('d', _annSec(CX,CY,ring.r1,ring.r2,a1,a2));
+      el.setAttribute('fill','hsla('+hue+',46%,60%,'+ring.alpha+')');
+      el.setAttribute('stroke','rgba(255,255,255,0.38)');
+      el.setAttribute('stroke-width','0.8');
+      el.setAttribute('data-s', i+1);
+      el.setAttribute('data-z', ring.name);
+      el.setAttribute('id','ird-p-'+ring.name+'-'+(i+1));
+      el.classList.add('ird-sector-zone');
+      g.appendChild(el);
+    }
+  });
+}
+
+function _annSec(cx,cy,r1,r2,a1,a2) {
+  var c1=Math.cos(a1),s1=Math.sin(a1),c2=Math.cos(a2),s2=Math.sin(a2);
+  return ['M',cx+r1*c1,cy+r1*s1,'A',r1,r1,0,0,1,cx+r1*c2,cy+r1*s2,
+          'L',cx+r2*c2,cy+r2*s2,'A',r2,r2,0,0,0,cx+r2*c1,cy+r2*s1,'Z'].join(' ');
+}
+
+function _drawClocks() {
+  var g = document.getElementById('ird-clock-g');
+  if (!g) return;
+  g.innerHTML = '';
+  var r = R_HUM + 22;
+  for (var h=0; h<12; h++) {
+    var midA = (h*30+15-90)*Math.PI/180;
+    var x = CX + r*Math.cos(midA), y = CY + r*Math.sin(midA);
+    var t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',x); t.setAttribute('y',y+4);
+    t.setAttribute('text-anchor','middle');
+    t.setAttribute('font-size','9');
+    t.setAttribute('font-family','Inter,sans-serif');
+    t.setAttribute('font-weight','700');
+    t.setAttribute('fill','#5c6bc0');
+    t.textContent = (h===0?'12':h)+':00';
+    g.appendChild(t);
+  }
+}
+
+// ── Eye Switch ─────────────────────────────────────────────────────────────
+function irdSwitchEye(eye) {
+  _eye = eye;
+  var lbl=document.getElementById('ird-eye-label');
+  var bR=document.getElementById('ird-btn-right'), bL=document.getElementById('ird-btn-left');
+  if (!bR) return;
+  if (eye==='right') {
+    bR.style.cssText='flex:1;padding:10px 6px;border-radius:11px;border:2px solid #3730a3;background:#3730a3;color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px';
+    bL.style.cssText='flex:1;padding:10px 6px;border-radius:11px;border:2px solid var(--bdr);background:var(--surf);color:#3730a3;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px';
+    if(lbl) lbl.textContent='Right Iris — 12 Sectors · 3 Concentric Zones';
+  } else {
+    bL.style.cssText='flex:1;padding:10px 6px;border-radius:11px;border:2px solid #3730a3;background:#3730a3;color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px';
+    bR.style.cssText='flex:1;padding:10px 6px;border-radius:11px;border:2px solid var(--bdr);background:var(--surf);color:#3730a3;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px';
+    if(lbl) lbl.textContent='Left Iris — 12 Sectors · 3 Concentric Zones';
+  }
+  _buildRef();
+}
+
+// ── Marker Tool ────────────────────────────────────────────────────────────
+function irdSelectMarker(type) {
+  _mkType = type;
+  Object.keys(MKDEF).forEach(function(t){
+    var b=document.getElementById('ird-mk-'+t);
+    if(b) b.classList.remove('ird-selected');
+  });
+  var lbl=document.getElementById('ird-active-lbl');
+  if (type) {
+    var b=document.getElementById('ird-mk-'+type);
+    if(b) b.classList.add('ird-selected');
+    if(lbl) lbl.textContent='🖊 Active: '+MKDEF[type].label+' — tap any iris zone to place';
+  } else {
+    if(lbl) lbl.textContent='No marker active — select a type above, then tap any iris zone';
+  }
+}
+
+function _placeMark(sec, zone, cx, cy) {
+  var id='irdm-'+Date.now();
+  var data=_secs()[sec-1];
+  _markers.push({id:id,s:sec,z:zone,t:_mkType,cx:cx,cy:cy,org:data?data.org:[]});
+  _renderMarks();
+  _updateMList();
+  if(typeof ccToast==='function') ccToast('📍 '+MKDEF[_mkType].label+' placed — Sector '+sec+' ('+zone+')');
+}
+
+function _renderMarks() {
+  var g=document.getElementById('ird-markers-g');
+  if(!g) return;
+  g.innerHTML='';
+  _markers.forEach(function(m){
+    var def=MKDEF[m.t];
+    var c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',m.cx); c.setAttribute('cy',m.cy); c.setAttribute('r','7');
+    c.setAttribute('fill',def.fill); c.setAttribute('stroke',def.color); c.setAttribute('stroke-width','2');
+    c.classList.add('ird-marker-dot');
+    g.appendChild(c);
+  });
+}
+
+function _updateMList() {
+  var wrap=document.getElementById('ird-mlist-wrap');
+  var list=document.getElementById('ird-mlist');
+  if(!wrap||!list) return;
+  if(_markers.length===0){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  list.innerHTML=_markers.map(function(m){
+    var def=MKDEF[m.t], data=_secs()[m.s-1];
+    return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr)">'
+      +'<div style="width:10px;height:10px;border-radius:50%;background:'+def.color+';flex-shrink:0"></div>'
+      +'<div style="flex:1;font-size:11.5px"><b>'+def.label+'</b> · Sector '+m.s+' ('+m.z+')'
+      +'<div style="font-size:10px;color:var(--mu)">'+(data?data.org.join(', '):'—')+'</div></div>'
+      +'<button onclick="irdRemoveMarker(\''+m.id+'\')" style="font-size:12px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0 4px;line-height:1">✕</button>'
+      +'</div>';
+  }).join('');
+}
+
+function irdRemoveMarker(id) {
+  _markers=_markers.filter(function(m){return m.id!==id;});
+  _renderMarks(); _updateMList();
+}
+
+function irdClearMarkers() {
+  _markers=[]; _renderMarks(); _updateMList();
+  var sw=document.getElementById('ird-summary-wrap');
+  if(sw) sw.style.display='none';
+}
+
+// ── Bottom Sheet ───────────────────────────────────────────────────────────
+function _showSheet(sec, zone) {
+  var data=_secs()[sec-1]; if(!data) return;
+  var signs=ZONE_SIGNS[zone]||[];
+  var html='<div style="background:linear-gradient(135deg,#1e1b4b,#3730a3);padding:14px 18px 12px">'
+    +'<div style="color:rgba(255,255,255,.6);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em">Sector '+sec+' · '+data.clk+'</div>'
+    +'<div style="color:#fff;font-family:\'Cormorant Garamond\',serif;font-size:19px;font-weight:700;margin-top:3px">'+data.org.join(' · ')+'</div>'
+    +'<div style="margin-top:5px;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.12);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:600;color:rgba(255,255,255,.85)">'+data.sys+'</div>'
+    +'</div>'
+    +'<div style="padding:14px 18px">'
+    +'<div style="background:#eef2ff;border:1px solid #c5cae9;border-radius:10px;padding:10px 12px;margin-bottom:12px">'
+    +'<div style="font-size:10px;font-weight:700;color:#3730a3;text-transform:uppercase;margin-bottom:4px">📍 Zone: '+zone.charAt(0).toUpperCase()+zone.slice(1)+'</div>'
+    +'<div style="font-size:12px;color:#312e81;line-height:1.55">'+(ZONE_DESC[zone]||'')+'</div></div>'
+    +'<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Common Iris Signs in This Zone</div>'
+    +signs.map(function(s){return '<div style="font-size:12px;color:var(--tx);padding:4px 0;border-bottom:.5px solid var(--bdr)">• '+s+'</div>';}).join('')+'</div>'
+    +'<div style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:1px solid #a5d6a7;border-radius:10px;padding:10px 12px;margin-bottom:12px">'
+    +'<div style="font-size:10px;font-weight:700;color:#2e7d32;text-transform:uppercase;margin-bottom:4px">🌿 Naturopathic Significance</div>'
+    +'<div style="font-size:12px;color:#1b5e20;line-height:1.55">'+data.sig+'</div></div>'
+    +'<div style="font-size:10.5px;font-weight:600;color:#3730a3;margin-bottom:8px">Quick Place Marker:</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px">'
+    +Object.entries(MKDEF).map(function(kv){
+       return '<button onclick="irdQuickMark('+sec+',\''+zone+'\',\''+kv[0]+'\')" style="padding:5px 11px;border-radius:16px;border:1.5px solid '+kv[1].color+';background:#fff;color:'+kv[1].color+';font-size:10.5px;font-weight:600;cursor:pointer">'+kv[1].label+'</button>';
+     }).join('')+'</div>'
+    +'<button onclick="irdCloseSheet()" style="margin-top:14px;width:100%;padding:10px;background:#eef2ff;border:none;border-radius:10px;color:#3730a3;font-size:12px;font-weight:700;cursor:pointer">Close ✕</button>'
+    +'</div>';
+
+  var bs=document.getElementById('ird-bottom-sheet');
+  var ov=document.getElementById('ird-bs-overlay');
+  var bc=document.getElementById('ird-bs-content');
+  if(bc) bc.innerHTML=html;
+  if(ov){ ov.style.display='block'; setTimeout(function(){ov.style.opacity='1';},10); }
+  if(bs){ setTimeout(function(){bs.style.transform='translateY(0)';},10); }
+}
+
+function irdCloseSheet() {
+  var bs=document.getElementById('ird-bottom-sheet');
+  var ov=document.getElementById('ird-bs-overlay');
+  if(bs) bs.style.transform='translateY(100%)';
+  if(ov){ ov.style.opacity='0'; setTimeout(function(){ov.style.display='none';},320); }
+}
+
+function irdQuickMark(sec, zone, type) {
+  _mkType=type;
+  var midA=(sec*30-15-90)*Math.PI/180;
+  var midR=zone==='pupillary'?(R_PUP+R_PUPZ)/2:zone==='ciliary'?(R_PUPZ+R_CIL)/2:(R_CIL+R_HUM)/2;
+  _placeMark(sec, zone, CX+midR*Math.cos(midA), CY+midR*Math.sin(midA));
+  irdCloseSheet();
+}
+
+// ── Findings Summary ───────────────────────────────────────────────────────
+function irdSummary() {
+  var wrap=document.getElementById('ird-summary-wrap');
+  var cont=document.getElementById('ird-summary-content');
+  if(!wrap||!cont) return;
+  if(_markers.length===0){
+    if(typeof ccToast==='function') ccToast('⚠️ No markers placed — select a marker type and tap the iris first');
+    return;
+  }
+  var bySec={};
+  _markers.forEach(function(m){ if(!bySec[m.s]) bySec[m.s]=[]; bySec[m.s].push(m); });
+  var html='<div style="background:#eef2ff;border:1px solid #c5cae9;border-radius:10px;padding:11px 13px;margin-bottom:10px">'
+    +'<div style="font-size:10px;font-weight:700;color:#3730a3;text-transform:uppercase;margin-bottom:4px">Eye Examined</div>'
+    +'<div style="font-size:13px;font-weight:600;color:#1e1b4b">👁 '+(_eye==='right'?'Right':'Left')+' Iris — '+_markers.length+' sign(s) marked</div></div>';
+  Object.keys(bySec).forEach(function(sec){
+    var sd=_secs()[sec-1], ms=bySec[sec];
+    html+='<div style="margin-bottom:10px;background:var(--surf);border:1px solid #c5cae9;border-radius:10px;overflow:hidden">'
+      +'<div style="background:#3730a3;color:#fff;padding:8px 12px;font-size:11.5px;font-weight:700">Sector '+sec+' · '+(sd?sd.org.join(' / '):'—')+'</div>'
+      +'<div style="padding:10px 12px">'
+      +ms.map(function(m){
+          var def=MKDEF[m.t];
+          return '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">'
+            +'<div style="width:8px;height:8px;border-radius:50%;background:'+def.color+';margin-top:3px;flex-shrink:0"></div>'
+            +'<div><b style="color:var(--tx);font-size:12px">'+def.label+'</b> <span style="color:var(--mu);font-size:10.5px">('+m.z+' zone)</span>'
+            +'<div style="font-size:11px;color:#4a148c;margin-top:1px">'+def.desc+'</div></div></div>';
+        }).join('')+'</div></div>';
+  });
+  html+='<div style="background:#fff8e1;border:1px solid #ffcc80;border-left:3px solid #ffa000;border-radius:9px;padding:10px 12px;font-size:11.5px;color:#e65100;line-height:1.6"><b>⚠️ Clinical Note:</b> Iridology is a complementary assessment tool. All findings must be correlated with clinical history, physical examination, and investigations before drawing conclusions.</div>';
+  cont.innerHTML=html;
+  wrap.style.display='block';
+  wrap.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── DDx Iris Link ──────────────────────────────────────────────────────────
+function irdLinkDDx() {
+  var input=document.getElementById('ird-ddx-input');
+  var res=document.getElementById('ird-ddx-result');
+  if(!input||!res) return;
+  var q=input.value.trim().toLowerCase();
+  if(!q){res.innerHTML='<span style="color:#dc2626">Please enter a disease name</span>';return;}
+  _clearHi();
+  var sig=null, matchKey='';
+  Object.keys(DDX_SIGS).forEach(function(k){
+    if(q.includes(k)||k.includes(q.replace(/\s+/g,''))){ sig=DDX_SIGS[k]; matchKey=k; }
+  });
+  if(!sig){
+    res.innerHTML='<span style="color:#b45309">No iris signature found for "'+input.value+'". Try: hypertension, diabetes, thyroid, asthma, ibs, kidney, pcos, migraine, liver, obesity…</span>';
+    return;
+  }
+  _hiSecs=sig.secs;
+  sig.secs.forEach(function(s){
+    ['pupillary','ciliary','humoral'].forEach(function(z){
+      var el=document.getElementById('ird-p-'+z+'-'+s);
+      if(el) el.classList.add('ird-hi');
+    });
+  });
+  res.innerHTML='<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:9px;padding:9px 12px;margin-top:6px">'
+    +'<div style="font-size:11px;font-weight:700;color:#2e7d32;margin-bottom:4px">✅ Iris Signature: '+matchKey.toUpperCase()+'</div>'
+    +'<div style="font-size:11.5px;color:#1b5e20;line-height:1.6"><b>Zones:</b> '+sig.zones.join(', ')+'<br><b>Sectors highlighted:</b> '+sig.secs.join(', ')+'<br>'+sig.note+'</div>'
+    +'<button onclick="_irdClearHi()" style="margin-top:8px;padding:4px 12px;background:none;border:1px solid #2e7d32;border-radius:6px;color:#2e7d32;font-size:10.5px;cursor:pointer">✕ Clear Highlights</button></div>';
+}
+
+function _irdClearHi() {
+  _clearHi();
+  var r=document.getElementById('ird-ddx-result');
+  if(r) r.innerHTML='';
+}
+
+function _clearHi() {
+  _hiSecs.forEach(function(s){
+    ['pupillary','ciliary','humoral'].forEach(function(z){
+      var el=document.getElementById('ird-p-'+z+'-'+s);
+      if(el) el.classList.remove('ird-hi');
+    });
+  });
+  _hiSecs=[];
+}
+
+// ── AI Analysis ────────────────────────────────────────────────────────────
+async function irdRunAI() {
+  var btn=document.getElementById('ird-ai-btn');
+  var res=document.getElementById('ird-ai-result');
+  var ctx=document.getElementById('ird-ctx-input');
+  if(!res) return;
+  if(_markers.length===0){
+    if(typeof ccToast==='function') ccToast('⚠️ Place at least one marker before running AI analysis');
+    return;
+  }
+  if(typeof needsKey==='function' && needsKey()){
+    res.innerHTML='<div style="background:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #f59e0b;border-radius:10px;padding:14px;font-size:13px;color:#7c2d12">⏳ API key loading — wait a moment and retry</div>';
+    return;
+  }
+  if(btn){ btn.disabled=true; btn.textContent='🔭 Analysing…'; }
+  res.innerHTML='<div style="text-align:center;padding:28px;font-size:13px;color:#555"><div style="font-size:28px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:8px">👁</div><br>Processing iris findings…</div>';
+
+  var eyeLabel=_eye==='right'?'Right':'Left';
+  var findings=_markers.map(function(m){
+    var def=MKDEF[m.t], data=_secs()[m.s-1];
+    return def.label+' in Sector '+m.s+' ('+(data?data.org.join('/'):'')+', '+m.z+' zone)';
+  }).join('; ');
+
+  var prompt='You are a senior BNYS iridologist performing a constitutional iris analysis.\n\n'
+    +'Eye examined: '+eyeLabel+' Iris\n'
+    +'Iris findings: '+findings+'\n'
+    +(ctx&&ctx.value?'Patient context: '+ctx.value+'\n':'')
+    +'\nProvide a comprehensive iridological constitutional analysis with these sections:\n'
+    +'## 1. Constitutional Type\nIdentify Haematogenic / Mixed / Lymphatic type based on iris signs.\n\n'
+    +'## 2. Organ System Weaknesses\nPrioritised list from strongest to weakest sign with brief explanation.\n\n'
+    +'## 3. Naturopathic Interpretation\nWhat each major finding suggests clinically.\n\n'
+    +'## 4. Recommended BNYS Protocols\nSpecific diet, hydrotherapy, yoga asanas, and herbal support for the findings.\n\n'
+    +'## 5. Follow-up Investigations\nLab tests or clinical assessments suggested by the iris findings.\n\n'
+    +'## 6. Clinical Correlation Points\nHistory / examination / lab parameters to correlate with these iris signs.\n\n'
+    +'Be specific and clinically useful for a BNYS physician. End with a professional iridology disclaimer.';
+
+  try {
+    var bubId='ird-bub-'+Date.now();
+    res.innerHTML='<div class="ird-zone-card" style="padding:14px;font-size:13px;line-height:1.7;color:var(--tx)" id="'+bubId+'"><div style="text-align:center;padding:10px;color:#7986cb">Generating analysis…</div></div>';
+    if(typeof callAIStream==='function'){
+      var acc='';
+      await callAIStream(
+        [{role:'system',content:'You are a BNYS iridology specialist providing clinical iris constitutional analysis.'},
+         {role:'user',content:prompt}],
+        2400,
+        function(tok){ acc+=tok; var el=document.getElementById(bubId); if(el) el.innerHTML=typeof _caiMdToHtml==='function'?_caiMdToHtml(acc):acc.replace(/\n/g,'<br>'); },
+        null
+      );
+    } else if(typeof callAI==='function'){
+      var raw=await callAI([{role:'user',content:prompt}],2200);
+      var el=document.getElementById(bubId);
+      if(el) el.innerHTML=typeof _caiMdToHtml==='function'?_caiMdToHtml(raw):raw.replace(/\n/g,'<br>');
+    }
+    res.scrollIntoView({behavior:'smooth',block:'start'});
+  } catch(e){
+    res.innerHTML='<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:14px;color:#dc2626;font-size:12.5px">⚠️ '+(e.message||'AI error')+' — check API key and connection, then retry.</div>';
+  }
+  if(btn){ btn.disabled=false; btn.textContent='🔭 Analyse with AI'; }
+}
+
+// ── Reference Table ────────────────────────────────────────────────────────
+function _buildRef() {
+  var el=document.getElementById('ird-ref-table');
+  if(!el) return;
+  el.innerHTML=_secs().map(function(s){
+    return '<div class="ird-ref-row" onclick="_showSheet('+s.s+',\'ciliary\')">'
+      +'<div class="ird-ref-clk">'+s.clk+'</div>'
+      +'<div class="ird-ref-org"><b>'+s.org.join(', ')+'</b><div style="font-size:10.5px;color:var(--mu);margin-top:1px">'+s.sig.split(',')[0]+'</div></div>'
+      +'<div class="ird-ref-sys">'+s.sys+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function _secs(){ return _eye==='right'?SECTORS_R:SECTORS_L; }
+
+// ── Expose globals ─────────────────────────────────────────────────────────
+window.irdInit         = irdInit;
+window.irdSwitchEye    = irdSwitchEye;
+window.irdSelectMarker = irdSelectMarker;
+window.irdClearMarkers = irdClearMarkers;
+window.irdRemoveMarker = irdRemoveMarker;
+window.irdSummary      = irdSummary;
+window.irdLinkDDx      = irdLinkDDx;
+window.irdRunAI        = irdRunAI;
+window.irdCloseSheet   = irdCloseSheet;
+window.irdQuickMark    = irdQuickMark;
+window._irdClearHi     = _irdClearHi;
+window._showSheet      = _showSheet;
+
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     NATURAREF v2.11.0 — LAB REFERENCE MODULE
+     Patch: append this block immediately before </body> in the main file.
+     ─────────────────────────────────────────────────────────────────
+     Features:
+       • lab_ranges_india.json loaded from GitHub CDN → cached in IndexedDB
+       • Panel auto-registered into SECS + sidebar nav
+       • Lab value input → instant colour-coded status badge
+       • AI naturopathic commentary + confirmatory test suggestions
+       • Gender-aware ranges, India-specific notes, critical value alerts
+       • Dark-mode aware
+     ═══════════════════════════════════════════════════════════════════ -->
+
+<!-- ══ LAB REFERENCE CSS ══ -->
+<style>
+/* ── Panel chrome ── */
+#ca-labref{background:var(--bg)}
+.lr-hero{
+  background:linear-gradient(135deg,#1a3a5a 0%,#0f6b5c 55%,#1a5a3a 100%);
+  border-radius:14px;padding:16px 18px 14px;margin-bottom:14px;
+  color:#fff;display:flex;align-items:flex-start;gap:14px;position:relative;overflow:hidden;
+}
+.lr-hero::before{
+  content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;
+  border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none;
+}
+.lr-hero-icon{font-size:32px;flex-shrink:0;margin-top:2px}
+.lr-hero-title{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:700;line-height:1.2;margin-bottom:4px}
+.lr-hero-sub{font-size:10.5px;opacity:.78;line-height:1.5}
+.lr-hero-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  margin-top:8px;padding:3px 10px;border-radius:12px;
+  background:rgba(255,255,255,.14);font-size:9.5px;font-weight:700;letter-spacing:.04em;
+  border:1px solid rgba(255,255,255,.22);
+}
+
+/* ── Panel selector pills ── */
+.lr-panel-tabs{
+  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;
+}
+.lr-ptab{
+  flex:1;min-width:calc(25% - 6px);padding:7px 4px;font-size:10.5px;font-weight:700;
+  border-radius:10px;border:1.5px solid var(--bdr);background:var(--surf);
+  color:var(--mu);cursor:pointer;text-align:center;transition:all .14s;
+  font-family:Inter,sans-serif;
+}
+.lr-ptab:hover{border-color:var(--sage-lt);color:var(--sage-deep)}
+.lr-ptab.active{
+  background:linear-gradient(135deg,#0f6b5c,#1a5a3a);
+  color:#fff;border-color:transparent;
+  box-shadow:0 3px 12px rgba(15,107,92,.28);
+}
+
+/* ── Input card ── */
+.lr-input-card{
+  background:var(--surf);border:1.5px solid var(--bdr);border-radius:14px;
+  padding:14px;margin-bottom:14px;
+}
+.lr-input-hdr{
+  font-size:11px;font-weight:700;color:var(--em);text-transform:uppercase;
+  letter-spacing:.08em;margin-bottom:11px;display:flex;align-items:center;gap:6px;
+}
+.lr-field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px}
+@media(min-width:640px){.lr-field-row{grid-template-columns:2fr 1fr 1fr}}
+.lr-label{font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.lr-select,.lr-input{
+  width:100%;padding:9px 11px;border:1.5px solid var(--bdr);border-radius:9px;
+  background:var(--bg);color:var(--tx);font-family:Inter,sans-serif;font-size:13px;
+  outline:none;transition:border-color .15s;
+}
+.lr-select:focus,.lr-input:focus{border-color:var(--sage-lt);background:var(--white)}
+.lr-go-btn{
+  width:100%;padding:13px;background:linear-gradient(135deg,#0f6b5c,#1a5a3a);
+  color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;
+  cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.02em;
+  transition:all .2s;box-shadow:0 4px 16px rgba(15,107,92,.28);
+}
+.lr-go-btn:hover{opacity:.92;transform:translateY(-1px)}
+.lr-go-btn:active{transform:translateY(0)}
+.lr-go-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ── Result badge ── */
+.lr-result-wrap{margin-bottom:14px;display:none}
+.lr-status-card{
+  border-radius:14px;padding:14px 16px;
+  border:2px solid transparent;
+  animation:lr-popIn .28s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes lr-popIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.lr-status-normal{background:#edf7ee;border-color:#86efac;color:#14532d}
+.lr-status-low{background:#eff6ff;border-color:#93c5fd;color:#1e3a5f}
+.lr-status-high{background:#fff7ed;border-color:#fdba74;color:#7c2d12}
+.lr-status-critical{background:#fef2f2;border-color:#fca5a5;color:#7f1d1d}
+.lr-status-indicator{
+  display:flex;align-items:center;gap:10px;margin-bottom:10px;
+}
+.lr-status-dot{
+  width:12px;height:12px;border-radius:50%;flex-shrink:0;
+  box-shadow:0 0 0 3px rgba(255,255,255,.5);
+}
+.lr-status-normal .lr-status-dot{background:#22c55e}
+.lr-status-low .lr-status-dot{background:#3b82f6}
+.lr-status-high .lr-status-dot{background:#f97316}
+.lr-status-critical .lr-status-dot{background:#ef4444;animation:lr-pulse 1s infinite}
+@keyframes lr-pulse{0%,100%{box-shadow:0 0 0 3px rgba(239,68,68,.2)}50%{box-shadow:0 0 0 6px rgba(239,68,68,.35)}}
+.lr-status-label{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.lr-value-display{font-size:28px;font-weight:900;line-height:1;margin-bottom:6px;font-family:'Cormorant Garamond',serif}
+.lr-range-info{font-size:11.5px;opacity:.82;line-height:1.6}
+.lr-india-note{
+  background:rgba(212,175,55,.14);border:1px solid rgba(212,175,55,.35);
+  border-radius:9px;padding:9px 11px;margin-top:10px;
+  font-size:11.5px;color:#5a3a00;line-height:1.55;
+}
+.lr-critical-banner{
+  background:#fef2f2;border:2px solid #ef4444;border-radius:9px;
+  padding:10px 12px;margin-top:10px;font-size:12px;
+  color:#7f1d1d;font-weight:700;line-height:1.5;
+}
+
+/* ── AI Commentary ── */
+.lr-ai-card{
+  background:linear-gradient(135deg,#0f2c24,#1a3a30);
+  border-radius:14px;padding:14px 16px;margin-top:12px;
+}
+.lr-ai-hdr{color:#e8f0e4;font-size:11.5px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.lr-ai-body{color:#c4d8c0;font-size:12.5px;line-height:1.75}
+.lr-ai-body p{margin:0 0 8px}
+.lr-ai-body strong{color:#d4af37}
+.lr-ai-body ul{margin:4px 0 8px 18px}
+.lr-ai-body li{margin-bottom:3px}
+.lr-ai-streaming{display:inline-block;width:8px;height:14px;background:#d4af37;border-radius:2px;animation:lr-blink .7s step-end infinite;vertical-align:text-bottom;margin-left:2px}
+@keyframes lr-blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── Confirm tests pills ── */
+.lr-confirm-section{margin-top:12px}
+.lr-confirm-hdr{font-size:10.5px;font-weight:700;color:var(--em);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+.lr-confirm-pills{display:flex;flex-wrap:wrap;gap:5px}
+.lr-confirm-pill{
+  padding:4px 11px;background:var(--em-lt);border:1px solid var(--sage-lt);
+  border-radius:14px;font-size:11px;font-weight:600;color:var(--sage-deep);cursor:default;
+}
+
+/* ── Reference browser ── */
+.lr-browser-wrap{margin-bottom:14px}
+.lr-browser-search{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surf);border:1.5px solid var(--bdr);border-radius:10px;
+  padding:8px 12px;margin-bottom:11px;
+}
+.lr-browser-search input{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--tx);font-family:Inter,sans-serif;font-size:13px;
+}
+.lr-browser-search input::placeholder{color:var(--lt)}
+.lr-ref-group{margin-bottom:12px}
+.lr-ref-group-hdr{
+  font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.10em;
+  color:var(--mu);padding:5px 2px;margin-bottom:6px;
+  border-bottom:1.5px solid var(--bdr);
+  display:flex;align-items:center;gap:6px;
+}
+.lr-ref-row{
+  display:flex;align-items:center;gap:10px;padding:9px 11px;
+  background:var(--surf);border:1px solid var(--bdr);border-radius:10px;
+  margin-bottom:5px;cursor:pointer;transition:all .12s;
+}
+.lr-ref-row:hover{border-color:var(--sage-lt);box-shadow:var(--sh)}
+.lr-ref-name{flex:1;font-size:12.5px;font-weight:600;color:var(--tx)}
+.lr-ref-range{font-size:11px;color:var(--mu);text-align:right;white-space:nowrap}
+.lr-ref-unit{font-size:10px;color:var(--lt);margin-top:1px}
+.lr-ref-pill{
+  padding:2px 8px;border-radius:10px;font-size:9.5px;font-weight:700;
+  background:var(--em-lt);color:var(--sage-deep);white-space:nowrap;
+}
+
+/* ── Load state ── */
+.lr-loading{text-align:center;padding:40px 16px;color:var(--mu)}
+.lr-spinner{
+  width:32px;height:32px;border:3px solid var(--bdr);border-top-color:var(--sage);
+  border-radius:50%;animation:lr-spin 0.8s linear infinite;margin:0 auto 12px;
+}
+@keyframes lr-spin{to{transform:rotate(360deg)}}
+
+/* ── Dark mode overrides ── */
+body.dark .lr-hero{filter:brightness(.9)}
+body.dark .lr-input-card{background:#221e18;border-color:#3a3028}
+body.dark .lr-select,body.dark .lr-input{background:#1a1612;border-color:#3a3028;color:var(--tx)}
+body.dark .lr-ptab{background:#1a1612;border-color:#3a3028;color:#b7d4c0}
+body.dark .lr-ptab.active{background:linear-gradient(135deg,#0f4a3a,#0a3028);color:#d8ede4}
+body.dark .lr-ref-row{background:#221e18;border-color:#3a3028}
+body.dark .lr-status-normal{background:#0d2a0d;border-color:#166534;color:#86efac}
+body.dark .lr-status-low{background:#0d1020;border-color:#1e3a8a;color:#93c5fd}
+body.dark .lr-status-high{background:#1a1000;border-color:#9a3412;color:#fcd34d}
+body.dark .lr-status-critical{background:#1a0505;border-color:#991b1b;color:#fca5a5}
+body.dark .lr-india-note{background:rgba(212,175,55,.08);color:#c4a882}
+body.dark .lr-browser-wrap .lr-browser-search{background:#1a1612;border-color:#3a3028}
+body.dark .lr-browser-wrap .lr-browser-search input{color:var(--tx)}
+body.dark .lr-confirm-pill{background:rgba(107,143,110,.15);border-color:#2a4a3a;color:var(--sage-lt)}
+</style>
+
+<!-- ══ LAB REFERENCE JAVASCRIPT ══ -->
+<script>
+(function(){
+'use strict';
+
+/* ── Constants ────────────────────────────────────────────────────── */
+var LR_JSON_URL = 'https://cdn.jsdelivr.net/gh/vikyaitool-droid/ccr-data@main/data/v1/lab_ranges_india.json';
+var LR_IDB_KEY  = 'naturaref:lab_ranges_india:v1';
+var LR_IDB_TS   = 'naturaref:lab_ranges_india:ts';
+var LR_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+/* ── State ───────────────────────────────────────────────────────── */
+var _lrData      = null;   // parsed JSON from CDN
+var _lrLoading   = false;
+var _lrPanel     = null;   // currently selected panel key
+var _lrGender    = 'male';
+var _lrAbort     = null;
+
+/* ═══════════════════════════════════════════════════════════════════
+   IDB HELPERS (mirrors NrKV pattern used elsewhere in the app)
+   ═══════════════════════════════════════════════════════════════════ */
+function _lrIdbOpen() {
+  return new Promise(function(res, rej) {
+    var req = indexedDB.open('NaturaRefKV', 1);
+    req.onupgradeneeded = function(e) {
+      e.target.result.createObjectStore('kv', { keyPath: 'k' });
+    };
+    req.onsuccess  = function(e) { res(e.target.result); };
+    req.onerror    = function(e) { rej(e.target.error); };
+  });
+}
+function idbGet(key) {
+  return _lrIdbOpen().then(function(db) {
+    return new Promise(function(res, rej) {
+      var tx  = db.transaction('kv', 'readonly');
+      var req = tx.objectStore('kv').get(key);
+      req.onsuccess = function() { res(req.result ? req.result.v : null); };
+      req.onerror   = function() { rej(req.error); };
+    });
+  });
+}
+function idbSet(key, val) {
+  return _lrIdbOpen().then(function(db) {
+    return new Promise(function(res, rej) {
+      var tx  = db.transaction('kv', 'readwrite');
+      var req = tx.objectStore('kv').put({ k: key, v: val });
+      req.onsuccess = function() { res(); };
+      req.onerror   = function() { rej(req.error); };
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DATA LOADING — CDN → IDB cache
+   ═══════════════════════════════════════════════════════════════════ */
+async function _lrLoadData() {
+  if (_lrData) return _lrData;
+  if (_lrLoading) return null;
+  _lrLoading = true;
+
+  // 1. Try IDB cache first
+  try {
+    var ts    = await idbGet(LR_IDB_TS);
+    var fresh = ts && (Date.now() - parseInt(ts, 10)) < LR_CACHE_TTL;
+    if (fresh) {
+      var cached = await idbGet(LR_IDB_KEY);
+      if (cached) {
+        _lrData = JSON.parse(cached);
+        _lrLoading = false;
+        return _lrData;
+      }
+    }
+  } catch(e) {}
+
+  // 2. Fetch from CDN
+  try {
+    var res  = await fetch(LR_JSON_URL);
+    var json = await res.json();
+    _lrData  = json;
+    // Cache to IDB
+    try {
+      await idbSet(LR_IDB_KEY, JSON.stringify(json));
+      await idbSet(LR_IDB_TS, String(Date.now()));
+    } catch(e) {}
+    _lrLoading = false;
+    return _lrData;
+  } catch(e) {
+    _lrLoading = false;
+    throw new Error('Lab ranges JSON could not be loaded — check CDN URL or offline status: ' + e.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION BUILDER — called by openSection() override
+   ═══════════════════════════════════════════════════════════════════ */
+function _lrBuildPanel(container) {
+  container.innerHTML = [
+    '<div class="ca" id="ca-labref" style="overflow-y:auto">',
+    '<div style="max-width:900px;margin:0 auto;padding:10px 14px 80px">',
+
+    /* Hero */
+    '<div class="lr-hero">',
+      '<div class="lr-hero-icon">🔬</div>',
+      '<div>',
+        '<div class="lr-hero-title">Lab Reference · India</div>',
+        '<div class="lr-hero-sub">Indian population–calibrated ranges · Colour-coded interpretation · AI naturopathic commentary</div>',
+        '<div class="lr-hero-badge">🇮🇳 ICMR-aligned &nbsp;|&nbsp; ♀♂ Gender-aware &nbsp;|&nbsp; 📶 IndexedDB cached</div>',
+      '</div>',
+    '</div>',
+
+    /* Panel tabs */
+    '<div class="lr-panel-tabs" id="lr-panel-tabs">',
+      '<button class="lr-ptab active" onclick="lrSelectPanel(\'CBC\')">🩸 CBC</button>',
+      '<button class="lr-ptab" onclick="lrSelectPanel(\'Metabolic\')">⚗️ Metabolic</button>',
+      '<button class="lr-ptab" onclick="lrSelectPanel(\'Liver\')">🫀 Liver</button>',
+      '<button class="lr-ptab" onclick="lrSelectPanel(\'Kidney\')">🫘 Kidney</button>',
+      '<button class="lr-ptab" onclick="lrSelectPanel(\'Thyroid\')">🦋 Thyroid</button>',
+      '<button class="lr-ptab" onclick="lrSelectPanel(\'Lipids\')">💧 Lipids</button>',
+      '<button class="lr-ptab" onclick="lrSelectPanel(\'HbA1c\')">🩻 HbA1c</button>',
+      '<button class="lr-ptab" onclick="lrSelectPanel(\'Inflammatory\')">🔥 Inflam.</button>',
+      '<button class="lr-ptab" onclick="lrSelectPanel(\'Electrolytes\')">⚡ Electrolytes</button>',
+    '</div>',
+
+    /* Input card */
+    '<div class="lr-input-card">',
+      '<div class="lr-input-hdr">🧪 Enter Lab Value for Interpretation</div>',
+      '<div class="lr-field-row">',
+        '<div>',
+          '<div class="lr-label">Test Name</div>',
+          '<select class="lr-select" id="lr-test-select" onchange="lrOnTestChange()"><option value="">— select panel first —</option></select>',
+        '</div>',
+        '<div>',
+          '<div class="lr-label">Value</div>',
+          '<input class="lr-input" id="lr-value-input" type="number" step="any" placeholder="e.g. 9.8" oninput="lrClearResult()"/>',
+        '</div>',
+        '<div>',
+          '<div class="lr-label">Gender</div>',
+          '<select class="lr-select" id="lr-gender-select" onchange="_lrGender=this.value;lrClearResult()">',
+            '<option value="male">Male</option>',
+            '<option value="female">Female</option>',
+          '</select>',
+        '</div>',
+      '</div>',
+      '<button class="lr-go-btn" id="lr-go-btn" onclick="lrInterpret()">🔬 Interpret Value + AI Commentary</button>',
+    '</div>',
+
+    /* Result area */
+    '<div class="lr-result-wrap" id="lr-result-wrap">',
+      '<div id="lr-status-card" class="lr-status-card lr-status-normal">',
+        '<div class="lr-status-indicator">',
+          '<div class="lr-status-dot"></div>',
+          '<div class="lr-status-label" id="lr-status-label">Normal</div>',
+        '</div>',
+        '<div class="lr-value-display" id="lr-value-display">—</div>',
+        '<div class="lr-range-info" id="lr-range-info"></div>',
+        '<div id="lr-india-note"></div>',
+        '<div id="lr-critical-banner" style="display:none" class="lr-critical-banner"></div>',
+        '<div class="lr-confirm-section" id="lr-confirm-section" style="display:none">',
+          '<div class="lr-confirm-hdr">🧾 Confirmatory Tests Recommended</div>',
+          '<div class="lr-confirm-pills" id="lr-confirm-pills"></div>',
+        '</div>',
+      '</div>',
+      '<div class="lr-ai-card" id="lr-ai-card" style="display:none">',
+        '<div class="lr-ai-hdr">🌿 BNYS Naturopathic Interpretation <span id="lr-ai-badge" style="margin-left:auto;font-size:9px;font-weight:600;padding:2px 8px;background:rgba(212,175,55,.2);border:1px solid rgba(212,175,55,.35);border-radius:8px;color:#d4af37">AI</span></div>',
+        '<div class="lr-ai-body" id="lr-ai-body"></div>',
+      '</div>',
+    '</div>',
+
+    /* Reference browser */
+    '<div class="lr-browser-wrap" id="lr-browser-wrap">',
+      '<div class="lr-input-hdr" style="margin-bottom:10px">📖 Reference Browser — <span id="lr-browser-panel-name">CBC</span></div>',
+      '<div class="lr-browser-search">',
+        '<span style="color:var(--lt);font-size:15px">🔍</span>',
+        '<input type="text" id="lr-search-input" placeholder="Search test name…" oninput="lrFilterBrowser(this.value)"/>',
+      '</div>',
+      '<div id="lr-browser-list"><div class="lr-loading"><div class="lr-spinner"></div><div>Loading lab ranges…</div></div></div>',
+    '</div>',
+
+    '</div></div>'
+  ].join('');
+
+  // Auto-load first panel
+  _lrPanel = 'CBC';
+  _lrLoadData()
+    .then(function() { lrRenderBrowser('CBC'); })
+    .catch(function(err) {
+      var el = document.getElementById('lr-browser-list');
+      if (el) el.innerHTML = '<div style="padding:20px;color:#c0392b;font-size:12.5px">⚠️ ' + err.message + '</div>';
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PANEL TAB SWITCHING
+   ═══════════════════════════════════════════════════════════════════ */
+window.lrSelectPanel = function(panelKey) {
+  _lrPanel = panelKey;
+  // Update tabs
+  document.querySelectorAll('.lr-ptab').forEach(function(b) {
+    b.classList.toggle('active', b.textContent.trim().replace(/^[\S]+\s/, '').trim() === _lrPanelLabel(panelKey) || b.getAttribute('onclick') === 'lrSelectPanel(\'' + panelKey + '\')');
+  });
+  // Update browser header
+  var hn = document.getElementById('lr-browser-panel-name');
+  if (hn) hn.textContent = panelKey;
+  // Rebuild test select
+  lrBuildTestSelect(panelKey);
+  // Render browser
+  lrRenderBrowser(panelKey);
+  lrClearResult();
+};
+
+function _lrPanelLabel(key) {
+  var map = {CBC:'CBC',Metabolic:'Metabolic',Liver:'Liver',Kidney:'Kidney',Thyroid:'Thyroid',Lipids:'Lipids',HbA1c:'HbA1c',Inflammatory:'Inflam.',Electrolytes:'Electrolytes'};
+  return map[key] || key;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEST SELECT BUILDER
+   ═══════════════════════════════════════════════════════════════════ */
+function lrBuildTestSelect(panelKey) {
+  var sel = document.getElementById('lr-test-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— select test —</option>';
+  if (!_lrData || !_lrData[panelKey]) return;
+  Object.keys(_lrData[panelKey]).forEach(function(testName) {
+    var opt = document.createElement('option');
+    opt.value = testName;
+    opt.textContent = testName;
+    sel.appendChild(opt);
+  });
+}
+
+window.lrOnTestChange = function() { lrClearResult(); };
+window.lrClearResult  = function() {
+  var w = document.getElementById('lr-result-wrap');
+  if (w) w.style.display = 'none';
+  if (_lrAbort) { _lrAbort.abort(); _lrAbort = null; }
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   REFERENCE BROWSER RENDERER
+   ═══════════════════════════════════════════════════════════════════ */
+function lrRenderBrowser(panelKey, filter) {
+  var wrap = document.getElementById('lr-browser-list');
+  if (!wrap) return;
+  if (!_lrData) {
+    wrap.innerHTML = '<div class="lr-loading"><div class="lr-spinner"></div><div>Loading…</div></div>';
+    _lrLoadData().then(function() { lrRenderBrowser(panelKey, filter); }).catch(function(){});
+    return;
+  }
+  var panel = _lrData[panelKey];
+  if (!panel) { wrap.innerHTML = '<div style="padding:20px;color:var(--mu);font-size:13px">No data for this panel.</div>'; return; }
+
+  var filterLow = (filter || '').toLowerCase().trim();
+  var html = '';
+  Object.keys(panel).forEach(function(testName) {
+    if (filterLow && testName.toLowerCase().indexOf(filterLow) === -1) return;
+    var t = panel[testName];
+    var rangeStr = _lrRangeStr(t);
+    var unitStr  = t.unit || '';
+    html += '<div class="lr-ref-row" onclick="lrQuickFill(\'' + testName.replace(/'/g,"\\'") + '\')" title="Tap to auto-fill input">';
+    html += '<div class="lr-ref-name">' + testName + '</div>';
+    html += '<div style="text-align:right">';
+    html += '<div class="lr-ref-range">' + rangeStr + '</div>';
+    html += '<div class="lr-ref-unit">' + unitStr + '</div>';
+    html += '</div>';
+    if (t.india_note || t.south_asian_note) {
+      html += '<span class="lr-ref-pill">🇮🇳 India</span>';
+    }
+    html += '</div>';
+  });
+  wrap.innerHTML = html || '<div style="padding:20px;color:var(--mu);font-size:13px;text-align:center">No matches found.</div>';
+}
+
+window.lrFilterBrowser = function(q) { lrRenderBrowser(_lrPanel, q); };
+
+window.lrQuickFill = function(testName) {
+  var sel = document.getElementById('lr-test-select');
+  if (!sel) return;
+  // Ensure right panel options are loaded
+  lrBuildTestSelect(_lrPanel);
+  sel.value = testName;
+  var inp = document.getElementById('lr-value-input');
+  if (inp) { inp.value = ''; inp.focus(); }
+  lrClearResult();
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   RANGE HELPERS
+   ═══════════════════════════════════════════════════════════════════ */
+function _lrRangeStr(t) {
+  if (!t) return '—';
+  var g = _lrGender;
+  if (t.male && t.female) return (g === 'female' ? t.female : t.male)[0] + ' – ' + (g === 'female' ? t.female : t.male)[1];
+  if (t.range)            return t.range[0] + ' – ' + t.range[1];
+  if (t.optimal)          return 'Optimal: < ' + t.optimal[1];
+  return '—';
+}
+
+function _lrGetRange(t) {
+  var g = _lrGender;
+  if (t.male && t.female) return g === 'female' ? t.female : t.male;
+  if (t.range)            return t.range;
+  return null;
+}
+
+/* Status → Normal | Low | High | Critical */
+function _lrGetStatus(t, val) {
+  var range = _lrGetRange(t);
+  if (!range) {
+    // For tests without simple ranges (ANA etc.)
+    return { status: 'info', label: 'Reference Only', cls: 'lr-status-normal' };
+  }
+  var lo = range[0], hi = range[1];
+  var clo = t.critical_low  !== undefined ? t.critical_low  : null;
+  var chi = t.critical_high !== undefined ? t.critical_high : null;
+
+  if (clo !== null && val < clo) return { status: 'critical', label: '⚠️ CRITICAL — Low',  cls: 'lr-status-critical' };
+  if (chi !== null && val > chi) return { status: 'critical', label: '⚠️ CRITICAL — High', cls: 'lr-status-critical' };
+  if (val < lo)                  return { status: 'low',      label: '↓ Low',               cls: 'lr-status-low'     };
+  if (val > hi)                  return { status: 'high',     label: '↑ Elevated',          cls: 'lr-status-high'    };
+  return                                 { status: 'normal',  label: '✓ Normal',             cls: 'lr-status-normal'  };
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MAIN INTERPRET FUNCTION
+   ═══════════════════════════════════════════════════════════════════ */
+window.lrInterpret = async function() {
+  var testName = (document.getElementById('lr-test-select') || {}).value || '';
+  var valStr   = (document.getElementById('lr-value-input') || {}).value || '';
+  var gender   = (document.getElementById('lr-gender-select') || {}).value || 'male';
+  _lrGender    = gender;
+
+  if (!testName) { if (typeof ccToast === 'function') ccToast('⚠️ Select a test first'); return; }
+  if (!valStr)   { if (typeof ccToast === 'function') ccToast('⚠️ Enter a value'); return; }
+
+  var val = parseFloat(valStr);
+  if (isNaN(val)) { if (typeof ccToast === 'function') ccToast('⚠️ Enter a valid number'); return; }
+
+  if (!_lrData) {
+    try { await _lrLoadData(); } catch(e) { return; }
+  }
+
+  var panel    = _lrData[_lrPanel];
+  if (!panel)  { if (typeof ccToast === 'function') ccToast('⚠️ Panel data missing — reload page'); return; }
+  var testData = panel[testName];
+  if (!testData) { if (typeof ccToast === 'function') ccToast('⚠️ Test not found in panel'); return; }
+
+  var { status, label, cls } = _lrGetStatus(testData, val);
+  var range    = _lrGetRange(testData);
+  var unit     = testData.unit || '';
+
+  /* ── 1. Paint status card ── */
+  var wrap = document.getElementById('lr-result-wrap');
+  var card = document.getElementById('lr-status-card');
+  var lbl  = document.getElementById('lr-status-label');
+  var disp = document.getElementById('lr-value-display');
+  var info = document.getElementById('lr-range-info');
+  var note = document.getElementById('lr-india-note');
+  var crit = document.getElementById('lr-critical-banner');
+
+  card.className = 'lr-status-card ' + cls;
+  lbl.textContent  = label;
+  disp.textContent = val + ' ' + unit;
+  info.innerHTML   = range
+    ? 'Reference range: <strong>' + range[0] + ' – ' + range[1] + ' ' + unit + '</strong>'
+    : (testData.notes || '');
+  if (testData.notes && range) info.innerHTML += '<br><span style="opacity:.8">' + testData.notes + '</span>';
+
+  // India note
+  var indiaNote = testData.india_note || testData.south_asian_note || '';
+  if (indiaNote) {
+    note.innerHTML = '🇮🇳 <strong>India context:</strong> ' + indiaNote;
+    note.className = 'lr-india-note';
+    note.style.display = '';
+  } else { note.style.display = 'none'; }
+
+  // Critical banner
+  if (status === 'critical') {
+    crit.innerHTML = '🚨 CRITICAL VALUE — Immediate clinical action required. Verify result, assess patient, consider urgent referral.';
+    crit.style.display = '';
+  } else { crit.style.display = 'none'; }
+
+  // Confirm tests
+  var confirmEl    = document.getElementById('lr-confirm-section');
+  var confirmPills = document.getElementById('lr-confirm-pills');
+  var confirmTests = testData.confirm_tests || [];
+  if (confirmTests.length && status !== 'normal') {
+    confirmPills.innerHTML = confirmTests.map(function(t) {
+      return '<span class="lr-confirm-pill">🧾 ' + t + '</span>';
+    }).join('');
+    confirmEl.style.display = '';
+  } else {
+    confirmEl.style.display = 'none';
+  }
+
+  wrap.style.display = '';
+
+  /* ── 2. AI Commentary (only for abnormal or user-requested) ── */
+  var aiCard = document.getElementById('lr-ai-card');
+  var aiBody = document.getElementById('lr-ai-body');
+  aiCard.style.display = '';
+  aiBody.innerHTML = '<span class="lr-ai-streaming"></span>';
+
+  // Cancel previous stream
+  if (_lrAbort) { _lrAbort.abort(); }
+  _lrAbort = new AbortController();
+
+  var statusLabel = label.replace(/[⚠️↓↑✓]/g, '').trim();
+  var rangeStr    = range ? range[0] + ' – ' + range[1] + ' ' + unit : 'no standard range';
+  var bnysHint    = testData.bnys_insight || '';
+  var confirmHint = confirmTests.length ? confirmTests.join(', ') : '';
+
+  var sysPrompt = 'You are Dr. Vikranth, BNYS naturopathic physician. Provide a concise clinical commentary in 3 parts:\n'
+    + '**1. Clinical Significance** — what this result means physiologically (2-3 sentences)\n'
+    + '**2. BNYS Naturopathic Protocol** — specific dietary, herbal, yoga, hydrotherapy interventions with doses and evidence where available (4-6 bullet points)\n'
+    + '**3. What Tests to Confirm** — 3-5 specific follow-up investigations to confirm cause and monitor (brief list)\n\n'
+    + 'Rules: Be specific, cite herbs with doses, mention any relevant BNYS/naturopathic evidence. End with: "— Dr. Vikranth · BNYS". No generic statements.';
+
+  var userPrompt = 'Patient: ' + gender + '\n'
+    + 'Test: ' + testName + '\n'
+    + 'Value: ' + val + ' ' + unit + '\n'
+    + 'Status: ' + statusLabel + '\n'
+    + 'Normal range: ' + rangeStr + '\n'
+    + (bnysHint   ? 'BNYS hint: ' + bnysHint + '\n' : '')
+    + (confirmHint ? 'Likely confirmatory tests: ' + confirmHint + '\n' : '');
+
+  // Use streaming if available, fallback to callAI
+  try {
+    if (typeof callAIStream === 'function') {
+      var acc = '';
+      await callAIStream(
+        [{ role:'system', content: sysPrompt }, { role:'user', content: userPrompt }],
+        900,
+        function(tok) {
+          acc += tok;
+          aiBody.innerHTML = _lrMd(acc) + '<span class="lr-ai-streaming"></span>';
+        },
+        _lrAbort.signal
+      );
+      aiBody.innerHTML = _lrMd(acc);
+    } else if (typeof callAI === 'function') {
+      var raw = await callAI([{ role:'system', content: sysPrompt }, { role:'user', content: userPrompt }], 900);
+      aiBody.innerHTML = _lrMd(raw);
+    } else {
+      aiBody.innerHTML = '<span style="color:var(--mu);font-style:italic">AI not available — set API key in Settings.</span>';
+    }
+  } catch(e) {
+    if (e.name !== 'AbortError') {
+      aiBody.innerHTML = '<span style="color:#c0392b">⚠️ AI error: ' + (e.message || 'check API key') + '</span>';
+    }
+  }
+  _lrAbort = null;
+
+  // Scroll result into view
+  var rw = document.getElementById('lr-result-wrap');
+  if (rw) rw.scrollIntoView({ behavior:'smooth', block:'nearest' });
+};
+
+/* ── Minimal markdown renderer for AI output ── */
+function _lrMd(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^### (.+)$/gm,'<div style="font-size:12px;font-weight:800;color:#d4af37;text-transform:uppercase;letter-spacing:.06em;margin:10px 0 5px">$1</div>')
+    .replace(/^## (.+)$/gm,'<div style="font-size:13px;font-weight:700;color:#d4af37;margin:12px 0 5px">$1</div>')
+    .replace(/^# (.+)$/gm,'<div style="font-size:14px;font-weight:700;color:#d4af37;margin:12px 0 6px">$1</div>')
+    .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+    .replace(/(<\/li>\s*<li>)/g,'$1')
+    .replace(/\n{2,}/g,'<br><br>')
+    .replace(/\n/g,'<br>');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION REGISTRATION — hooks into existing openSection() flow
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Wait for SECS to be defined, then register */
+function _lrRegister() {
+  /* Inject into SECS array (used by search index, DDx banner etc.) */
+  if (typeof SECS !== 'undefined') {
+    var already = SECS.some(function(s) { return s.id === 'labref'; });
+    if (!already) {
+      SECS.push({
+        id:'labref', title:'Lab Reference · India', icon:'🔬',
+        group:'diagnose',
+        tabs:[['ref','Lab Reference','🔬','#1a5a3a']]
+      });
+    }
+  }
+
+  /* Intercept openSection to handle 'labref' */
+  var _origOpenSection = window.openSection;
+  window.openSection = function(sec) {
+    if (sec && sec.id === 'labref') {
+      /* Create view if needed */
+      var secViews = document.getElementById('sec-views');
+      if (!secViews) return;
+      var existingView = document.getElementById('sv-labref');
+      if (!existingView) {
+        var view = document.createElement('div');
+        view.id = 'sv-labref';
+        view.className = 'sec-view';
+        /* Minimal sec-hdr */
+        view.innerHTML = '<div class="sec-hdr"><div class="sec-hdr-row">'
+          + '<div class="sec-hicon" style="background:#e0f5ee;color:#1a5a3a">🔬</div>'
+          + '<div><div class="sec-title" style="color:#1a5a3a">Lab Reference · India</div>'
+          + '<div class="sec-sub">Indian population–calibrated ranges · AI naturopathic commentary · IndexedDB cached</div></div>'
+          + '</div></div>'
+          + '<div id="lr-section-body"></div>';
+        secViews.appendChild(view);
+        _lrBuildPanel(view.querySelector('#lr-section-body'));
+      }
+      /* Show sec-views, hide others */
+      document.getElementById('home-view').style.display  = 'none';
+      document.getElementById('group-view').style.display = 'none';
+      secViews.style.display = 'block';
+      /* Hide all sec-view children, show ours */
+      Array.from(secViews.children).forEach(function(c) { c.style.display = 'none'; });
+      existingView = document.getElementById('sv-labref');
+      existingView.style.display = 'block';
+      /* Update topbar */
+      var tbSec = document.getElementById('tb-sec');
+      var tbSub = document.getElementById('tb-sub');
+      var tbIco = document.getElementById('tb-icon');
+      var tbTtl = document.getElementById('tb-ttl-block');
+      var tbBrand = document.getElementById('tb-brand-home');
+      if (tbBrand) tbBrand.style.display = 'none';
+      if (tbTtl)   tbTtl.style.display   = 'flex';
+      if (tbIco)   { tbIco.innerHTML = '🔬'; tbIco.style.background = '#e0f5ee'; tbIco.style.color = '#1a5a3a'; }
+      if (tbSec)   { tbSec.textContent = 'Lab Reference · India'; tbSec.style.color = '#1a5a3a'; }
+      if (tbSub)   tbSub.textContent = 'ICMR-calibrated · AI naturopathic · Cached';
+      /* curSec / back button */
+      if (typeof curSec !== 'undefined') window.curSec = 'labref';
+      var bb = document.getElementById('back-btn');
+      if (bb) bb.classList.add('visible');
+      document.body.classList.remove('in-group');
+      document.body.classList.add('in-section');
+      if (typeof syncBotNav === 'function') syncBotNav('diagnose');
+      /* Ensure test select is populated for current panel */
+      setTimeout(function() { lrBuildTestSelect(_lrPanel || 'CBC'); }, 150);
+      return;
+    }
+    if (_origOpenSection) _origOpenSection(sec);
+  };
+
+  /* Add sidebar nav entry */
+  _lrInjectSidebarNav();
+}
+
+/* ── Sidebar nav injection ── */
+function _lrInjectSidebarNav() {
+  /* Find the Diagnose group body in sidebar and inject a nav item */
+  var sbNav = document.querySelector('.sb-nav');
+  if (!sbNav) return;
+  if (document.getElementById('sbh-labref')) return; // already added
+  /* Look for diagnose group */
+  var diagGroup = sbNav.querySelector('[data-group="diagnose"]');
+  if (!diagGroup) {
+    /* Fallback: find by icon/text content */
+    var groups = sbNav.querySelectorAll('.sb-group');
+    groups.forEach(function(g) {
+      var hdr = g.querySelector('.sb-hdr');
+      if (hdr && (hdr.textContent.toLowerCase().includes('diagnos') || hdr.textContent.toLowerCase().includes('clinical'))) {
+        diagGroup = g.querySelector('.sb-items');
+      }
+    });
+  }
+  if (!diagGroup) diagGroup = sbNav.querySelector('.sb-items'); // first group as last resort
+  if (!diagGroup) return;
+
+  var item = document.createElement('button');
+  item.id = 'sbh-labref';
+  item.className = 'sb-item';
+  item.innerHTML = '<span>🔬</span><span>Lab Reference · India</span>';
+  item.onclick = function() {
+    if (typeof openSec === 'function') openSec('labref', item);
+    else if (typeof openSection === 'function') openSection({ id:'labref' });
+  };
+  diagGroup.insertBefore(item, diagGroup.firstChild);
+}
+
+/* ── Also expose a direct global to open from anywhere ── */
+window.openLabRef = function() {
+  if (typeof openSection === 'function') openSection({ id:'labref' });
+};
+
+/* ── Register on DOM ready ── */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() { setTimeout(_lrRegister, 400); });
+} else {
+  setTimeout(_lrRegister, 400);
+}
+
+/* ── Also expose for manual call after app boots ── */
+window._lrRegister = _lrRegister;
+
+})();
+</script>
+
+<!-- ══ SIDEBAR: add Lab Reference entry to the "Learn" or "Diagnose" group via DOM-ready hook ══
+     (The JS above injects this automatically — this comment is for documentation)
+     To manually trigger: openLabRef()  or  openSection({id:'labref'})
+     ─────────────────────────────────────────────────────────────────── -->
+
+</body>
+</html>
