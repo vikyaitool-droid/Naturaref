@@ -22427,7 +22427,13 @@ function irdInit() {
   svg.addEventListener('click', function(e) {
     var pt = svg.createSVGPoint();
     pt.x = e.clientX; pt.y = e.clientY;
-    var loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    /* Touch fallback: synthesised click may have clientX/Y = 0 on some mobile browsers */
+    if (!pt.x && !pt.y && e.changedTouches && e.changedTouches.length) {
+      pt.x = e.changedTouches[0].clientX; pt.y = e.changedTouches[0].clientY;
+    }
+    var ctm = svg.getScreenCTM();
+    if (!ctm) return; /* guard: SVG not rendered yet */
+    var loc = pt.matrixTransform(ctm.inverse());
     var dx = loc.x - CX, dy = loc.y - CY;
     var r  = Math.sqrt(dx*dx + dy*dy);
     if (r < R_PUP + 2 || r > R_HUM + 8) return;
@@ -22617,7 +22623,7 @@ function irdCloseSheet() {
   var bs=document.getElementById('ird-bottom-sheet');
   var ov=document.getElementById('ird-bs-overlay');
   if(bs) bs.style.transform='translateY(100%)';
-  if(ov){ ov.style.opacity='0'; setTimeout(function(){ov.style.display='none';},320); }
+  if(ov){ ov.style.opacity='0'; ov.style.pointerEvents='none'; setTimeout(function(){ov.style.display='none';ov.style.pointerEvents='';},320); }
 }
 
 function irdQuickMark(sec, zone, type) {
