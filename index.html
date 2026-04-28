@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NaturaRef">
 <meta name="theme-color" content="#0d0d0d">
-<title>NaturaRef AI v2.10.0</title>
+<title>NaturaRef AI v2.10.1</title>
 
 <link rel="manifest" href="/Naturaref/manifest.json">
 <link rel="apple-touch-icon" href="/Naturaref/icon-192x192.png">
@@ -895,9 +895,24 @@ body.dark .lux-calc-back { background:#221e18; border-color:#3a3028; }
 .sr-section-hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px;padding:3px 0;border-bottom:2px solid currentColor}
 
 /* ══ SECTION VIEWS ══ */
-#sec-views{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+#sec-views{
+  flex:1;
+  display:flex;          /* MUST be flex — children use flex:1 to fill height */
+  flex-direction:column;
+  overflow:hidden;
+  min-height:0;
+  /* Full-viewport overlay guard: sits above home-view / group-view in stacking order */
+  position:relative;
+  z-index:10;
+}
 .sec-view{flex:1;display:none;flex-direction:column;overflow:hidden;min-height:0}
-.sec-view.active{display:flex!important;flex-direction:column;overflow:hidden}
+.sec-view.active{
+  display:flex!important; /* activates flex:1 chain → fills #sec-views height */
+  flex-direction:column;
+  overflow:hidden;
+  min-height:0;
+  height:100%;            /* explicit 100% so desktop media-query height is always enforced */
+}
 .sec-hdr{
   padding:6px 14px;border-bottom:1px solid var(--border);
   background:var(--warm);flex-shrink:0;
@@ -1753,13 +1768,18 @@ body.dark .tab-index{background:#1a1612}
 
   /* ── Home view: single scrollable column — magazine layout ── */
   #home-view{
-    display:block!important;
+    display:block;
     height:100%;
     overflow-y:auto;
     overflow-x:hidden;
     padding:0;
     scroll-behavior:smooth;
   }
+  /* Hide home-view and group-view when a section is active — CSS-level guard
+     prevents ghosting even if JS display assignments arrive out of order */
+  body.in-group #home-view,
+  body.in-section #home-view { display:none !important; }
+  body.in-section #group-view { display:none !important; }
   #home-view::-webkit-scrollbar{ width:5px; }
   #home-view::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px; }
 
@@ -5293,7 +5313,11 @@ var SECS = [
   { id:'ahara',                 icon:'🥘', title:'Ahara — Classical Diet Theory',   sub:'Ahara Vidhi · Pathya-Apathya · Samskara · Ritucharya · Viruddha Ahara · Six tastes (Shad Rasa)', color:'#166534', bg:'#dcfce7', data:{ahara:AHARA_DATA}, customRender:false,
     tabs:[['rasa','🥘','Shad Rasa','#166534'],['pathya','🌿','Pathya-Apathya','#064E3B'],['ritu','🍃','Ritucharya','#0369a1']] },
   { id:'iridology', icon:'👁', title:'Iridology', sub:'Interactive Iris Zone Chart · Right/Left Eye · 12 Sectors · Marker Tool · AI Constitutional Analysis · DDx Iris Finder', color:'#3730a3', bg:'#eef2ff', data:{}, customRender:true,
-    tabs:[['iris','👁','Iris Chart','#3730a3']] }
+    tabs:[['iris','👁','Iris Chart','#3730a3']] },
+  { id:'auricular', icon:'👂', title:'Auricular Therapy', sub:'Interactive Ear Acupoint Map · 100+ Points · Tap to Explore · Press-Seed Protocol · AI Treatment Generator', color:'#0f766e', bg:'#ccfbf1', data:{}, customRender:true,
+    tabs:[['ear','👂','Ear Map','#0f766e']] },
+  { id:'tongue', icon:'👅', title:'Tongue Diagnosis', sub:'Interactive Tongue Zone Map · TCM & Ayurvedic Mapping · Coating & Colour Analysis · AI Constitutional Interpretation', color:'#be123c', bg:'#ffe4e6', data:{}, customRender:true,
+    tabs:[['tng','👅','Tongue Map','#be123c']] }
 ];
 
 // Fix imaging data key (ec vs ec2)
@@ -5314,7 +5338,7 @@ const SB_GROUPS = [
   {
     label: '🌿 Treat',
     key: 'treat',
-    ids: ['bnys','skills','bnys_protocols','naturotreat','herbal','dosing','metabolic','chromotherapy','magneto','clinnut','colon','lifestyle','detox','physio','counselling','yogathera','panchakarma','treatmanip','helioaero','acupther','reflexology','iridology','intpain','firstaid']
+    ids: ['bnys','skills','bnys_protocols','naturotreat','herbal','dosing','metabolic','chromotherapy','magneto','clinnut','colon','lifestyle','detox','physio','counselling','yogathera','panchakarma','treatmanip','helioaero','acupther','reflexology','iridology','auricular','tongue','intpain','firstaid']
   },
   {
     label: '🧬 Wellness',
@@ -8156,6 +8180,472 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
     return;
   } // end reflexology block
 
+  // ══════════════════════════════════════════════════════════════════════
+  // AURICULAR THERAPY — Custom interactive SVG module
+  // ══════════════════════════════════════════════════════════════════════
+  if (sec.id === 'auricular') {
+    view.innerHTML = `
+      <div class="sec-hdr">
+        <div class="sec-hdr-row">
+          <div class="sec-hicon" style="background:#ccfbf1;color:#0f766e">👂</div>
+          <div>
+            <div class="sec-title" style="color:#0f766e">Auricular Therapy</div>
+            <div class="sec-sub">Interactive Ear Acupoint Map · Tap any zone · Press-Seed Protocol · AI Treatment Generator</div>
+          </div>
+        </div>
+      </div>
+      <div class="ca" id="ca-auricular" style="overflow-y:auto">
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 100px">
+
+          <!-- Hero -->
+          <div style="background:linear-gradient(135deg,#064e3b,#0f766e,#0d9488);border-radius:14px;padding:14px 18px;margin-bottom:16px;color:#fff;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden">
+            <div style="position:absolute;right:-20px;top:-20px;width:160px;height:160px;background:radial-gradient(circle,rgba(255,255,255,.07),transparent);border-radius:50%;pointer-events:none"></div>
+            <div style="font-size:38px;flex-shrink:0">👂</div>
+            <div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;margin-bottom:4px">Auricular Therapy Analyser</div>
+              <div style="font-size:10.5px;opacity:.82;line-height:1.55">Tap any ear zone to view acupoints · Select conditions · Generate AI press-seed protocol · Based on WHO auricular nomenclature</div>
+            </div>
+          </div>
+
+          <!-- Ear Toggle -->
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <button id="aur-btn-left" onclick="aurSwitchEar('left')"
+              style="flex:1;padding:10px 6px;border-radius:11px;border:2px solid #0f766e;background:#0f766e;color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+              👂 Left Ear
+            </button>
+            <button id="aur-btn-right" onclick="aurSwitchEar('right')"
+              style="flex:1;padding:10px 6px;border-radius:11px;border:2px solid var(--bdr);background:var(--surf);color:#0f766e;font-size:12.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+              👂 Right Ear
+            </button>
+          </div>
+
+          <!-- SVG Ear Map -->
+          <div style="background:var(--surf);border:1.5px solid #99f6e4;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--sh-md)">
+            <div id="aur-ear-label" style="text-align:center;font-size:11px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Left Ear — 12 Anatomical Zones · WHO Nomenclature</div>
+            <div style="display:flex;justify-content:center;position:relative">
+              <svg id="aur-ear-svg" viewBox="0 0 340 520" xmlns="http://www.w3.org/2000/svg"
+                style="width:100%;max-width:320px;height:auto;display:block;-webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation">
+                <defs>
+                  <radialGradient id="aur-skin-grad" cx="40%" cy="30%" r="70%">
+                    <stop offset="0%" stop-color="#fde8d0"/>
+                    <stop offset="100%" stop-color="#f0c8a0"/>
+                  </radialGradient>
+                  <filter id="aur-sh" x="-10%" y="-10%" width="120%" height="120%">
+                    <feDropShadow dx="2" dy="3" stdDeviation="4" flood-color="rgba(0,0,0,0.15)"/>
+                  </filter>
+                </defs>
+
+                <!-- ── Ear silhouette (anatomically styled) ── -->
+                <!-- Outer helix -->
+                <path d="M170 30 C230 20 290 60 300 130 C315 200 305 280 280 340 C260 390 240 430 220 460 C205 480 185 495 168 490 C148 485 138 468 142 448 C146 428 162 418 170 400 C180 378 182 355 175 335 C165 308 148 295 140 270 C128 235 125 195 135 155 C145 115 155 75 170 30 Z"
+                  fill="url(#aur-skin-grad)" stroke="#d4956a" stroke-width="2" filter="url(#aur-sh)"/>
+
+                <!-- Antihelix body -->
+                <path d="M175 90 C205 82 235 105 238 140 C242 178 228 215 210 245 C195 270 178 282 168 295 C158 308 152 322 155 340 C160 365 172 375 170 395"
+                  fill="none" stroke="#c4845a" stroke-width="8" stroke-linecap="round" opacity="0.5"/>
+
+                <!-- Concha (main bowl) -->
+                <ellipse cx="188" cy="240" rx="52" ry="68" fill="#f5e0cc" stroke="#c4845a" stroke-width="1.5" opacity="0.7"/>
+
+                <!-- Tragus -->
+                <path d="M148 255 C138 248 132 260 136 272 C140 284 152 288 158 278 C163 268 158 258 148 255 Z"
+                  fill="#f0c8a0" stroke="#c4845a" stroke-width="1.5"/>
+
+                <!-- Antitragus -->
+                <path d="M175 305 C165 300 158 310 160 320 C162 330 172 334 180 328 C188 322 185 308 175 305 Z"
+                  fill="#f0c8a0" stroke="#c4845a" stroke-width="1.5"/>
+
+                <!-- Ear lobe -->
+                <path d="M148 448 C140 455 138 470 145 480 C152 490 165 492 175 487 C185 482 190 470 186 460 C182 450 170 445 158 446 Z"
+                  fill="#fde8d0" stroke="#d4956a" stroke-width="1.5"/>
+
+                <!-- ── Clickable zone overlays ── -->
+                <!-- 1. Helix/Scapha (top arc) -->
+                <path id="aur-z-helix" class="aur-zone" onclick="aurTapZone('Helix &amp; Scapha')"
+                  d="M170 30 C200 22 255 50 278 100 C245 90 215 78 185 75 C180 60 175 45 170 30 Z"
+                  fill="rgba(16,185,129,0.18)" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 3" style="cursor:pointer"/>
+
+                <!-- 2. Superior Antihelix Crus -->
+                <path id="aur-z-sup-ant" class="aur-zone" onclick="aurTapZone('Superior Antihelix Crus')"
+                  d="M185 75 C215 78 245 90 278 100 C290 130 290 165 278 195 C255 178 232 160 210 145 C210 118 200 95 185 75 Z"
+                  fill="rgba(59,130,246,0.18)" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 3" style="cursor:pointer"/>
+
+                <!-- 3. Inferior Antihelix Crus -->
+                <path id="aur-z-inf-ant" class="aur-zone" onclick="aurTapZone('Inferior Antihelix Crus')"
+                  d="M210 145 C232 160 255 178 278 195 C288 230 282 268 265 295 C242 272 220 252 205 230 C208 202 210 173 210 145 Z"
+                  fill="rgba(139,92,246,0.18)" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 3" style="cursor:pointer"/>
+
+                <!-- 4. Triangular Fossa -->
+                <path id="aur-z-tri" class="aur-zone" onclick="aurTapZone('Triangular Fossa')"
+                  d="M185 75 C200 95 210 118 210 145 C210 173 208 202 205 230 C190 215 175 200 168 185 C168 155 172 115 185 75 Z"
+                  fill="rgba(245,158,11,0.22)" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 3" style="cursor:pointer"/>
+
+                <!-- 5. Cymba Conchae -->
+                <path id="aur-z-cymba" class="aur-zone" onclick="aurTapZone('Cymba Conchae')"
+                  d="M168 185 C175 200 190 215 205 230 C220 252 242 272 265 295 C250 315 230 328 210 335 C195 310 182 288 172 268 C168 240 165 210 168 185 Z"
+                  fill="rgba(239,68,68,0.18)" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3" style="cursor:pointer"/>
+
+                <!-- 6. Cavum Conchae (centre bowl) -->
+                <ellipse id="aur-z-cavum" class="aur-zone" onclick="aurTapZone('Cavum Conchae')"
+                  cx="190" cy="268" rx="38" ry="42"
+                  fill="rgba(236,72,153,0.22)" stroke="#ec4899" stroke-width="1.5" stroke-dasharray="4 3" style="cursor:pointer"/>
+
+                <!-- 7. Tragus -->
+                <path id="aur-z-tragus" class="aur-zone" onclick="aurTapZone('Tragus')"
+                  d="M144 248 C134 242 126 256 130 270 C134 284 148 290 158 280 C166 270 162 254 144 248 Z"
+                  fill="rgba(20,184,166,0.28)" stroke="#14b8a6" stroke-width="1.5" stroke-dasharray="4 3" style="cursor:pointer"/>
+
+                <!-- 8. Antitragus -->
+                <path id="aur-z-antitragus" class="aur-zone" onclick="aurTapZone('Antitragus')"
+                  d="M172 302 C162 296 154 308 157 320 C160 332 172 336 181 328 C190 320 183 306 172 302 Z"
+                  fill="rgba(168,85,247,0.28)" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="4 3" style="cursor:pointer"/>
+
+                <!-- 9. Intertragic Notch -->
+                <path id="aur-z-notch" class="aur-zone" onclick="aurTapZone('Intertragic Notch')"
+                  d="M157 280 C162 288 165 298 163 308 C160 308 157 305 154 300 C150 290 150 282 157 280 Z"
+                  fill="rgba(251,146,60,0.32)" stroke="#fb923c" stroke-width="1.5" stroke-dasharray="4 3" style="cursor:pointer"/>
+
+                <!-- 10. Antihelix body -->
+                <path id="aur-z-antihelix" class="aur-zone" onclick="aurTapZone('Antihelix Body')"
+                  d="M172 268 C182 288 195 310 210 335 C200 348 188 356 178 360 C168 340 160 318 158 295 C158 282 163 272 172 268 Z"
+                  fill="rgba(34,197,94,0.22)" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="4 3" style="cursor:pointer"/>
+
+                <!-- 11. Ear Lobe -->
+                <path id="aur-z-lobe" class="aur-zone" onclick="aurTapZone('Ear Lobe')"
+                  d="M145 445 C137 453 135 470 143 481 C151 492 166 494 177 488 C188 482 192 468 187 458 C182 448 168 443 155 444 Z"
+                  fill="rgba(251,191,36,0.28)" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4 3" style="cursor:pointer"/>
+
+                <!-- 12. Posterior Ear / Back -->
+                <path id="aur-z-posterior" class="aur-zone" onclick="aurTapZone('Posterior Groove')"
+                  d="M140 270 C132 290 130 315 135 340 C140 365 148 390 148 410 C140 400 130 380 125 355 C118 320 120 285 140 270 Z"
+                  fill="rgba(99,102,241,0.22)" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4 3" style="cursor:pointer"/>
+
+                <!-- Zone labels -->
+                <text x="262" y="58" font-size="8.5" font-family="Inter,sans-serif" font-weight="700" fill="#0f766e" text-anchor="middle" style="pointer-events:none">HELIX</text>
+                <text x="265" y="150" font-size="8" font-family="Inter,sans-serif" font-weight="700" fill="#3b82f6" text-anchor="middle" style="pointer-events:none">SUP.ANT.</text>
+                <text x="268" y="235" font-size="8" font-family="Inter,sans-serif" font-weight="700" fill="#8b5cf6" text-anchor="middle" style="pointer-events:none">INF.ANT.</text>
+                <text x="175" y="130" font-size="8" font-family="Inter,sans-serif" font-weight="700" fill="#d97706" text-anchor="middle" style="pointer-events:none">TRI FOSSA</text>
+                <text x="245" y="310" font-size="8" font-family="Inter,sans-serif" font-weight="700" fill="#dc2626" text-anchor="middle" style="pointer-events:none">CYMBA</text>
+                <text x="198" y="270" font-size="8" font-family="Inter,sans-serif" font-weight="700" fill="#be185d" text-anchor="middle" style="pointer-events:none">CAVUM</text>
+                <text x="122" y="265" font-size="8" font-family="Inter,sans-serif" font-weight="700" fill="#0d9488" text-anchor="middle" style="pointer-events:none">TRAGUS</text>
+                <text x="195" y="325" font-size="8" font-family="Inter,sans-serif" font-weight="700" fill="#9333ea" text-anchor="middle" style="pointer-events:none">ANTI-T</text>
+                <text x="160" y="350" font-size="8" font-family="Inter,sans-serif" font-weight="700" fill="#16a34a" text-anchor="middle" style="pointer-events:none">ANTI-HX</text>
+                <text x="162" y="472" font-size="8" font-family="Inter,sans-serif" font-weight="700" fill="#b45309" text-anchor="middle" style="pointer-events:none">LOBE</text>
+                <text x="110" y="325" font-size="8" font-family="Inter,sans-serif" font-weight="700" fill="#4f46e5" text-anchor="middle" style="pointer-events:none" transform="rotate(-90,110,325)">POST.</text>
+              </svg>
+            </div>
+            <!-- Zone legend -->
+            <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;justify-content:center">
+              <div style="display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--mu)"><div style="width:9px;height:9px;background:#10b981;border-radius:2px;opacity:.7"></div>Helix/Scapha</div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--mu)"><div style="width:9px;height:9px;background:#3b82f6;border-radius:2px;opacity:.7"></div>Sup Antihelix</div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--mu)"><div style="width:9px;height:9px;background:#f59e0b;border-radius:2px;opacity:.7"></div>Triangular Fossa</div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--mu)"><div style="width:9px;height:9px;background:#ec4899;border-radius:2px;opacity:.7"></div>Cavum Conchae</div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--mu)"><div style="width:9px;height:9px;background:#14b8a6;border-radius:2px;opacity:.7"></div>Tragus</div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--mu)"><div style="width:9px;height:9px;background:#fbbf24;border-radius:2px;opacity:.7"></div>Ear Lobe</div>
+            </div>
+          </div>
+
+          <!-- Condition Search -->
+          <div style="background:var(--surf);border:1.5px solid #99f6e4;border-radius:14px;padding:14px;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">🔍 Find Points by Condition</div>
+            <div style="display:flex;gap:8px">
+              <input id="aur-cond-input" class="calc-input" placeholder="e.g. Insomnia, Low back pain, Anxiety, Hypertension…" style="flex:1"/>
+              <button onclick="aurFindCondition()" style="padding:9px 14px;background:#0f766e;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">Find →</button>
+            </div>
+            <div id="aur-cond-result" style="margin-top:10px;font-size:12px;color:var(--mu)"></div>
+          </div>
+
+          <!-- Selected Zone Info -->
+          <div id="aur-zone-card" style="display:none;background:var(--surf);border:1.5px solid #99f6e4;border-radius:14px;padding:14px;margin-bottom:14px">
+            <div id="aur-zone-content"></div>
+          </div>
+
+          <!-- Quick Condition Grid -->
+          <div style="background:var(--surf);border:1.5px solid #99f6e4;border-radius:14px;padding:14px;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">⚡ Quick Protocol Selector</div>
+            <div style="display:flex;flex-wrap:wrap;gap:7px" id="aur-quick-grid">
+              ${['Insomnia','Anxiety','Hypertension','Low Back Pain','Knee Pain','Migraine','Obesity','Smoking Cessation','Allergy','Depression','Dysmenorrhoea','Constipation','Acne','Tinnitus','Asthma','Diabetes'].map(c=>`<button onclick="aurQuickCondition('${c}')" style="padding:5px 11px;border-radius:20px;border:1.5px solid #99f6e4;background:#f0fdf9;color:#0f766e;font-size:11px;font-weight:600;cursor:pointer">${c}</button>`).join('')}
+            </div>
+          </div>
+
+          <!-- AI Protocol Generator -->
+          <div style="background:linear-gradient(135deg,#064e3b,#065f46);border-radius:14px;padding:16px;margin-bottom:14px">
+            <div style="color:#fff;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;margin-bottom:5px">🌿 AI Auricular Protocol Generator</div>
+            <div style="color:rgba(255,255,255,.72);font-size:10.5px;margin-bottom:12px;line-height:1.55">Generate a complete personalised press-seed or needle auricular protocol with point selection rationale, stimulation schedule, and adjunct BNYS recommendations</div>
+            <div style="margin-bottom:10px">
+              <label style="font-size:10px;font-weight:700;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px">Chief Complaint / Condition</label>
+              <input id="aur-ai-complaint" placeholder="e.g. Insomnia with anxiety, chronic low back pain, hypertension…"
+                style="width:100%;padding:9px 12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:9px;color:#fff;font-size:12px;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;margin-bottom:8px">
+              <label style="font-size:10px;font-weight:700;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px">Patient Context (optional)</label>
+              <input id="aur-ai-ctx" placeholder="Age, gender, constitution, other medications, key findings…"
+                style="width:100%;padding:9px 12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:9px;color:#fff;font-size:12px;font-family:Inter,sans-serif;outline:none;box-sizing:border-box">
+            </div>
+            <button id="aur-ai-btn" onclick="aurRunAI()"
+              style="width:100%;padding:13px;background:linear-gradient(135deg,#059669,#0d9488);color:#fff;border:none;border-radius:11px;cursor:pointer;font-size:14px;font-weight:700;font-family:Inter,sans-serif;box-shadow:0 4px 18px rgba(5,150,105,.4);transition:all .2s">
+              🌿 Generate Protocol
+            </button>
+          </div>
+          <div id="aur-ai-result" style="margin-bottom:20px"></div>
+
+          <!-- Reference Table -->
+          <div style="background:var(--surf);border:1.5px solid #99f6e4;border-radius:14px;overflow:hidden;margin-bottom:20px">
+            <div style="background:linear-gradient(135deg,#065f46,#0f766e);padding:12px 14px">
+              <div style="color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em">📖 Auricular Zone Reference — WHO Nomenclature</div>
+            </div>
+            <div id="aur-ref-table" style="padding:8px"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Zone Bottom Sheet -->
+      <div id="aur-bs-overlay" onclick="aurCloseSheet()"
+        style="display:none;position:fixed;inset:0;z-index:599;background:rgba(6,78,59,.35);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;transition:opacity .3s"></div>
+      <div id="aur-bottom-sheet"
+        style="position:fixed;left:0;right:0;bottom:0;z-index:600;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -8px 40px rgba(15,118,110,.2);max-height:78vh;overflow-y:auto;transform:translateY(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);-webkit-overflow-scrolling:touch">
+        <div style="padding:10px 0 0;display:flex;justify-content:center">
+          <div style="width:36px;height:4px;border-radius:2px;background:#d1d5db"></div>
+        </div>
+        <div id="aur-bs-content" style="padding:16px 18px 50px"></div>
+      </div>
+    `;
+    secViews.appendChild(view);
+    setTimeout(function() { aurInit(); }, 120);
+    return;
+  } // end auricular block
+
+  // ══════════════════════════════════════════════════════════════════════
+  // TONGUE DIAGNOSIS — Custom interactive SVG module
+  // ══════════════════════════════════════════════════════════════════════
+  if (sec.id === 'tongue') {
+    view.innerHTML = `
+      <div class="sec-hdr">
+        <div class="sec-hdr-row">
+          <div class="sec-hicon" style="background:#ffe4e6;color:#be123c">👅</div>
+          <div>
+            <div class="sec-title" style="color:#be123c">Tongue Diagnosis</div>
+            <div class="sec-sub">Interactive Tongue Zone Map · TCM & Ayurvedic Mapping · Coating & Colour Analysis · AI Interpretation</div>
+          </div>
+        </div>
+      </div>
+      <div class="ca" id="ca-tongue" style="overflow-y:auto">
+        <div style="max-width:980px;margin:0 auto;padding:10px 14px 100px">
+
+          <!-- Hero -->
+          <div style="background:linear-gradient(135deg,#881337,#be123c,#e11d48);border-radius:14px;padding:14px 18px;margin-bottom:16px;color:#fff;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden">
+            <div style="position:absolute;right:-20px;top:-20px;width:160px;height:160px;background:radial-gradient(circle,rgba(255,255,255,.07),transparent);border-radius:50%;pointer-events:none"></div>
+            <div style="font-size:38px;flex-shrink:0">👅</div>
+            <div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;margin-bottom:4px">Tongue Diagnosis Analyser</div>
+              <div style="font-size:10.5px;opacity:.82;line-height:1.55">Tap any zone to view organ correlations · Record colour &amp; coating · Generate AI TCM/Ayurvedic analysis · For clinical use by BNYS physicians</div>
+            </div>
+          </div>
+
+          <!-- System Toggle -->
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <button id="tng-btn-tcm" onclick="tngSwitchSystem('tcm')"
+              style="flex:1;padding:10px 6px;border-radius:11px;border:2px solid #be123c;background:#be123c;color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+              ☯️ TCM System
+            </button>
+            <button id="tng-btn-ayur" onclick="tngSwitchSystem('ayur')"
+              style="flex:1;padding:10px 6px;border-radius:11px;border:2px solid var(--bdr);background:var(--surf);color:#be123c;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+              🌿 Ayurvedic System
+            </button>
+          </div>
+
+          <!-- SVG Tongue Map -->
+          <div style="background:var(--surf);border:1.5px solid #fecdd3;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--sh-md)">
+            <div id="tng-system-label" style="text-align:center;font-size:11px;font-weight:700;color:#be123c;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">TCM — 5 Zone Mapping · Organ Correspondence</div>
+            <div style="display:flex;justify-content:center">
+              <svg id="tng-tongue-svg" viewBox="0 0 320 430" xmlns="http://www.w3.org/2000/svg"
+                style="width:100%;max-width:300px;height:auto;display:block;-webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation">
+                <defs>
+                  <radialGradient id="tng-tongue-grad" cx="50%" cy="40%" r="60%">
+                    <stop offset="0%" stop-color="#f87171"/>
+                    <stop offset="100%" stop-color="#dc2626"/>
+                  </radialGradient>
+                  <filter id="tng-sh" x="-10%" y="-10%" width="120%" height="120%">
+                    <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(190,18,60,0.25)"/>
+                  </filter>
+                  <clipPath id="tng-clip">
+                    <path d="M160 28 C200 22 248 45 265 90 C282 135 280 185 272 228 C260 278 240 318 218 348 C198 374 178 390 160 395 C142 390 122 374 102 348 C80 318 60 278 48 228 C40 185 38 135 55 90 C72 45 120 22 160 28 Z"/>
+                  </clipPath>
+                </defs>
+
+                <!-- Tongue body -->
+                <path d="M160 28 C200 22 248 45 265 90 C282 135 280 185 272 228 C260 278 240 318 218 348 C198 374 178 390 160 395 C142 390 122 374 102 348 C80 318 60 278 48 228 C40 185 38 135 55 90 C72 45 120 22 160 28 Z"
+                  fill="url(#tng-tongue-grad)" filter="url(#tng-sh)" stroke="#991b1b" stroke-width="2"/>
+
+                <!-- Midline crack -->
+                <line x1="160" y1="40" x2="160" y2="380" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" stroke-dasharray="6 4" clip-path="url(#tng-clip)"/>
+
+                <!-- ── TCM Zone overlays ── -->
+                <!-- Zone 1: Tip (Heart / Lung) -->
+                <ellipse id="tng-z-tip" class="tng-zone" onclick="tngTapZone('tip')"
+                  cx="160" cy="65" rx="60" ry="38"
+                  fill="rgba(239,68,68,0.30)" stroke="#ef4444" stroke-width="2" stroke-dasharray="5 3" style="cursor:pointer"/>
+
+                <!-- Zone 2: Front-Middle (Lung / Upper Jiao) -->
+                <ellipse id="tng-z-front" class="tng-zone" onclick="tngTapZone('front')"
+                  cx="160" cy="138" rx="72" ry="45"
+                  fill="rgba(251,146,60,0.25)" stroke="#fb923c" stroke-width="2" stroke-dasharray="5 3" style="cursor:pointer"/>
+
+                <!-- Zone 3: Centre (Spleen / Stomach / Middle Jiao) -->
+                <ellipse id="tng-z-centre" class="tng-zone" onclick="tngTapZone('centre')"
+                  cx="160" cy="218" rx="78" ry="48"
+                  fill="rgba(234,179,8,0.25)" stroke="#eab308" stroke-width="2" stroke-dasharray="5 3" style="cursor:pointer"/>
+
+                <!-- Zone 4: Sides (Liver / Gallbladder) -->
+                <path id="tng-z-sides" class="tng-zone" onclick="tngTapZone('sides')"
+                  d="M80 175 C62 195 52 225 52 255 C52 280 58 300 68 318 C90 295 110 268 118 240 C125 215 120 188 108 170 Z M240 175 C258 195 268 225 268 255 C268 280 262 300 252 318 C230 295 210 268 202 240 C195 215 200 188 212 170 Z"
+                  fill="rgba(34,197,94,0.28)" stroke="#22c55e" stroke-width="2" stroke-dasharray="5 3" style="cursor:pointer"/>
+
+                <!-- Zone 5: Root (Kidney / Lower Jiao) -->
+                <ellipse id="tng-z-root" class="tng-zone" onclick="tngTapZone('root')"
+                  cx="160" cy="320" rx="70" ry="55"
+                  fill="rgba(99,102,241,0.28)" stroke="#6366f1" stroke-width="2" stroke-dasharray="5 3" style="cursor:pointer"/>
+
+                <!-- Zone labels -->
+                <text x="160" y="68" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" font-weight="800" fill="#fff" style="pointer-events:none" filter="url(#tng-sh)">TIP</text>
+                <text x="160" y="80" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="rgba(255,255,255,.85)" style="pointer-events:none">Heart · Lung</text>
+
+                <text x="160" y="140" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" font-weight="800" fill="#fff" style="pointer-events:none">FRONT</text>
+                <text x="160" y="152" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="rgba(255,255,255,.85)" style="pointer-events:none">Lung · Upper Jiao</text>
+
+                <text x="160" y="218" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" font-weight="800" fill="#fff" style="pointer-events:none">CENTRE</text>
+                <text x="160" y="230" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="rgba(255,255,255,.85)" style="pointer-events:none">Spleen · Stomach</text>
+
+                <text x="68" y="248" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" font-weight="800" fill="#fff" transform="rotate(-15,68,248)" style="pointer-events:none">SIDES</text>
+                <text x="252" y="248" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" font-weight="800" fill="#fff" transform="rotate(15,252,248)" style="pointer-events:none">SIDES</text>
+                <text x="160" y="266" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="rgba(255,255,255,.8)" style="pointer-events:none">Liver · Gallbladder</text>
+
+                <text x="160" y="318" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" font-weight="800" fill="#fff" style="pointer-events:none">ROOT</text>
+                <text x="160" y="330" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="rgba(255,255,255,.85)" style="pointer-events:none">Kidney · Lower Jiao</text>
+
+                <!-- Tip arrow label -->
+                <text x="160" y="418" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="var(--mu)" style="pointer-events:none">↑ Tip (anterior) · Root (posterior) ↑</text>
+              </svg>
+            </div>
+            <!-- Zone legend -->
+            <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;justify-content:center">
+              <div style="display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--mu)"><div style="width:9px;height:9px;background:#ef4444;border-radius:2px;opacity:.7"></div>Tip — Heart/Lung</div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--mu)"><div style="width:9px;height:9px;background:#fb923c;border-radius:2px;opacity:.7"></div>Front — Lung</div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--mu)"><div style="width:9px;height:9px;background:#eab308;border-radius:2px;opacity:.7"></div>Centre — Spleen/Stomach</div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--mu)"><div style="width:9px;height:9px;background:#22c55e;border-radius:2px;opacity:.7"></div>Sides — Liver/GB</div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--mu)"><div style="width:9px;height:9px;background:#6366f1;border-radius:2px;opacity:.7"></div>Root — Kidney</div>
+            </div>
+          </div>
+
+          <!-- Findings Recorder -->
+          <div style="background:var(--surf);border:1.5px solid #fecdd3;border-radius:14px;padding:14px;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:#be123c;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">📋 Clinical Findings Recorder</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <label style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Tongue Colour</label>
+                <select id="tng-colour" class="calc-input" style="width:100%">
+                  <option value="">Select…</option>
+                  <option>Pale (Qi/Blood deficiency)</option>
+                  <option>Pink/Normal (Balanced)</option>
+                  <option>Red (Heat/Yin deficiency)</option>
+                  <option>Deep Red/Crimson (Extreme Heat)</option>
+                  <option>Purple/Bluish (Blood stasis)</option>
+                  <option>Dusky/Dark (Severe stasis)</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Coating (Fur)</label>
+                <select id="tng-coating" class="calc-input" style="width:100%">
+                  <option value="">Select…</option>
+                  <option>Thin White (Normal / exterior cold)</option>
+                  <option>Thick White (Cold-damp / phlegm)</option>
+                  <option>Thin Yellow (Mild heat)</option>
+                  <option>Thick Yellow (Interior heat/infection)</option>
+                  <option>Grey/Black (Extreme cold or heat)</option>
+                  <option>No Coating / Peeled (Yin deficiency)</option>
+                  <option>Greasy/Slippery (Damp-phlegm)</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Shape / Form</label>
+                <select id="tng-shape" class="calc-input" style="width:100%">
+                  <option value="">Select…</option>
+                  <option>Normal</option>
+                  <option>Swollen / Puffy (Qi stagnation, damp)</option>
+                  <option>Thin / Scalloped edges (Qi/Blood deficiency)</option>
+                  <option>Cracked / Fissured (Yin deficiency)</option>
+                  <option>Deviated to one side (Wind/stroke)</option>
+                  <option>Trembling (Internal wind)</option>
+                  <option>Stiff / Rigid (Heat, phlegm, wind)</option>
+                  <option>Flaccid / Limp (Qi exhaustion)</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Moisture</label>
+                <select id="tng-moisture" class="calc-input" style="width:100%">
+                  <option value="">Select…</option>
+                  <option>Moist (Normal or damp)</option>
+                  <option>Dry (Yin deficiency / fluid damage)</option>
+                  <option>Wet / Dripping (Yang deficiency)</option>
+                  <option>Rough / Dry-cracked (Severe fluid loss)</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <label style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Special Features</label>
+              <div style="display:flex;flex-wrap:wrap;gap:7px" id="tng-features-grid">
+                ${['Red tip','Midline crack','Transverse cracks','Teeth marks','Sublingual varicosities','Red dots/Papillae','Geographic tongue','Quivering','Bilateral coating','Unilateral coating'].map(f=>`<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tx);cursor:pointer"><input type="checkbox" value="${f}" class="tng-feat-cb" style="accent-color:#be123c"> ${f}</label>`).join('')}
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="tngGenerateSummary()" style="padding:8px 16px;background:#fef2f2;border:1.5px solid #fecdd3;border-radius:9px;color:#be123c;font-size:12px;font-weight:700;cursor:pointer">📋 Generate Findings Summary</button>
+              <button onclick="tngClearFindings()" style="padding:8px 16px;background:#f9fafb;border:1.5px solid var(--bdr);border-radius:9px;color:var(--mu);font-size:12px;font-weight:700;cursor:pointer">🗑 Clear</button>
+            </div>
+            <div id="tng-summary-box" style="display:none;margin-top:12px;background:#fef2f2;border:1.5px solid #fecdd3;border-radius:10px;padding:12px;font-size:12.5px;color:var(--tx);line-height:1.7"></div>
+          </div>
+
+          <!-- AI Constitutional Analysis -->
+          <div style="background:linear-gradient(135deg,#881337,#be123c);border-radius:14px;padding:16px;margin-bottom:14px">
+            <div style="color:#fff;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;margin-bottom:5px">✨ AI Tongue Interpretation</div>
+            <div style="color:rgba(255,255,255,.72);font-size:10.5px;margin-bottom:12px;line-height:1.55">Submit your recorded tongue findings for AI-powered TCM &amp; Ayurvedic constitutional analysis with personalised BNYS treatment protocol</div>
+            <div style="margin-bottom:10px">
+              <label style="font-size:10px;font-weight:700;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px">Patient Context (optional)</label>
+              <input id="tng-ai-ctx" placeholder="Age, gender, chief complaint, key symptoms, pulse findings…"
+                style="width:100%;padding:9px 12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:9px;color:#fff;font-size:12px;font-family:Inter,sans-serif;outline:none;box-sizing:border-box">
+            </div>
+            <button id="tng-ai-btn" onclick="tngRunAI()"
+              style="width:100%;padding:13px;background:linear-gradient(135deg,#e11d48,#f43f5e);color:#fff;border:none;border-radius:11px;cursor:pointer;font-size:14px;font-weight:700;font-family:Inter,sans-serif;box-shadow:0 4px 18px rgba(225,29,72,.4);transition:all .2s">
+              🔍 Analyse with AI
+            </button>
+          </div>
+          <div id="tng-ai-result" style="margin-bottom:20px"></div>
+
+          <!-- Reference Table -->
+          <div style="background:var(--surf);border:1.5px solid #fecdd3;border-radius:14px;overflow:hidden;margin-bottom:20px">
+            <div style="background:linear-gradient(135deg,#881337,#be123c);padding:12px 14px">
+              <div style="color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em">📖 TCM Tongue Zone Reference</div>
+            </div>
+            <div id="tng-ref-table" style="padding:8px"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Zone Bottom Sheet -->
+      <div id="tng-bs-overlay" onclick="tngCloseSheet()"
+        style="display:none;position:fixed;inset:0;z-index:599;background:rgba(136,19,55,.35);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;transition:opacity .3s"></div>
+      <div id="tng-bottom-sheet"
+        style="position:fixed;left:0;right:0;bottom:0;z-index:600;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -8px 40px rgba(190,18,60,.2);max-height:78vh;overflow-y:auto;transform:translateY(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);-webkit-overflow-scrolling:touch">
+        <div style="padding:10px 0 0;display:flex;justify-content:center">
+          <div style="width:36px;height:4px;border-radius:2px;background:#d1d5db"></div>
+        </div>
+        <div id="tng-bs-content" style="padding:16px 18px 50px"></div>
+      </div>
+    `;
+    secViews.appendChild(view);
+    setTimeout(function() { tngInit(); }, 120);
+    return;
+  } // end tongue block
+
   // Single-tab: render full shell (ti- needed by openSec) then auto-load content
   if (sec.tabs.length === 1) {
     const t = sec.tabs[0];
@@ -8299,7 +8789,12 @@ function buildCard(item, color) {
 
   let body = '';
   if (item.c || item.content) {
-    body = item.c || item.content;
+    var _rawBody = item.c || item.content;
+    // item.c may be pre-rendered HTML (from _renderLegacyHtml) or plain markdown.
+    // If it already contains HTML tags, use as-is. Otherwise run through _md().
+    body = (typeof _rawBody === 'string' && /<[a-z]/i.test(_rawBody))
+      ? _rawBody
+      : (typeof _md === 'function' ? _md(_rawBody) : _rawBody);
   } else {
     // Lab-style card with up/dn arrays
     const abbr = item.abbr ? `<div class="abbr-box">${item.abbr}</div>` : '';
@@ -9601,6 +10096,73 @@ function openSec(secId, btn, skipHistory, groupKey) {
 
 // ─── NRData async section data loader ───
 // Patches sec.data from Puter FS before rendering; falls back to inline {} if unavailable
+
+/* ── Self-contained legacy HTML → styled clinical HTML converter ──────────────
+   Converts _legacyHtml (<b>/<br>) directly into styled boxes.
+   Does NOT rely on _md() so it works regardless of script execution order.
+   Cards with complex HTML (divs, custom classes, lists etc.) pass through unchanged. */
+function _renderLegacyHtml(html) {
+  if (!html || typeof html !== 'string') return html || '';
+
+  // If the content has ANY tags beyond simple inline (<b>, <br>, <em>, <i>, <strong>),
+  // it's already structured HTML — return as-is so the browser renders it natively.
+  // Regex: a '<' followed by a tag name that is NOT one of the simple inline ones.
+  if (/<(?!\/?(?:b|br|em|i|strong)\s*[\s>\/])[a-z]/i.test(html)) return html;
+
+  // 1. Convert <b>/<br>/<em> to clean plain text with \n separators
+  var s = html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?(strong|b|em|i)>/gi, '\u0002')  // use \x02 as bold marker
+    .replace(/<[^>]+>/g, '');
+
+  // 2. Split into lines
+  var lines = s.split('\n');
+  var out = '';
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) continue;
+
+    // Find bold segments (\x02...\x02)
+    var boldRe = /\x02([^\x02]+)\x02/g;
+
+    // Check if line starts with a bold label (e.g. \x02Definition:\x02 or \x02Sitz Bath:\x02)
+    var startsWithBold = line.indexOf('\u0002') === 0;
+    var labelMatch = startsWithBold && line.match(/^\x02([^\x02]+)\x02\s*(.*)/s);
+
+    if (labelMatch) {
+      var label = labelMatch[1].trim();
+      var body  = (labelMatch[2] || '').trim();
+
+      // Definition box
+      if (/^definition/i.test(label.replace(/:$/, ''))) {
+        out += '<div style="background:#e8f5ec;border-left:4px solid #2c6e4f;border-radius:0 9px 9px 0;padding:11px 14px;margin:4px 0 12px">'
+             + '<div style="font-size:10px;font-weight:800;color:#1e4a3b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px">📖 Definition</div>'
+             + '<div style="font-size:13px;color:#222;line-height:1.6">' + _escHtml(body) + '</div></div>';
+      }
+      // Section header (label only, no body — e.g. "Key treatments:")
+      else if (!body) {
+        out += '<div style="font-size:11px;font-weight:800;color:#1e4a3b;text-transform:uppercase;letter-spacing:.09em;margin:14px 0 6px;padding-bottom:4px;border-bottom:2px solid #a8d4b8">'
+             + _escHtml(label.replace(/:$/, '')) + '</div>';
+      }
+      // Treatment tile (label + body)
+      else {
+        out += '<div style="background:#faf6f0;border:1px solid #e0d6cc;border-radius:9px;padding:10px 13px;margin:6px 0">'
+             + '<div style="font-size:12.5px;font-weight:700;color:#1e4a3b;margin-bottom:5px">' + _escHtml(label.replace(/:$/, '')) + '</div>'
+             + '<div style="font-size:12.5px;color:#333;line-height:1.6">' + _escHtml(body) + '</div></div>';
+      }
+    } else {
+      // Plain line — strip any remaining \x02 markers and render as paragraph
+      var plain = line.replace(/\x02/g, '');
+      if (plain) out += '<p style="font-size:13px;color:#333;line-height:1.6;margin:6px 0">' + _escHtml(plain) + '</p>';
+    }
+  }
+  return out || ('<p style="font-size:13px;color:#666">' + _escHtml(s.replace(/\x02/g,'')) + '</p>');
+}
+function _escHtml(t) {
+  if (!t) return '';
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 async function _nrLoadSectionData(sec, tabId, color, targetEl, retryCallback) {
   if (!sec || sec.customRender) return;
   // Build section name from sec.id (override map for sec.id ≠ filename cases)
@@ -9635,7 +10197,7 @@ async function _nrLoadSectionData(sec, tabId, color, targetEl, retryCallback) {
           rebuilt[cat].push({
             t: card.title || '',
             badge: card.badge || '',
-            c: card._legacyHtml || c.summary || ''
+            c: _renderLegacyHtml(card._legacyHtml) || c.summary || ''
           });
         }
       });
@@ -14413,35 +14975,6 @@ var FALLBACK = {
   ]
 };
 
-async function toggleLiveSection(el, id, type) {
-  toggleSection(el, id);
-  if (liveLoaded[id]) return;
-  liveLoaded[id] = true;
-  var grid = document.getElementById(id + '-grid');
-  if (!grid) return;
-
-  var items = FALLBACK[type];
-  var icon = type === 'news' ? '📰' : '🔬';
-  var btnLabel = type === 'news' ? 'Read' : 'PubMed';
-  grid.innerHTML = items.map(function(item) {
-    return '<div class="clg-card" onclick="clgToggle(this)">' +
-      '<div class="clg-head">' +
-        '<div class="clg-icon">' + icon + '</div>' +
-        '<div class="clg-main">' +
-          '<div class="clg-name">' + item.title + '</div>' +
-          '<div class="clg-loc">' + item.source + '</div>' +
-        '</div>' +
-        '<div class="clg-arr">›</div>' +
-      '</div>' +
-      '<div class="clg-body">' +
-        '<div class="clg-desc">' + item.desc + '</div>' +
-        '<div class="clg-actions">' +
-          '<a class="clg-btn clg-web" onclick="event.stopPropagation()" href="' + item.url + '" target="_blank" rel="noopener">🌐 ' + btnLabel + '</a>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-}
 function toggleSection(el, id) {
   var panel = document.getElementById(id);
   if (!panel) return;
@@ -22736,13 +23269,731 @@ window._showSheet      = _showSheet;
 })();
 </script>
 <!-- ═══════════════════════════════════════════════════════════
-     NATURAREF · LAB REFERENCE · INDIA  v3.0
-     Append before </body>.
-     FIX: Data embedded inline — no CDN dependency.
-          IDB caches on first run; CDN refreshes in background.
-          Registration is SYNCHRONOUS (patch is at EOF).
+     AURICULAR THERAPY · TONGUE DIAGNOSIS — Interactive Modules
      ═══════════════════════════════════════════════════════════ -->
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// AURICULAR THERAPY MODULE
+// ═══════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
 
+var _aurEar = 'left';
+var _aurReady = false;
+
+// ── Zone data ──────────────────────────────────────────────────────
+var AUR_ZONES = {
+  'Helix & Scapha': {
+    color:'#10b981',
+    points:['Helix 1–6 (HX1–HX6)','Allergy point (HX1a)','Apex of Ear (HX6a)'],
+    organs:['Liver (HX2)','Urinary bladder (HX3)','Large intestine (HX4)','Small intestine (HX5)'],
+    conditions:['Fever reduction','Acute inflammation','Allergy & urticaria','Hypertension (Apex)','Skin disorders','Acute infections'],
+    technique:'Press-seed (Vaccaria) or short needle — 3–5 seconds pressure each point',
+    protocol:'Apex of ear: bloodletting or needle for acute fever/HTN. Allergy point: bilateral seeds for urticaria. Change seeds every 3–4 days.',
+    ayur:'Corresponds to Srotas (channels) — Annavaha, Udakavaha. Ear Apex = Pitta-clearing marma equivalent.',
+    tip:'The ear apex is the most powerful anti-inflammatory and antihypertensive point. Press firmly until you feel warmth.'
+  },
+  'Superior Antihelix Crus': {
+    color:'#3b82f6',
+    points:['Toes (AH1)','Ankle (AH2)','Knee (AH3)','Hip (AH4)','Buttock (AH5)'],
+    organs:['Lower limb musculoskeletal','Sciatic nerve pathway'],
+    conditions:['Knee pain (OA/RA)','Hip pain','Ankle sprain','Foot & toe disorders','Sciatica','Lower limb paresis'],
+    technique:'Thumb-tip pressure or needle perpendicular — locate tender point with probe',
+    protocol:'For knee pain: seeds on Knee + Hip bilaterally, change 3×/week. Combine with Shenmen for pain modulation.',
+    ayur:'Maps to Janu Sandhi (knee marma). Stimulation activates Apana Vata — downward flow regulation.',
+    tip:'Always probe for the most tender sub-point — active pathology shifts the exact tender spot by 1–2 mm.'
+  },
+  'Inferior Antihelix Crus': {
+    color:'#8b5cf6',
+    points:['Sympathetic (ANT1)','Sciatic nerve (AH6)','Abdomen (AH8)','Chest (AH9)','Neck (AH10)'],
+    organs:['Autonomic nervous system','Thoraco-lumbar spine'],
+    conditions:['Autonomic dysregulation','Chest pain (non-cardiac)','Upper back pain','Cervical spondylosis','Intercostal neuralgia','Thoracic rigidity'],
+    technique:'Needle or press-seed — Sympathetic point is key for ANS regulation in all protocols',
+    protocol:'Sympathetic point: always include in hypertension, IBS, anxiety protocols. Pair with Shenmen (Triangular Fossa).',
+    ayur:'Vyana Vata regulation point — governs peripheral circulation and autonomic balance.',
+    tip:'The Sympathetic point in this zone is one of the five most important auricular points in clinical practice.'
+  },
+  'Triangular Fossa': {
+    color:'#f59e0b',
+    points:['Shenmen (TF4)','Uterus/Genitalia (TF2)','Pelvis (TF3)','Hypertension groove (posterior)'],
+    organs:['Shen (Spirit/Mind)','Reproductive organs','Pelvic floor'],
+    conditions:['Anxiety & insomnia','Pain (all types — Shenmen)','Dysmenorrhoea','Uterine fibroids (adjunct)','Infertility (adjunct)','Pelvic inflammatory disease','Addiction'],
+    technique:'Shenmen: needle or seed — single most important point for pain and sedation',
+    protocol:'Shenmen is the master analgesic and sedative point — include in every pain and anxiety protocol. Uterus point: bilateral seeds for dysmenorrhoea, start 5 days before cycle.',
+    ayur:'Shenmen = Shira Marma equivalent. Uterus point = Garbhashaya — regulates Apana Vata and reproductive function.',
+    tip:'Shenmen alone reduces pain perception by 30–40% when properly stimulated. Never skip it in pain protocols.'
+  },
+  'Cymba Conchae': {
+    color:'#ef4444',
+    points:['Kidney (CO10)','Ureter (CO9)','Bladder (CO9a)','Liver (CO12)','Pancreas/Gallbladder (CO11)'],
+    organs:['Kidney','Urinary bladder','Liver','Pancreas','Gallbladder'],
+    conditions:['Chronic kidney disease (adjunct)','Urinary tract infections','Kidney stones (pain relief)','Hepatitis (adjunct)','Diabetes mellitus','Cholelithiasis pain','Oedema'],
+    technique:'Probe for most tender point — needle or seed at exact tender locus',
+    protocol:'Kidney + Shenmen + Sympathetic: renal oedema and CKD adjunct. Pancreas + Endocrine: diabetes protocol — bilateral, 3×/week.',
+    ayur:'Kidney = Vrikka — Jala Mahabhuta dominant. Liver = Yakrit — Agni and Ranjaka Pitta seat.',
+    tip:'In diabetes: Pancreas point in Cymba + Endocrine point in Cavum + Hunger point in Tragus — the triad protocol.'
+  },
+  'Cavum Conchae': {
+    color:'#ec4899',
+    points:['Heart (CO15)','Lung (CO14)','Trachea (CO16)','Oesophagus (CO13)','Endocrine (CO18)','Triple Warmer (CO17)','Spleen (CO13a)'],
+    organs:['Heart','Lungs','Trachea','Oesophagus','Endocrine system','Spleen'],
+    conditions:['Cardiac arrhythmia (adjunct)','Asthma & COPD','Chronic cough','Dysphagia','Hormonal imbalance','Thyroid disorders','Diabetes','Immunity modulation','Insomnia (Heart point)'],
+    technique:'Heart point: seed or low-frequency electrical stimulation. Lung: gentle needle for respiratory conditions.',
+    protocol:'Asthma: Lung + Trachea + Shenmen + Sympathetic — bilateral seeds, replace every 3 days. Heart + Shenmen: palpitations and anxiety.',
+    ayur:'Cavum = Hridaya (Heart) and Pranavaha Srotas (Lung). Endocrine = Ojasthana — seat of Ojas and immunity.',
+    tip:'The Cavum Conchae is the richest zone in clinically active points — target most cardio-respiratory and endocrine conditions here.'
+  },
+  'Tragus': {
+    color:'#14b8a6',
+    points:['Hunger (TG1)','Thirst (TG2)','External nose (TG1a)','Adrenal gland (TG2p)','Apex of Tragus (AT)','Pharynx/Larynx (TG3)'],
+    organs:['Adrenal glands','Hypothalamus (appetite)','Nasal passages','Throat'],
+    conditions:['Obesity & appetite control','Rhinitis & sinusitis','Pharyngitis','Adrenal fatigue','Stress response','Acute pain (Adrenal point)','Throat disorders'],
+    technique:'Adrenal gland: firm sustained pressure or seed — powerful anti-inflammatory',
+    protocol:'Weight loss: Hunger + Stomach + Shenmen — primary triad. Change every 3 days, press before meals. Adrenal: include in all inflammatory and stress protocols.',
+    ayur:'Adrenal = Adrenavaha — Vata-Pitta junction. Hunger/Thirst = Kshudha and Trishna — governed by Samana Vata.',
+    tip:'The Adrenal point on the tragus is the auricular equivalent of cortisone injection — use in acute inflammatory and allergic states.'
+  },
+  'Antitragus': {
+    color:'#a855f7',
+    points:['Brain stem (AT3)','Occiput (AT3a)','Temple (AT2)','Forehead (AT1)','Vertex (AT4)','Thalamus (AT2a)','Parotid (AT4a)'],
+    organs:['Brain','Brainstem','Trigeminal nerve','Parotid gland'],
+    conditions:['Migraine & headache','Epilepsy (adjunct)','Neurasthenia','Insomnia (with Shenmen)','Tinnitus','Vertigo','Parotitis'],
+    technique:'Thalamus: most important for pain modulation — needle or electrical stimulation',
+    protocol:'Migraine: Occiput + Temple + Shenmen + Liver + Thalamus — bilateral seeds. Epilepsy adjunct: Brainstem + Thalamus (specialist use).',
+    ayur:'Mastishka (brain) marma equivalents — regulates Prana Vata and Tarpaka Kapha.',
+    tip:'Occiput + Thalamus combination is the most powerful migraine protocol in auricular therapy — change seeds every 3 days during prodrome phase.'
+  },
+  'Intertragic Notch': {
+    color:'#fb923c',
+    points:['Ovary/Testis (IT2)','Internal secretion/Endocrine (IT1)','Pituitary (IT1a)'],
+    organs:['Ovary','Testis','Pituitary gland','Endocrine system'],
+    conditions:['Menstrual irregularity','Dysmenorrhoea','Menopause symptoms','PCOS/PCOD','Male hypogonadism','Infertility','Hormonal acne'],
+    technique:'Seeds bilateral — apply 5 days before expected menstruation for dysmenorrhoea',
+    protocol:'PCOS: Endocrine + Ovary + Shenmen + Liver — bilateral, 2× weekly. Menopause: Ovary + Endocrine + Kidney (Cymba) — reduces hot flashes.',
+    ayur:'Aartava Dhatu and Shukra Dhatu — governed by Apana Vata. Pituitary = Ajna Chakra level control.',
+    tip:'The most complete hormonal regulation zone — always probe all sub-points for tenderness to identify the active point.'
+  },
+  'Antihelix Body': {
+    color:'#22c55e',
+    points:['Lumbar vertebrae (AH8)','Thoracic vertebrae (AH7)','Cervical vertebrae (AH6a)','Sacrum (AH8a)','Lumbar Sympathetic'],
+    organs:['Spine','Paravertebral muscles','Spinal cord'],
+    conditions:['Low back pain (acute & chronic)','Sciatica','Cervical spondylosis','Thoracic outlet syndrome','Disc prolapse (adjunct)','Post-fracture rehabilitation','Ankylosing spondylitis'],
+    technique:'Probe vertebral column points systematically — seed at most tender vertebral level',
+    protocol:'Low back pain: Lumbar + Sacrum + Shenmen + Sympathetic — gold-standard auricular protocol. Cervical: Cervical vertebrae + Occiput (Antitragus) + Shenmen.',
+    ayur:'Merudanda (spinal column) — governs Vata movement through entire body. Activation balances Vyana and Prana Vata.',
+    tip:'Map the tender points to identify the exact spinal level of pathology — auricular tenderness precisely correlates with the affected segment.'
+  },
+  'Ear Lobe': {
+    color:'#fbbf24',
+    points:['Eye 1 (LO4)','Eye 2 (LO5)','Analgesia for dental procedures (LO4a)','Frontal lobe (LO1–3)','Cheek (LO5a)','Tonsil (LO8–10)'],
+    organs:['Eyes','Frontal lobe','Tonsils','Face & teeth'],
+    conditions:['Eye disorders (glaucoma adjunct, myopia)','Dental pain','Tonsillitis','Trigeminal neuralgia','Facial palsy','Dental anaesthesia (procedure)','Otitis media'],
+    technique:'Eye points: gentle seed pressure — do not needle in self-administration',
+    protocol:'Eye 1 + Eye 2: seed bilaterally for myopia programme (children — 3×/week). Dental analgesia: needle LO4a ipsilateral before procedure.',
+    ayur:'Netra (eye) — Alochaka Pitta seat. Tonsils = Tundikeri — Kapha accumulation site.',
+    tip:'The ear lobe is the only zone used for auricular acupuncture analgesia during dental procedures — stimulate 20 minutes before treatment.'
+  },
+  'Posterior Groove': {
+    color:'#6366f1',
+    points:['Groove for lowering blood pressure (posterior)','Posterior heart (H)','Posterior lung (L)','Liver Yang (LY)'],
+    organs:['Heart (posterior surface)','Liver Yang regulation','Blood pressure control'],
+    conditions:['Hypertension (primary protocol)','Cardiac palpitations','Liver Yang rising','Irritability & anger','Flushing & hot sensations'],
+    technique:'Seeds in the groove along posterior ear — run tip of seed along entire groove length bilaterally',
+    protocol:'Hypertension: Groove (posterior) + Apex of ear + Shenmen + Sympathetic — the four-point HTN protocol. Press seeds 2–3 min bilaterally, 3× daily.',
+    ayur:'Liver Yang rising = Pachaka Pitta and Ranjaka Pitta aggravation. Posterior groove = Manya Marma adjacent stimulation.',
+    tip:'The posterior groove is invisible from the front but accessible by folding the ear forward. It is the most specific point for labile hypertension.'
+  }
+};
+
+// ── Condition→Zone lookup ───────────────────────────────────────────
+var AUR_COND_MAP = {
+  'insomnia':       ['Triangular Fossa','Cavum Conchae','Antitragus'],
+  'anxiety':        ['Triangular Fossa','Inferior Antihelix Crus','Cymba Conchae'],
+  'hypertension':   ['Posterior Groove','Helix & Scapha','Inferior Antihelix Crus','Triangular Fossa'],
+  'low back pain':  ['Antihelix Body','Triangular Fossa','Inferior Antihelix Crus'],
+  'knee pain':      ['Superior Antihelix Crus','Triangular Fossa','Inferior Antihelix Crus'],
+  'migraine':       ['Antitragus','Triangular Fossa','Inferior Antihelix Crus','Cymba Conchae'],
+  'obesity':        ['Tragus','Cavum Conchae','Triangular Fossa'],
+  'smoking cessation':['Tragus','Cavum Conchae','Triangular Fossa','Helix & Scapha'],
+  'allergy':        ['Helix & Scapha','Tragus','Inferior Antihelix Crus'],
+  'depression':     ['Triangular Fossa','Cavum Conchae','Antitragus'],
+  'dysmenorrhoea':  ['Intertragic Notch','Triangular Fossa','Inferior Antihelix Crus'],
+  'constipation':   ['Helix & Scapha','Cymba Conchae','Inferior Antihelix Crus'],
+  'acne':           ['Helix & Scapha','Cavum Conchae','Cymba Conchae'],
+  'tinnitus':       ['Antitragus','Cavum Conchae','Cymba Conchae'],
+  'asthma':         ['Cavum Conchae','Inferior Antihelix Crus','Triangular Fossa'],
+  'diabetes':       ['Cymba Conchae','Cavum Conchae','Intertragic Notch','Tragus']
+};
+
+// ── Init ────────────────────────────────────────────────────────────
+function aurInit() {
+  if (_aurReady) return;
+  _aurReady = true;
+  _aurBuildRef();
+  // Highlight zones on hover
+  document.querySelectorAll('.aur-zone').forEach(function(z) {
+    z.addEventListener('mouseenter', function(){ this.style.opacity = '1.8'; this.style.strokeWidth = '2.5'; });
+    z.addEventListener('mouseleave', function(){ this.style.opacity = ''; this.style.strokeWidth = ''; });
+  });
+}
+
+function aurSwitchEar(ear) {
+  _aurEar = ear;
+  var bL = document.getElementById('aur-btn-left'), bR = document.getElementById('aur-btn-right');
+  var lbl = document.getElementById('aur-ear-label');
+  var base = 'flex:1;padding:10px 6px;border-radius:11px;font-size:12.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;';
+  if (ear === 'left') {
+    bL.style.cssText = base + 'border:2px solid #0f766e;background:#0f766e;color:#fff';
+    bR.style.cssText = base + 'border:2px solid var(--bdr);background:var(--surf);color:#0f766e';
+    if(lbl) lbl.textContent = 'Left Ear — 12 Anatomical Zones · WHO Nomenclature';
+  } else {
+    bR.style.cssText = base + 'border:2px solid #0f766e;background:#0f766e;color:#fff';
+    bL.style.cssText = base + 'border:2px solid var(--bdr);background:var(--surf);color:#0f766e';
+    if(lbl) lbl.textContent = 'Right Ear — 12 Anatomical Zones · WHO Nomenclature (Mirror Image)';
+  }
+}
+
+function aurTapZone(zoneName) {
+  var z = AUR_ZONES[zoneName];
+  if (!z) return;
+  // Show bottom sheet
+  var overlay = document.getElementById('aur-bs-overlay');
+  var sheet   = document.getElementById('aur-bottom-sheet');
+  var content = document.getElementById('aur-bs-content');
+  if (!sheet) return;
+
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="width:12px;height:12px;border-radius:50%;background:${z.color};flex-shrink:0;box-shadow:0 0 0 3px ${z.color}33"></div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:${z.color}">${zoneName}</div>
+    </div>
+    <div style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Key Acupoints</div>
+    <div style="font-size:12px;color:var(--tx);margin-bottom:10px;line-height:1.6">${z.points.map(p=>`<span style="display:inline-block;margin:2px 4px 2px 0;padding:2px 8px;background:${z.color}18;border-radius:10px;border:1px solid ${z.color}44;color:${z.color};font-weight:600">${p}</span>`).join('')}</div>
+    <div style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Organ Correspondences</div>
+    <div style="font-size:12px;color:var(--tx);margin-bottom:10px">${z.organs.join(' · ')}</div>
+    <div style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Clinical Indications</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">${z.conditions.map(c=>`<span style="padding:3px 9px;background:#f0fdf9;border:1px solid #99f6e4;border-radius:12px;font-size:11px;color:#0f766e">${c}</span>`).join('')}</div>
+    <div style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Technique</div>
+    <div style="font-size:12px;color:var(--tx);margin-bottom:10px;line-height:1.55">${z.technique}</div>
+    <div style="background:#f0fdf9;border:1.5px solid #99f6e4;border-radius:10px;padding:10px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">📋 Protocol Note</div>
+      <div style="font-size:12px;color:#065f46;line-height:1.6">${z.protocol}</div>
+    </div>
+    <div style="background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:10px;padding:10px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">🌿 Ayurvedic Correlation</div>
+      <div style="font-size:12px;color:#5b21b6;line-height:1.6">${z.ayur}</div>
+    </div>
+    <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:10px;margin-bottom:16px">
+      <div style="font-size:10px;font-weight:700;color:#c2410c;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">💡 Clinical Pearl</div>
+      <div style="font-size:12px;color:#7c2d12;line-height:1.6">${z.tip}</div>
+    </div>
+    <button onclick="aurCloseSheet()" style="width:100%;padding:12px;background:#0f766e;color:#fff;border:none;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer">✓ Close</button>
+  `;
+
+  overlay.style.display = 'block';
+  requestAnimationFrame(function(){ overlay.style.opacity = '1'; sheet.style.transform = 'translateY(0)'; });
+}
+
+function aurCloseSheet() {
+  var overlay = document.getElementById('aur-bs-overlay');
+  var sheet   = document.getElementById('aur-bottom-sheet');
+  if (!sheet) return;
+  overlay.style.opacity = '0';
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(function(){ overlay.style.display = 'none'; }, 350);
+}
+
+function aurFindCondition() {
+  var val = (document.getElementById('aur-cond-input').value || '').trim().toLowerCase();
+  if (!val) return;
+  _aurShowConditionResult(val);
+}
+
+function aurQuickCondition(cond) {
+  var inp = document.getElementById('aur-cond-input');
+  if (inp) inp.value = cond;
+  _aurShowConditionResult(cond.toLowerCase());
+}
+
+function _aurShowConditionResult(condLow) {
+  var el = document.getElementById('aur-cond-result');
+  // Find best match
+  var bestKey = null, bestScore = 0;
+  Object.keys(AUR_COND_MAP).forEach(function(k) {
+    var score = 0;
+    if (condLow === k) score = 100;
+    else if (condLow.includes(k) || k.includes(condLow)) score = 80;
+    else { condLow.split(' ').forEach(function(w){ if(k.includes(w) && w.length>2) score+=30; }); }
+    if (score > bestScore) { bestScore = score; bestKey = k; }
+  });
+
+  if (!bestKey || bestScore < 20) {
+    el.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:8px 0">⚠️ No specific protocol found — use AI Generator below for custom protocol.</div>';
+    return;
+  }
+
+  var zones = AUR_COND_MAP[bestKey];
+  el.innerHTML = `
+    <div style="background:#f0fdf9;border:1.5px solid #99f6e4;border-radius:10px;padding:11px">
+      <div style="font-size:10.5px;font-weight:700;color:#0f766e;margin-bottom:7px">🎯 Key Zones for <b>${bestKey.replace(/\b\w/g,c=>c.toUpperCase())}</b></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${zones.map(z=>`<button onclick="aurTapZone('${z}')" style="padding:5px 11px;background:#fff;border:1.5px solid #0f766e;border-radius:10px;color:#0f766e;font-size:11.5px;font-weight:700;cursor:pointer">${z}</button>`).join('')}
+      </div>
+      <div style="font-size:11px;color:#065f46;margin-top:8px">Tap any zone above to view detailed point locations, technique, and protocol.</div>
+    </div>
+  `;
+}
+
+function _aurBuildRef() {
+  var el = document.getElementById('aur-ref-table');
+  if (!el) return;
+  el.innerHTML = Object.entries(AUR_ZONES).map(function([name, z]) {
+    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 8px;border-bottom:1px solid var(--bdr);cursor:pointer" onclick="aurTapZone('${name.replace(/'/g,"\\'")}')" >
+      <div style="width:10px;height:10px;border-radius:50%;background:${z.color};flex-shrink:0;margin-top:2px;box-shadow:0 0 0 2px ${z.color}33"></div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--tx)">${name}</div>
+        <div style="font-size:11px;color:var(--mu);margin-top:2px">${z.conditions.slice(0,3).join(' · ')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function aurRunAI() {
+  var btn = document.getElementById('aur-ai-btn');
+  var res = document.getElementById('aur-ai-result');
+  var complaint = (document.getElementById('aur-ai-complaint').value || '').trim();
+  var ctx = (document.getElementById('aur-ai-ctx').value || '').trim();
+  if (!res) return;
+  if (!complaint) {
+    if(typeof ccToast==='function') ccToast('⚠️ Enter a condition or complaint first');
+    return;
+  }
+  if(btn){ btn.disabled=true; btn.textContent='🌿 Generating…'; }
+  res.innerHTML='<div style="text-align:center;padding:28px;font-size:13px;color:#555"><div style="font-size:28px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:8px">👂</div><br>Generating auricular protocol…</div>';
+
+  var prompt = `You are a senior BNYS physician and auricular therapy specialist with expertise in WHO auricular nomenclature, Traditional Chinese Medicine, and Ayurvedic integration.
+
+Patient Complaint: ${complaint}
+${ctx ? 'Patient Context: ' + ctx : ''}
+Ear being treated: ${_aurEar}
+
+Generate a complete clinical auricular therapy protocol with these sections:
+
+## 1. Primary Point Selection
+List 4–6 primary auricular points with their WHO nomenclature codes, anatomical zone, and rationale for each.
+
+## 2. Secondary/Adjunct Points
+2–3 additional supporting points with rationale.
+
+## 3. Stimulation Protocol
+Specify: Press-seed (Vaccaria), Needle, or Ear Pellet — frequency of sessions, duration per session, seed replacement schedule.
+
+## 4. Point Stimulation Technique
+Pressure method, timing, and patient instructions for self-stimulation at home.
+
+## 5. Ayurvedic Correlation
+Connect the selected points to relevant Ayurvedic concepts (Doshas, Srotas, Dhatus, Marma equivalents).
+
+## 6. Adjunct BNYS Recommendations
+Relevant hydrotherapy, yoga, diet, or herbal support to complement the auricular protocol.
+
+## 7. Expected Timeline & Outcomes
+Session frequency, expected response by week 2/4/8, and signs of improvement.
+
+## 8. Contraindications & Precautions
+Specific to this condition and patient profile.
+
+Be specific, clinically precise, and practical for a BNYS outpatient setting. End with: "Protocol by Dr. Vikranth · BNYS, MD · Vis Medicatrix Naturae"`;
+
+  try {
+    var bubId = 'aur-bub-' + Date.now();
+    res.innerHTML = '<div style="background:var(--surf);border:1.5px solid #99f6e4;border-radius:14px;padding:16px;font-size:13px;line-height:1.75;color:var(--tx)" id="' + bubId + '"><div style="text-align:center;padding:10px;color:#0f766e">Generating protocol…</div></div>';
+    if(typeof callAIStream==='function'){
+      var acc='';
+      await callAIStream(
+        [{role:'system',content:'You are a BNYS auricular therapy specialist providing complete clinical protocols.'},
+         {role:'user',content:prompt}],
+        2400,
+        function(tok){ acc+=tok; var el=document.getElementById(bubId); if(el) el.innerHTML=typeof _caiMdToHtml==='function'?_caiMdToHtml(acc):acc.replace(/\n/g,'<br>'); },
+        null
+      );
+    } else if(typeof callAI==='function'){
+      var raw=await callAI([{role:'user',content:prompt}],2200);
+      var el=document.getElementById(bubId);
+      if(el) el.innerHTML=typeof _caiMdToHtml==='function'?_caiMdToHtml(raw):raw.replace(/\n/g,'<br>');
+    }
+    res.scrollIntoView({behavior:'smooth',block:'start'});
+  } catch(e) {
+    res.innerHTML='<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:14px;color:#dc2626;font-size:12.5px">⚠️ '+(e.message||'AI error')+'</div>';
+  }
+  if(btn){ btn.disabled=false; btn.textContent='🌿 Generate Protocol'; }
+}
+
+window.aurInit         = aurInit;
+window.aurSwitchEar    = aurSwitchEar;
+window.aurTapZone      = aurTapZone;
+window.aurCloseSheet   = aurCloseSheet;
+window.aurFindCondition= aurFindCondition;
+window.aurQuickCondition=aurQuickCondition;
+window.aurRunAI        = aurRunAI;
+
+})();
+
+
+// ═══════════════════════════════════════════════════════════════════
+// TONGUE DIAGNOSIS MODULE
+// ═══════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var _tngSystem = 'tcm';
+var _tngReady  = false;
+
+// ── Zone data ──────────────────────────────────────────────────────
+var TNG_ZONES = {
+  tip: {
+    name: 'Tongue Tip',
+    tcm: {
+      organs: ['Heart','Lung (anterior tip region)'],
+      color_clue: 'Red tip = Heart Heat / emotional heat. Pale tip = Heart Blood deficiency. Swollen tip = Heart Qi stagnation.',
+      coating: 'Thin dry coating at tip = Lung Yin deficiency. No coating at tip = severe Yin depletion.',
+      conditions: ['Anxiety & palpitations','Insomnia (Heart patterns)','Mouth ulcers (Heart Fire)','Red/Hot sensation in chest','Respiratory conditions','Emotional dysregulation'],
+      signs: ['Red tip — Heart Fire: emotional stress, insomnia, palpitations','Pale tip — Heart Blood deficiency: fatigue, poor memory','Purple tip — Blood stasis: chronic cardiovascular issues','Papillae on tip — Heat accumulation in Heart']
+    },
+    ayur: {
+      organs: ['Hridaya (Heart)','Pranavaha Srotas (respiratory)','Manas (mind)'],
+      dosha: 'Prana Vata and Sadhaka Pitta imbalance. Red tip = Pitta aggravation. Pale = Vata excess.',
+      conditions: ['Hrida Roga (heart disorders)','Unmada (mental disturbance)','Shwasa (asthma — anterior tip)'],
+      signs: ['Redness = Pitta excess in Hridaya','Pallor = Rasa Kshaya (plasma/lymph depletion)','Cracks = Vata aggravation in cardiac function']
+    },
+    color:'#ef4444'
+  },
+  front: {
+    name: 'Tongue Front (Anterior Third)',
+    tcm: {
+      organs: ['Lung','Upper Jiao (thorax region)'],
+      color_clue: 'Red front with thin yellow coat = Lung Heat. Pale with white coat = Lung Cold-damp / Qi deficiency. Dry front = Lung Yin deficiency.',
+      coating: 'Thick white coating in front = exterior cold or Lung Phlegm. Yellow coating = Lung Heat or infection.',
+      conditions: ['Respiratory infections (acute)','Chronic cough','Bronchitis & asthma','Sinusitis','Skin disorders (Lung controls skin)','Grief & sadness (Lung emotion)'],
+      signs: ['Red front — Lung Heat: fever, dry cough, sore throat','Pale front — Lung Qi deficiency: fatigue, weak voice, breathlessness','Swollen front edges — Lung Phlegm: productive cough, heaviness','Dry, cracked front — Lung Yin deficiency: dry cough, afternoon fever']
+    },
+    ayur: {
+      organs: ['Pranavaha Srotas','Rasavaha Srotas','Udakavaha Srotas'],
+      dosha: 'Prana Vata and Avalambaka Kapha govern this zone. Red = Pitta. Pale/wet = Kapha. Dry = Vata.',
+      conditions: ['Shwasa (asthma)','Kasa (cough)','Rajayakshma (tuberculosis-like wasting)','Twak Vikaras (skin disorders)'],
+      signs: ['Yellow coat = Ama Pitta in Pranavaha','White coat = Kapha accumulation in lungs','Dry/cracked = Vata-Pitta consuming Oja in Pranavaha']
+    },
+    color:'#fb923c'
+  },
+  centre: {
+    name: 'Tongue Centre (Middle Third)',
+    tcm: {
+      organs: ['Spleen','Stomach','Middle Jiao (digestive centre)'],
+      color_clue: 'The most diagnostically important zone. Pale centre = Spleen Qi deficiency. Greasy yellow coat = Stomach Heat with Damp. Peeled coat in centre = Stomach Yin deficiency.',
+      coating: 'Thick greasy coating here = Damp-Phlegm accumulation. Absence of coating = Stomach/Spleen Yin depletion — severe digestive weakness.',
+      conditions: ['Digestive disorders (IBS, gastritis)','Chronic fatigue (Spleen Qi deficiency)','Oedema & dampness','Poor appetite & bloating','Nausea & vomiting','Food intolerances','Anaemia (Spleen Blood generation)'],
+      signs: ['Pale centre with teeth marks — Spleen Qi deficiency: fatigue, loose stools, poor appetite','Thick yellow greasy coat — Stomach Damp-Heat: nausea, heavy feeling, foul breath','Red centre no coat — Stomach Yin deficiency: hunger without appetite, dry mouth','Swollen with greasy coat — Phlegm-Damp: obesity, lethargy, foggy thinking']
+    },
+    ayur: {
+      organs: ['Annavaha Srotas (GI)','Raktavaha Srotas','Pachaka Pitta seat'],
+      dosha: 'Samana Vata and Pachaka Pitta dominate this zone. Pale = Mandagni (weak digestion). Yellow coat = Sama Pitta (Pitta with Ama). Greasy = Kapha Ama accumulation.',
+      conditions: ['Agnimandya (digestive weakness)','Grahani (IBS)','Arsha (haemorrhoids)','Ajirna (indigestion)','Pandu (anaemia)'],
+      signs: ['Thick white coat = Ama accumulation — detox protocol needed','Yellow coat = Sama Pitta — Virechana (purgation) indicated','Peeled = Oja Kshaya — deep nourishment with Rasayanas required','Cracks in centre = Vata aggravation in Pakwashaya']
+    },
+    color:'#eab308'
+  },
+  sides: {
+    name: 'Tongue Sides (Lateral Edges)',
+    tcm: {
+      organs: ['Liver','Gallbladder'],
+      color_clue: 'Red sides = Liver Fire / Liver Yang rising. Purple sides = Liver Blood stasis. Pale sides = Liver Blood deficiency.',
+      coating: 'One-sided coating = pathogen in Liver/GB channel. Greasy coat on sides = Liver-Gallbladder Damp-Heat.',
+      conditions: ['Migraine (Liver Yang rising)','PMS & dysmenorrhoea (Liver Qi stagnation)','Hypochondriac pain','Eye disorders (Liver opens to eyes)','Anger & frustration (Liver emotion)','Tendon & joint issues','Detoxification disorders'],
+      signs: ['Red sides — Liver Fire: anger, headache, red eyes, bitter taste','Purple/dark sides — Liver Blood stasis: fixed pain, dark menstrual blood','Swollen sides — Liver Qi stagnation: bloating, mood swings, PMS','Teeth marks on sides — Liver overacting on Spleen: alternating bowel + stress']
+    },
+    ayur: {
+      organs: ['Yakrit (Liver)','Pittashaya (Gallbladder)','Ranjaka Pitta seat'],
+      dosha: 'Ranjaka Pitta governs this zone. Red = Pitta Vriddhi. Pale = Pitta Kshaya (Rakta Kshaya). Purple = Rakta Dushti (blood vitiation).',
+      conditions: ['Kamala (jaundice)','Yakrid Roga (liver disorders)','Aruchi (loss of taste)','Raktapitta (bleeding disorders)','Ashmaridha (gallstones)'],
+      signs: ['Red/inflamed sides = Ranjaka Pitta aggravation — Virechana indicated','Purple = Rakta Dushti with Vata — Raktamokshana may be indicated','Pale/washed sides = Yakrit Daurbalya — Bhumiamalaki, Kutki needed']
+    },
+    color:'#22c55e'
+  },
+  root: {
+    name: 'Tongue Root (Posterior Third)',
+    tcm: {
+      organs: ['Kidney','Urinary Bladder','Lower Jiao (pelvic region)'],
+      color_clue: 'No coating at root = Kidney Yin deficiency. Thick white wet coat at root = Kidney Yang deficiency / Cold in Lower Jiao. Red root no coat = Kidney Yin exhaustion.',
+      coating: 'The root coating is the most reliable indicator of Kidney function in TCM tongue diagnosis.',
+      conditions: ['Kidney disorders (CKD adjunct)','Lower back pain (Kidney deficiency type)','Urinary disorders','Reproductive disorders (Kidney governs reproduction)','Ear disorders (Kidney opens to ears)','Bone disorders (Kidney governs bones)','Premature ageing & hair loss'],
+      signs: ['No coating at root — Kidney Yin deficiency: night sweats, tinnitus, low back ache, hot palms','Thick white wet coat at root — Kidney Yang deficiency: cold lower back, frequent pale urination, cold limbs','Red root, cracked — Kidney Yin exhaustion (advanced): chronic illness, wasting patterns','Tooth marks at edges + pale root — Spleen + Kidney Qi deficiency: severe fatigue, oedema']
+    },
+    ayur: {
+      organs: ['Vrikka (Kidney)','Shukra/Artava Dhatu (reproductive tissue)','Majja Dhatu (bone marrow/nerves)'],
+      dosha: 'Apana Vata and Kidney Ojas seat. No coat = Oja Kshaya (vital essence depletion). Thick white coat = Ama in Shukra Dhatu. This zone reflects the deepest Dhatu (Shukra/Artava) health.',
+      conditions: ['Klaibya (sexual debility)','Mutravaha Srotas disorders','Asthi Kshaya (bone loss/osteoporosis)','Vandhyatva (infertility)','Balakshaya (depletion of strength)','Meha (urinary disorders)'],
+      signs: ['No coat = Shukra Kshaya — Ashwagandha, Shatavari, Bala needed urgently','Thick white coat = Ama blocking Shukra Dhatu — Triphala, Guggulu, Shodhana needed','Red/cracked root = advanced Pitta in Shukra — Chandraprabha, cooling Rasayanas']
+    },
+    color:'#6366f1'
+  }
+};
+
+// ── TCM Reference table data ───────────────────────────────────────
+var TNG_REF = [
+  { zone:'Tip', organs:'Heart · Lung', tcm_signs:'Red = Heart Fire | Pale = Heart Blood def.', color:'#ef4444' },
+  { zone:'Front', organs:'Lung · Upper Jiao', tcm_signs:'Red + yellow coat = Lung Heat | Pale = Lung Qi def.', color:'#fb923c' },
+  { zone:'Centre', organs:'Spleen · Stomach', tcm_signs:'Greasy coat = Damp | Peeled = Stomach Yin def.', color:'#eab308' },
+  { zone:'Sides', organs:'Liver · Gallbladder', tcm_signs:'Red = Liver Fire | Purple = Blood stasis', color:'#22c55e' },
+  { zone:'Root', organs:'Kidney · Bladder', tcm_signs:'No coat = Kidney Yin def. | Wet white = Kidney Yang def.', color:'#6366f1' }
+];
+
+// ── Init ────────────────────────────────────────────────────────────
+function tngInit() {
+  if (_tngReady) return;
+  _tngReady = true;
+  _tngBuildRef();
+}
+
+function tngSwitchSystem(sys) {
+  _tngSystem = sys;
+  var bT = document.getElementById('tng-btn-tcm'), bA = document.getElementById('tng-btn-ayur');
+  var lbl = document.getElementById('tng-system-label');
+  var base = 'flex:1;padding:10px 6px;border-radius:11px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;';
+  if (sys === 'tcm') {
+    bT.style.cssText = base + 'border:2px solid #be123c;background:#be123c;color:#fff';
+    bA.style.cssText = base + 'border:2px solid var(--bdr);background:var(--surf);color:#be123c';
+    if(lbl) lbl.textContent = 'TCM — 5 Zone Mapping · Organ Correspondence';
+  } else {
+    bA.style.cssText = base + 'border:2px solid #be123c;background:#be123c;color:#fff';
+    bT.style.cssText = base + 'border:2px solid var(--bdr);background:var(--surf);color:#be123c';
+    if(lbl) lbl.textContent = 'Ayurvedic — Dosha & Dhatu Tongue Mapping';
+  }
+}
+
+function tngTapZone(zoneId) {
+  var z = TNG_ZONES[zoneId];
+  if (!z) return;
+  var d = _tngSystem === 'ayur' ? z.ayur : z.tcm;
+  var sheet   = document.getElementById('tng-bottom-sheet');
+  var overlay = document.getElementById('tng-bs-overlay');
+  var content = document.getElementById('tng-bs-content');
+  if (!sheet) return;
+
+  var systemLabel = _tngSystem === 'ayur' ? '🌿 Ayurvedic' : '☯️ TCM';
+
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="width:12px;height:12px;border-radius:50%;background:${z.color};flex-shrink:0;box-shadow:0 0 0 3px ${z.color}33"></div>
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:${z.color}">${z.name}</div>
+        <div style="font-size:10px;color:var(--mu);font-weight:600">${systemLabel} System</div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Organ Correspondences</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">${d.organs.map(o=>`<span style="padding:3px 10px;background:${z.color}18;border:1px solid ${z.color}44;border-radius:12px;font-size:12px;font-weight:700;color:${z.color}">${o}</span>`).join('')}</div>
+
+    ${_tngSystem==='tcm' ? `
+    <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:10px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:#c2410c;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Colour Interpretation</div>
+      <div style="font-size:12px;color:#7c2d12;line-height:1.6">${z.tcm.color_clue}</div>
+    </div>
+    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:10px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Coating Significance</div>
+      <div style="font-size:12px;color:#14532d;line-height:1.6">${z.tcm.coating}</div>
+    </div>
+    ` : `
+    <div style="background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:10px;padding:10px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Dosha Analysis</div>
+      <div style="font-size:12px;color:#5b21b6;line-height:1.6">${z.ayur.dosha}</div>
+    </div>
+    `}
+
+    <div style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Clinical Conditions</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">${d.conditions.map(c=>`<span style="padding:3px 9px;background:#fef2f2;border:1px solid #fecdd3;border-radius:12px;font-size:11px;color:#be123c">${c}</span>`).join('')}</div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px">Diagnostic Signs & Interpretations</div>
+    <div style="margin-bottom:12px">${d.signs.map(s=>{var parts=s.split('—'); return `<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--bdr)"><div style="width:6px;height:6px;border-radius:50%;background:${z.color};flex-shrink:0;margin-top:5px"></div><div><div style="font-size:12px;font-weight:700;color:var(--tx)">${parts[0]||s}</div>${parts[1]?'<div style="font-size:11px;color:var(--mu);margin-top:1px">'+parts[1]+'</div>':''}</div></div>`;}).join('')}</div>
+
+    <button onclick="tngCloseSheet()" style="width:100%;padding:12px;background:#be123c;color:#fff;border:none;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px">✓ Close</button>
+  `;
+
+  overlay.style.display = 'block';
+  requestAnimationFrame(function(){ overlay.style.opacity = '1'; sheet.style.transform = 'translateY(0)'; });
+}
+
+function tngCloseSheet() {
+  var overlay = document.getElementById('tng-bs-overlay');
+  var sheet   = document.getElementById('tng-bottom-sheet');
+  if (!sheet) return;
+  overlay.style.opacity = '0';
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(function(){ overlay.style.display = 'none'; }, 350);
+}
+
+function tngGenerateSummary() {
+  var colour   = document.getElementById('tng-colour').value;
+  var coating  = document.getElementById('tng-coating').value;
+  var shape    = document.getElementById('tng-shape').value;
+  var moisture = document.getElementById('tng-moisture').value;
+  var feats    = Array.from(document.querySelectorAll('.tng-feat-cb:checked')).map(function(cb){ return cb.value; });
+
+  if (!colour && !coating && !shape && !moisture && !feats.length) {
+    if(typeof ccToast==='function') ccToast('⚠️ Record at least one tongue finding first');
+    return;
+  }
+
+  var lines = ['<b>Clinical Tongue Findings Summary</b><br><br>'];
+  if (colour)   lines.push('<b>Colour:</b> ' + colour + '<br>');
+  if (coating)  lines.push('<b>Coating:</b> ' + coating + '<br>');
+  if (shape)    lines.push('<b>Shape/Form:</b> ' + shape + '<br>');
+  if (moisture) lines.push('<b>Moisture:</b> ' + moisture + '<br>');
+  if (feats.length) lines.push('<b>Special Features:</b> ' + feats.join(', ') + '<br>');
+
+  // Basic interpretation
+  lines.push('<br><b>Preliminary Interpretation:</b><br>');
+  if (colour.includes('Pale')) lines.push('• Pale tongue → Qi or Blood deficiency (TCM) / Rasa-Rakta Kshaya (Ayurveda)<br>');
+  if (colour.includes('Red') && !colour.includes('Deep')) lines.push('• Red tongue → Heat pattern or Yin deficiency (TCM) / Pitta aggravation (Ayurveda)<br>');
+  if (colour.includes('Purple')) lines.push('• Purple tongue → Blood stasis (TCM) / Rakta Dushti (Ayurveda) — check cardiovascular risk<br>');
+  if (coating.includes('Thick')) lines.push('• Thick coating → Pathogenic accumulation, Ama (Ayurveda) — consider detox protocol<br>');
+  if (coating.includes('No Coating') || coating.includes('Peeled')) lines.push('• Absent coating → Yin deficiency (TCM) / Oja Kshaya (Ayurveda) — nourishing Rasayana needed<br>');
+  if (coating.includes('Greasy')) lines.push('• Greasy coating → Damp-Phlegm (TCM) / Kapha Ama (Ayurveda) — reduce heavy foods, consider Trikatu<br>');
+  if (shape.includes('Swollen')) lines.push('• Swollen tongue → Qi stagnation or Damp retention / Kapha excess<br>');
+  if (shape.includes('Cracked')) lines.push('• Cracks → Yin deficiency (TCM) / Vata aggravation (Ayurveda)<br>');
+  if (feats.includes('Red tip')) lines.push('• Red tip → Heart Fire (TCM) / Hridaya Pitta aggravation — anxiety, insomnia pattern<br>');
+  if (feats.includes('Teeth marks')) lines.push('• Teeth marks → Spleen Qi deficiency (TCM) / Mandagni (Ayurveda) — digestive weakness<br>');
+  if (feats.includes('Midline crack')) lines.push('• Midline crack → Stomach/Heart Yin deficiency / Vata in digestive tract<br>');
+
+  lines.push('<br><i style="font-size:11px;color:var(--mu)">This summary is for clinical reference only. Use AI Analysis below for a comprehensive interpretation and BNYS protocol.</i>');
+
+  var box = document.getElementById('tng-summary-box');
+  box.style.display = 'block';
+  box.innerHTML = lines.join('');
+}
+
+function tngClearFindings() {
+  ['tng-colour','tng-coating','tng-shape','tng-moisture'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.querySelectorAll('.tng-feat-cb').forEach(function(cb){ cb.checked = false; });
+  var box = document.getElementById('tng-summary-box');
+  if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+  if(typeof ccToast==='function') ccToast('🗑 Findings cleared');
+}
+
+function _tngBuildRef() {
+  var el = document.getElementById('tng-ref-table');
+  if (!el) return;
+  el.innerHTML = TNG_REF.map(function(r) {
+    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 8px;border-bottom:1px solid var(--bdr)">
+      <div style="width:10px;height:10px;border-radius:50%;background:${r.color};flex-shrink:0;margin-top:2px;box-shadow:0 0 0 2px ${r.color}33"></div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--tx)">${r.zone} — <span style="color:${r.color}">${r.organs}</span></div>
+        <div style="font-size:11px;color:var(--mu);margin-top:2px">${r.tcm_signs}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function tngRunAI() {
+  var btn = document.getElementById('tng-ai-btn');
+  var res = document.getElementById('tng-ai-result');
+  var ctx = (document.getElementById('tng-ai-ctx').value || '').trim();
+
+  var colour   = document.getElementById('tng-colour').value;
+  var coating  = document.getElementById('tng-coating').value;
+  var shape    = document.getElementById('tng-shape').value;
+  var moisture = document.getElementById('tng-moisture').value;
+  var feats    = Array.from(document.querySelectorAll('.tng-feat-cb:checked')).map(function(cb){ return cb.value; });
+
+  if (!colour && !coating && !shape && !moisture && !feats.length) {
+    if(typeof ccToast==='function') ccToast('⚠️ Record tongue findings before AI analysis');
+    return;
+  }
+
+  if(btn){ btn.disabled=true; btn.textContent='🔍 Analysing…'; }
+  res.innerHTML='<div style="text-align:center;padding:28px;font-size:13px;color:#555"><div style="font-size:28px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:8px">👅</div><br>Interpreting tongue findings…</div>';
+
+  var findings = [
+    colour   ? 'Colour: ' + colour   : null,
+    coating  ? 'Coating: ' + coating  : null,
+    shape    ? 'Shape: ' + shape      : null,
+    moisture ? 'Moisture: ' + moisture: null,
+    feats.length ? 'Special features: ' + feats.join(', ') : null
+  ].filter(Boolean).join('\n');
+
+  var prompt = `You are a senior BNYS physician with expertise in Traditional Chinese Medicine tongue diagnosis and Ayurvedic Jihva Pariksha (tongue examination).
+
+Tongue Findings Recorded:
+${findings}
+${ctx ? '\nPatient Context: ' + ctx : ''}
+
+Please provide a comprehensive tongue diagnosis analysis with these sections:
+
+## 1. TCM Pattern Identification
+Name the primary TCM pattern(s) indicated by these tongue findings. Explain the pattern pathophysiology.
+
+## 2. Organ Systems Affected
+Which organ systems are most implicated? Priority order from most to least affected.
+
+## 3. Ayurvedic Interpretation (Jihva Pariksha)
+Interpret the same findings through the Ayurvedic lens — Dosha imbalance, Dhatu involvement, Srotas affected, Agni status, Ama presence.
+
+## 4. Clinical Correlations
+What symptoms and conditions would you expect this patient to present with based on these tongue findings?
+
+## 5. BNYS Treatment Protocol
+Specific recommendations:
+- Diet (Pathya/Apathya): what to eat and avoid
+- Hydrotherapy: specific techniques
+- Yoga/Pranayama: specific asanas and breathing practices
+- Herbal recommendations: Ayurvedic formulations
+- Panchakarma consideration if applicable
+
+## 6. Laboratory Investigations to Correlate
+Suggest lab tests that would confirm the tongue-based diagnosis.
+
+## 7. Monitoring & Follow-up
+How tongue appearance should change with correct treatment. Timeline.
+
+Be specific, clinically precise, and practically useful for a BNYS outpatient physician.
+End with: "Tongue Analysis by Dr. Vikranth · BNYS, MD · Vis Medicatrix Naturae"`;
+
+  try {
+    var bubId = 'tng-bub-' + Date.now();
+    res.innerHTML = '<div style="background:var(--surf);border:1.5px solid #fecdd3;border-radius:14px;padding:16px;font-size:13px;line-height:1.75;color:var(--tx)" id="' + bubId + '"><div style="text-align:center;padding:10px;color:#be123c">Interpreting findings…</div></div>';
+    if(typeof callAIStream==='function'){
+      var acc='';
+      await callAIStream(
+        [{role:'system',content:'You are a BNYS physician specialising in TCM tongue diagnosis and Ayurvedic Jihva Pariksha.'},
+         {role:'user',content:prompt}],
+        2400,
+        function(tok){ acc+=tok; var el=document.getElementById(bubId); if(el) el.innerHTML=typeof _caiMdToHtml==='function'?_caiMdToHtml(acc):acc.replace(/\n/g,'<br>'); },
+        null
+      );
+    } else if(typeof callAI==='function'){
+      var raw=await callAI([{role:'user',content:prompt}],2200);
+      var el=document.getElementById(bubId);
+      if(el) el.innerHTML=typeof _caiMdToHtml==='function'?_caiMdToHtml(raw):raw.replace(/\n/g,'<br>');
+    }
+    res.scrollIntoView({behavior:'smooth',block:'start'});
+  } catch(e) {
+    res.innerHTML='<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:14px;color:#dc2626;font-size:12.5px">⚠️ '+(e.message||'AI error')+'</div>';
+  }
+  if(btn){ btn.disabled=false; btn.textContent='🔍 Analyse with AI'; }
+}
+
+window.tngInit             = tngInit;
+window.tngSwitchSystem     = tngSwitchSystem;
+window.tngTapZone          = tngTapZone;
+window.tngCloseSheet       = tngCloseSheet;
+window.tngGenerateSummary  = tngGenerateSummary;
+window.tngClearFindings    = tngClearFindings;
+window.tngRunAI            = tngRunAI;
+
+})();
+</script>
 <style>
 .lr-hero{background:linear-gradient(135deg,#1a3a5a 0%,#0f6b5c 55%,#1a5a3a 100%);border-radius:14px;padding:16px 18px 14px;margin-bottom:14px;color:#fff;display:flex;align-items:flex-start;gap:14px;position:relative;overflow:hidden}
 .lr-hero::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none}
@@ -22874,12 +24125,136 @@ function _status(t,val){
   if(val>hi) return {cls:'lr-sh',lbl:'↑ Above Normal Range'};
   return       {cls:'lr-sn',lbl:'✓ Within Normal Range'};
 }
+/* ═══════════════════════════════════════════════════════════
+   _md() — Clinical-aware rich renderer
+   Converts plain-text BNYS card content into structured HTML
+   matching the NaturaRef luxury aesthetic.
+   ═══════════════════════════════════════════════════════════ */
 function _md(s){
   if(!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/^[-•*] (.+)$/gm,'<li>$1</li>')
-    .replace(/\n{2,}/g,'<br><br>').replace(/\n/g,'<br>');
+
+  /* 0. Already rich/structural HTML — return as-is (div, table, ul, ol, li, pre, blockquote etc.) */
+  if(/<(?:div|table|thead|tbody|tr|th|td|ul|ol|li|blockquote|pre|section|article|figure|nav|aside|main|form|dl|dt|dd|h[1-6])[\s>\/]/i.test(s)) return s;
+
+  /* 0b. Strip/convert simple inline HTML that may have been pre-applied by a basic markdown pass
+         (e.g. _legacyHtml with only <strong>/<br>/<em>).
+         Convert them back to markdown equivalents so the rich pipeline can re-style them. */
+  if(/<[a-zA-Z]/i.test(s)){
+    s = s.replace(/<br\s*\/?>/gi, '\n');
+    s = s.replace(/<\/?(strong|b)>/gi, '**');
+    s = s.replace(/<\/?(em|i)>/gi, '_');
+    s = s.replace(/<[^>]+>/g, ''); // strip any remaining unknown inline tags
+  }
+
+  var esc = function(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  s = esc(s);
+
+  /* 1. Pipe-delimited table blocks → styled HTML table */
+  s = s.replace(/^((?:[^\n|]*\|[^\n]+\n){2,})/gm, function(block){
+    var lines = block.trim().split('\n').filter(function(l){ return !/^[-|:\s]+$/.test(l.trim()); });
+    if(lines.length < 2) return block;
+    var heads = lines[0].split('|').map(function(c){ return c.trim(); });
+    var thHtml = '<tr>'+heads.map(function(h){
+      return '<th style="background:#1e4a3b;color:#e8f0e4;padding:8px 10px;font-size:11px;font-weight:700;text-align:left;text-transform:uppercase;letter-spacing:.07em">'+h+'</th>';
+    }).join('')+'</tr>';
+    var tbHtml = lines.slice(1).map(function(row, ri){
+      var cells = row.split('|').map(function(c){ return c.trim(); });
+      return '<tr style="background:'+(ri%2===0?'var(--warm)':'var(--sand2)')+'">'+cells.map(function(c){
+        return '<td style="padding:7px 10px;font-size:12.5px;color:var(--tx);border-bottom:1px solid var(--border);line-height:1.45">'+_mdInline(c)+'</td>';
+      }).join('')+'</tr>';
+    }).join('');
+    return '<div style="overflow-x:auto;margin:10px 0 8px;border-radius:9px;border:1.5px solid var(--sage-lt,#a8d4b8);overflow:hidden"><table style="width:100%;border-collapse:collapse"><thead>'+thHtml+'</thead><tbody>'+tbHtml+'</tbody></table></div>\n';
+  });
+
+  /* 2. "Definition: ..." → styled definition box
+        Body match stops at next **-prefixed line or blank line to avoid eating treatment tiles */
+  s = s.replace(/(^|\n)(?:\*\*)?(?:Definition|DEFINITION):?(?:\*\*)?[ \t]*([^\n]+(?:\n(?!\n|\*\*)[^\n]+)*)/,
+    function(m, pre, body){
+      return pre+'<div style="background:var(--sage-pale,#e8f5ec);border-left:4px solid var(--sage,#2c6e4f);border-radius:0 9px 9px 0;padding:11px 14px;margin:4px 0 12px">'
+        +'<div style="font-size:10px;font-weight:800;color:var(--sage-deep,#1e4a3b);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px">\ud83d\udcd6 Definition</div>'
+        +'<div style="font-size:13px;color:var(--tx);line-height:1.6">'+_mdInline(body.trim())+'</div></div>';
+    });
+
+  /* 3. Labelled info boxes: Indication, Contraindication, Note, Mechanism, Dose */
+  var _boxes = {
+    'Indication|Indications':           '#166534,#dcfce7,\u2705',
+    'Contraindication|Contraindications|Caution': '#c0392b,#fef2f2,\u26a0\ufe0f',
+    'Note|Clinical Pearl|Pearl':        '#b45309,#fef3c7,\ud83d\udfe1',
+    'Precaution|Warning':               '#c0392b,#fff5f5,\ud83d\udea8',
+    'Mechanism|MOA':                    '#0369a1,#dbeafe,\ud83d\udca1',
+    'Evidence|Studies':                 '#7d5a7e,#f5eef5,\ud83d\udd2c',
+    'Dose|Dosage':                      '#0f6b5c,#e0f5ee,\ud83d\udc8a'
+  };
+  Object.keys(_boxes).forEach(function(keys){
+    var parts = _boxes[keys].split(',');
+    var clr=parts[0], bg=parts[1], ico=parts[2];
+    var re = new RegExp('(^|\\n)('+keys+')[:\\s\\u2014\\u2013]([^\\n]+(?:\\n(?!\\n|\\*\\*)[^\\n]+)*)','g');
+    s = s.replace(re, function(m, pre, lbl, body){
+      return pre+'<div style="background:'+bg+';border-left:3px solid '+clr+';border-radius:0 8px 8px 0;padding:8px 12px;margin:5px 0">'
+        +'<span style="font-size:10px;font-weight:700;color:'+clr+';text-transform:uppercase;letter-spacing:.08em">'+ico+' '+lbl+'</span> '
+        +'<span style="font-size:12.5px;color:var(--tx);line-height:1.55">'+_mdInline(body.trim())+'</span></div>';
+    });
+  });
+
+  /* 4. Section headers: **Heading:** on its own line → styled divider */
+  s = s.replace(/(^|\n)\*\*([^*\n]{3,60}:)\*\*[ \t]*(\n|$)/gm, function(m, pre, hdr, suf){
+    return pre+'<div style="font-size:11px;font-weight:800;color:var(--sage-deep,#1e4a3b);text-transform:uppercase;letter-spacing:.09em;margin:14px 0 6px;padding-bottom:4px;border-bottom:2px solid var(--sage-lt,#a8d4b8)">'+hdr.replace(/:$/,'')+'</div>'+suf;
+  });
+
+  /* 5. Treatment tiles: **Name:** description OR **Name**: description — styled card
+        (?::\*\*|\*\*:) matches colon either inside bold (**Name:**) or outside (**Name**:) */
+  s = s.replace(/(^|\n)\*\*([^*\n]{2,70}?)(?::\*\*|\*\*:)[ \t]*([^\n]+(?:\n(?![\n*])[^\n]+)*)/gm,
+    function(m, pre, name, body){
+      return pre+'<div style="background:var(--warm);border:1px solid var(--border);border-radius:9px;padding:10px 13px;margin:6px 0">'
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--sage-deep,#1e4a3b);margin-bottom:5px">'+name+'</div>'
+        +'<div style="font-size:12.5px;color:var(--tx);line-height:1.6">'+_mdTempBadges(_mdInline(body.trim()))+'</div></div>';
+    });
+
+  /* 6. Remaining bold */
+  s = s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+
+  /* 7. Bullet lists */
+  s = s.replace(/^[-\u2022*] (.+)$/gm,'<li style="margin-bottom:3px">$1</li>');
+  s = s.replace(/(<li[\s\S]*?<\/li>)/g,'<ul style="margin:6px 0 6px 16px;padding:0;list-style:disc">$1</ul>');
+  s = s.replace(/<\/ul>\s*<ul[^>]*>/g,'');
+
+  /* 8. Arrow styling */
+  s = s.replace(/\u2191/g,'<span style="color:#2a5a8a;font-weight:700">\u2191</span>');
+  s = s.replace(/\u2193/g,'<span style="color:#b94040;font-weight:700">\u2193</span>');
+
+  /* 9. Temperature badges + line breaks */
+  s = _mdTempBadges(s);
+  s = s.replace(/\n{2,}/g,'<br><br>').replace(/\n/g,'<br>');
+  return s;
+}
+
+/* Inline markdown only (no block elements) */
+function _mdInline(s){
+  if(!s) return '';
+  return s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\u2191/g,'<span style="color:#2a5a8a;font-weight:700">\u2191</span>')
+    .replace(/\u2193/g,'<span style="color:#b94040;font-weight:700">\u2193</span>');
+}
+
+/* Temperature state badges — Cold/Hot/Neutral/Contrast/Warm/Steam */
+function _mdTempBadges(s){
+  if(!s) return '';
+  var map = [
+    {re:/\bCold\s*\(([^)]+)\)/g,     bg:'#dbeafe',clr:'#1e40af',lbl:'\u2744\ufe0f Cold'},
+    {re:/\bHot\s*\(([^)]+)\)/g,      bg:'#fee2e2',clr:'#991b1b',lbl:'\ud83d\udd25 Hot'},
+    {re:/\bNeutral\s*\(([^)]+)\)/g,  bg:'#f5f5f5',clr:'#374151',lbl:'\ud83c\udf21 Neutral'},
+    {re:/\bContrast\s*\(([^)]+)\)/g, bg:'#ede9fe',clr:'#5b21b6',lbl:'\ud83d\udd04 Contrast'},
+    {re:/\bWarm\s*\(([^)]+)\)/g,     bg:'#fef3c7',clr:'#92400e',lbl:'\u2668\ufe0f Warm'},
+    {re:/\bSteam\s*\(([^)]+)\)/g,    bg:'#d1fae5',clr:'#065f46',lbl:'\ud83d\udca8 Steam'}
+  ];
+  map.forEach(function(t){
+    s = s.replace(t.re, function(m, range){
+      return '<span style="display:inline-flex;align-items:center;gap:3px;background:'+t.bg+';color:'+t.clr
+        +';border:1px solid currentColor;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:700;white-space:nowrap;vertical-align:middle">'
+        +t.lbl+' <span style="opacity:.7;font-weight:400">'+range+'</span></span>';
+    });
+  });
+  return s;
 }
 function _esc(s){return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 
@@ -23228,12 +24603,35 @@ function _lrOpen(btn,skipHistory,groupKey){
     lrRenderView(view.querySelector('#lr-body'));
   }
 
-  /* Show/hide */
-  if(hv)hv.style.display='none';
-  if(gv)gv.style.display='none';
-  sv.style.display='block';
-  Array.from(sv.children).forEach(function(c){c.style.display='none';});
-  view.style.display='block';
+  /* ── Show / Hide — clean-state sequence ───────────────────────────
+     ORDER MATTERS:
+       1. Hide competing views first (home, group)
+       2. Deactivate ALL sibling sec-views (clears any previous inline styles too)
+       3. Show #sec-views as flex (not block — children need a flex parent to use flex:1)
+       4. Activate THIS view via .active class (display:flex!important + height:100%)
+       5. Reset scroll so new view always starts at the top
+     ──────────────────────────────────────────────────────────────── */
+  if(hv) hv.style.display='none';
+  if(gv) gv.style.display='none';
+
+  /* Deactivate siblings BEFORE making the parent visible — prevents the
+     1-frame ghost where a previously active sec-view is briefly visible */
+  document.querySelectorAll('#sec-views .sec-view').forEach(function(v){
+    v.classList.remove('active');
+    v.style.display=''; /* clear any old inline overrides */
+  });
+
+  /* #sec-views MUST be display:flex so its .sec-view child can use flex:1 */
+  sv.style.display='flex';
+
+  /* Activate via class — this triggers display:flex!important + height:100%
+     (both the base rule and the desktop @media override) */
+  view.classList.add('active');
+
+  /* Scroll reset — prevent re-open landing mid-page */
+  var _caEl=view.querySelector('.ca');
+  if(_caEl) _caEl.scrollTop=0;
+  sv.scrollTop=0;
 
   /* Topbar */
   ['tb-brand-home'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
