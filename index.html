@@ -8284,7 +8284,6 @@ Vit D: 18 nmol/L | B12: 198 pg/mL | Ferritin: 11 µg/L"></textarea>
       </div>
     `;
     secViews.appendChild(view);
-    setTimeout(function() { acuMerInit(); }, 120);
     return;
   } // end acupther block
 
@@ -15386,6 +15385,9 @@ function openSecFromGroup(secId) {
   document.getElementById('group-view').style.display = 'none';
   var btn = document.getElementById('sbh-' + secId);
   if (typeof openSec === 'function') openSec(secId, btn, false, currentGroup);
+  if (secId === 'acupther' && typeof acuMerInit === 'function') {
+    setTimeout(acuMerInit, 200);
+  }
   var backBtn = document.getElementById('back-btn');
   if (backBtn) {
     backBtn.classList.add('visible');
@@ -15422,6 +15424,10 @@ function backToGroupOrHome() {
     // Find which group this section belongs to and highlight that tab
     var group = (typeof getGroupForSec === 'function') ? getGroupForSec(secId) : null;
     if (typeof syncBotNav === 'function') syncBotNav(group || null);
+    // Re-init acupuncture map whenever that section is opened
+    if (secId === 'acupther' && typeof acuMerInit === 'function') {
+      setTimeout(acuMerInit, 150);
+    }
   };
 })();
 
@@ -23973,6 +23979,10 @@ function _applyTransform(){
 function acuMerInit(){
   _acuSel=null; _acuZoom=1; _acuPx=0; _acuPy=0;
 
+  // Reset event flag so touch/mouse events re-attach
+  var wrap=document.getElementById('acu-map-wrap');
+  if(wrap) wrap._acuEventsSet=false;
+
   // Build meridian chip strip
   var strip=document.getElementById('acu-chip-strip');
   if(!strip) return;
@@ -23999,8 +24009,11 @@ function acuMerInit(){
 
 function _setupMapInteraction(){
   var wrap=document.getElementById('acu-map-wrap');
-  if(!wrap||wrap._acuEventsSet) return;
-  wrap._acuEventsSet=true;
+  if(!wrap) return;
+  // Remove old event listeners by replacing with a clone
+  var newWrap=wrap.cloneNode(true);
+  wrap.parentNode.replaceChild(newWrap,wrap);
+  wrap=newWrap;
 
   // Mouse drag
   wrap.addEventListener('mousedown',function(e){
@@ -24244,42 +24257,24 @@ async function acuRunAI(){
   if(btn){btn.disabled=true;btn.textContent='🪡 Generating…';}
   res.innerHTML='<div style="text-align:center;padding:28px;font-size:13px;color:#555"><div style="font-size:28px;animation:diet-spin 1.2s linear infinite;display:inline-block;margin-bottom:8px">🪡</div><br>Generating protocol…</div>';
 
-  var selectedInfo=_acuSel?('Selected meridian: '+_acuSel+' ('+MERIDIANS.find(function(x){return x.id===_acuSel;})||{name:''}).name+')'):'';
-  var prompt='You are a senior BNYS physician and acupuncture specialist with expertise in WHO Standard Acupuncture Nomenclature, TCM, and Ayurvedic Marma Chikitsa.
+  var _selMer=MERIDIANS.find(function(x){return x.id===_acuSel;});
+  var selectedInfo=_acuSel?('Selected meridian: '+_acuSel+' ('+(_selMer?_selMer.name:'')+')'):'';
 
-Patient Complaint: '+complaint+'
-'+(ctx?'Patient Context: '+ctx+'
-':'')+(selectedInfo?selectedInfo+'
-':'')+'
-Generate a complete clinical acupuncture protocol:
-
-## 1. TCM Diagnosis & Pattern
-State TCM pattern and treatment principle.
-
-## 2. Primary Point Prescription
-5–7 primary acupoints with WHO codes, anatomical location, needle depth, direction, stimulation method, rationale.
-
-## 3. Secondary & Adjunct Points
-2–3 supporting points.
-
-## 4. Session Protocol
-Needle gauge, retention time, Deqi guidance, frequency, course length, best time.
-
-## 5. Moxibustion
-Indications, points, type, duration.
-
-## 6. Ayurvedic Marma Correlation
-Relevant Marma points, Doshas, Srotas.
-
-## 7. Adjunct BNYS Recommendations
-Hydrotherapy, yoga, diet, herbal support.
-
-## 8. Expected Timeline
-Response by session 3, week 2, week 6.
-
-## 9. Contraindications & Precautions
-
-End with: "Protocol by Dr. Vikranth · BNYS, MD · Vis Medicatrix Naturae"';
+  var prompt='You are a senior BNYS physician and acupuncture specialist with expertise in WHO Standard Acupuncture Nomenclature, TCM, and Ayurvedic Marma Chikitsa.\n\n'
+    +'Patient Complaint: '+complaint+'\n'
+    +(ctx?'Patient Context: '+ctx+'\n':'')
+    +(selectedInfo?selectedInfo+'\n':'')
+    +'\nGenerate a complete clinical acupuncture protocol:\n\n'
+    +'## 1. TCM Diagnosis & Pattern\nState TCM pattern and treatment principle.\n\n'
+    +'## 2. Primary Point Prescription\n5\u20137 primary acupoints with WHO codes, anatomical location, needle depth, direction, stimulation method, rationale.\n\n'
+    +'## 3. Secondary & Adjunct Points\n2\u20133 supporting points.\n\n'
+    +'## 4. Session Protocol\nNeedle gauge, retention time, Deqi guidance, frequency, course length, best time.\n\n'
+    +'## 5. Moxibustion\nIndications, points, type, duration.\n\n'
+    +'## 6. Ayurvedic Marma Correlation\nRelevant Marma points, Doshas, Srotas.\n\n'
+    +'## 7. Adjunct BNYS Recommendations\nHydrotherapy, yoga, diet, herbal support.\n\n'
+    +'## 8. Expected Timeline\nResponse by session 3, week 2, week 6.\n\n'
+    +'## 9. Contraindications & Precautions\n\n'
+    +'End with: "Protocol by Dr. Vikranth \xb7 BNYS, MD \xb7 Vis Medicatrix Naturae"';
 
   try{
     var bubId='acu-bub-'+Date.now();
@@ -24288,13 +24283,11 @@ End with: "Protocol by Dr. Vikranth · BNYS, MD · Vis Medicatrix Naturae"';
       var acc='';
       await callAIStream([{role:'system',content:'You are a BNYS acupuncture specialist. Respond in detailed clinical markdown format. Be precise — use full terms.'},
         {role:'user',content:prompt}],2800,
-        function(tok){acc+=tok;var el=document.getElementById(bubId);if(el)el.innerHTML=typeof _caiMdToHtml==='function'?_caiMdToHtml(acc):acc.replace(/
-/g,'<br>');},null);
+        function(tok){acc+=tok;var el=document.getElementById(bubId);if(el)el.innerHTML=typeof _caiMdToHtml==='function'?_caiMdToHtml(acc):acc.replace(/\n/g,'<br>');},null);
     } else if(typeof callAI==='function'){
       var raw=await callAI([{role:'user',content:prompt}],2500);
       var el=document.getElementById(bubId);
-      if(el)el.innerHTML=typeof _caiMdToHtml==='function'?_caiMdToHtml(raw):raw.replace(/
-/g,'<br>');
+      if(el)el.innerHTML=typeof _caiMdToHtml==='function'?_caiMdToHtml(raw):raw.replace(/\n/g,'<br>');
     }
     res.scrollIntoView({behavior:'smooth',block:'start'});
   } catch(e){
