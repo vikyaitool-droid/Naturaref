@@ -23398,6 +23398,7 @@ var _acuZoom = 1;
 var _acuPx = 0; var _acuPy = 0;
 var _drag = false; var _dragSx = 0; var _dragSy = 0; var _dragPx0 = 0; var _dragPy0 = 0;
 var _pinch = false; var _pinchD0 = 1; var _pinchZ0 = 1;
+var _tapActive = false; var _tapSX = 0; var _tapSY = 0;  // tap detection
 
 // ── Meridian Data ──────────────────────────────────────────────────
 // Coordinate space: 1024×1024 matching the body image
@@ -24003,8 +24004,23 @@ function acuMerInit(){
   clr.onclick=function(){acuClearMeridian();};
   strip.appendChild(clr);
 
-  // Set up zoom/pan
+  // Set up zoom/pan + SVG viewBox fitting
   _setupMapInteraction();
+  setTimeout(_fitSVGToImage, 50); // Fallback: ensure SVG is fitted after DOM settles
+}
+
+// ── SVG viewBox: dynamically match image aspect ratio ────────────────
+function _fitSVGToImage(){
+  var inner=document.getElementById('acu-map-inner');
+  if(!inner) return;
+  var img=inner.querySelector('img');
+  var svg=document.getElementById('acu-svg');
+  if(!svg||!img||!img.naturalWidth||!img.naturalHeight) return;
+  // Keep x-width at 1024; scale height to match natural image aspect ratio
+  var vbH=Math.round(1024*img.naturalHeight/img.naturalWidth);
+  svg.setAttribute('viewBox','0 0 1024 '+vbH);
+  // Make SVG exactly overlay the image
+  svg.style.height=img.offsetHeight+'px';
 }
 
 function _setupMapInteraction(){
@@ -24015,10 +24031,18 @@ function _setupMapInteraction(){
   wrap.parentNode.replaceChild(newWrap,wrap);
   wrap=newWrap;
 
+  // Fit SVG viewBox to actual image dimensions (fixes point alignment)
+  var img=wrap.querySelector('img');
+  if(img){
+    if(img.complete&&img.naturalWidth){_fitSVGToImage();}
+    else{img.addEventListener('load',_fitSVGToImage);}
+  }
+
   // Mouse drag
   wrap.addEventListener('mousedown',function(e){
     if(e.button!==0) return;
-    _drag=true; _dragSx=e.clientX; _dragSy=e.clientY; _dragPx0=_acuPx; _dragPy0=_acuPy;
+    _drag=true; _tapActive=false;
+    _dragSx=e.clientX; _dragSy=e.clientY; _dragPx0=_acuPx; _dragPy0=_acuPy;
     wrap.style.cursor='grabbing'; e.preventDefault();
   });
   document.addEventListener('mousemove',function(e){
@@ -24030,23 +24054,27 @@ function _setupMapInteraction(){
     if(_drag){_drag=false; wrap.style.cursor='grab';}
   });
 
-  // Touch
+  // Touch — with proper tap detection (prevents e.preventDefault() killing click on points)
   wrap.addEventListener('touchstart',function(e){
     if(e.touches.length===1){
+      _tapSX=e.touches[0].clientX; _tapSY=e.touches[0].clientY; _tapActive=true;
       _drag=true;
-      _dragSx=e.touches[0].clientX; _dragSy=e.touches[0].clientY;
-      _dragPx0=_acuPx; _dragPy0=_acuPy;
+      _dragSx=_tapSX; _dragSy=_tapSY; _dragPx0=_acuPx; _dragPy0=_acuPy;
     } else if(e.touches.length===2){
-      _drag=false; _pinch=true;
+      _drag=false; _pinch=true; _tapActive=false;
       _pinchD0=_ptsDist(e.touches); _pinchZ0=_acuZoom;
     }
     e.preventDefault();
   },{passive:false});
   wrap.addEventListener('touchmove',function(e){
     if(_drag&&e.touches.length===1){
-      var dx=(e.touches[0].clientX-_dragSx)/_acuZoom, dy=(e.touches[0].clientY-_dragSy)/_acuZoom;
-      _acuPx=_dragPx0+dx; _acuPy=_dragPy0+dy; _applyTransform();
+      var dx=(e.touches[0].clientX-_tapSX), dy=(e.touches[0].clientY-_tapSY);
+      // Cancel tap if finger moved more than 10px
+      if(Math.sqrt(dx*dx+dy*dy)>10) _tapActive=false;
+      var pdx=dx/_acuZoom, pdy=dy/_acuZoom;
+      _acuPx=_dragPx0+pdx; _acuPy=_dragPy0+pdy; _applyTransform();
     } else if(_pinch&&e.touches.length===2){
+      _tapActive=false;
       var d=_ptsDist(e.touches);
       _acuZoom=_clamp(_pinchZ0*(d/_pinchD0),0.8,5);
       _applyTransform();
@@ -24054,9 +24082,27 @@ function _setupMapInteraction(){
     e.preventDefault();
   },{passive:false});
   wrap.addEventListener('touchend',function(e){
+    // Tap detection: short touch with minimal movement → treat as point tap
+    if(_tapActive&&e.changedTouches.length===1&&e.touches.length===0){
+      var cx=e.changedTouches[0].clientX, cy=e.changedTouches[0].clientY;
+      var el=document.elementFromPoint(cx,cy);
+      if(el){
+        // Walk up DOM to find SVG <g data-code="..."> (the acupoint marker group)
+        var node=el;
+        var found=null;
+        for(var i=0;i<6&&node;i++){
+          if(node.getAttribute&&node.getAttribute('data-code')){found=node;break;}
+          node=node.parentNode;
+        }
+        if(found&&_acuSel){
+          acuShowPtSheet(_acuSel, found.getAttribute('data-code'));
+        }
+      }
+    }
+    _tapActive=false;
     if(e.touches.length<2) _pinch=false;
     if(e.touches.length===0) _drag=false;
-  });
+  },{passive:true});
 
   // Mouse wheel zoom
   wrap.addEventListener('wheel',function(e){
@@ -24306,6 +24352,9 @@ window.acuResetZoom    = acuResetZoom;
 window.acuShowPtSheet  = acuShowPtSheet;
 window.acuClosePtSheet = acuClosePtSheet;
 window.acuRunAI        = acuRunAI;
+window._fitSVGToImage  = _fitSVGToImage;
+// Re-fit SVG on orientation/resize (fixes alignment after rotate)
+window.addEventListener('resize', function(){ setTimeout(_fitSVGToImage,150); });
 
 })();
 </script>
